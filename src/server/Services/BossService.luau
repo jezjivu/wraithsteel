@@ -145,6 +145,16 @@ local function doHits(e: Encounter, moveId: string)
 	local def = BossConfig.Bosses[e.bossId]
 	local m = def.moves[moveId]
 	local hits = m.hits or 1
+	if not m.minRange and e.target then
+		-- Regular strikes step the boss's body into the swing.
+		local hum = e.c.humanoid
+		local base = def.walkSpeed
+		hum.WalkSpeed = base * BossConfig.StrikeStepSpeed
+		hum:MoveTo(e.c.root.Position + e.c.root.CFrame.LookVector * BossConfig.StrikeStep)
+		task.delay(m.active, function()
+			hum.WalkSpeed = base
+		end)
+	end
 	if m.minRange and e.target then
 		-- Gap closer: lunge toward the target over the active window.
 		-- TODO(Studio/Agent C): replace with animation root motion once rigs exist.

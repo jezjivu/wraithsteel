@@ -43,7 +43,9 @@ not touched by Rojo - save the place file as usual.
 - Without rigs, enemies and the boss appear as plain blocks. Put real rigs in
   `ServerStorage.Enemies/<enemyId>` and `ServerStorage.Bosses/<bossId>`.
 
-Controls: Left click = strike, R = heavy, F = parry, Q = dodge, 1/2 = skills, G = ultimate.
+Controls: Left click = strike, R = heavy (after 2 strikes = finisher), F = parry, Q = dash (also in
+the air; strike right after = dash strike), Space twice = double jump (strike in the air = air
+slam), Shift = sprint, Tab = lock on, 1/2 = skills, G = ultimate.
 E = use a hub station, H = controls card, Tab = lock on. Attacks auto-aim at the nearest enemy in front of you. Menu buttons (bottom-left): Spirits, Weapons, Quests, Expeditions, Store, Party, Trade, Codes.
 
 The hub town (Ninefold Crossing) is generated automatically if `Workspace.Hub` does not exist.

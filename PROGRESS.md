@@ -22,7 +22,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] AnalyticsService (onboarding funnel once per profile, economy + custom events)
 - [x] ProgressionService (Ember, Jade, XP/levels, Power with chapter caps, multipliers)
 - [x] MarketService (idempotent ProcessReceipt, pass cache, gifted passes incl. offline via profile messages, boosts, gift tokens)
-- [x] Pure-Luau test harness + specs (`tools/run_tests.py`, 60 tests) and luau-lsp type check (`tools/check.sh`)
+- [x] Pure-Luau test harness + specs (`tools/run_tests.py`, 63 tests) and luau-lsp type check (`tools/check.sh`)
 - [ ] Create passes/products on the Creator Dashboard and fill ids (MonetizationConfig)
 
 ## Phase 1 - Prologue vertical slice
@@ -95,6 +95,16 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Lock-on camera (Tab / middle mouse / R3) with reticle; attacks aim at the lock
 - [x] FALLEN death screen, dynamic clouds, polished menu look (gradients, accent line, button feedback, pop-in)
 
+## Combat depth & world pass (night 1, part 6)
+- [x] Combo finishers (heavy after 2+ lights), air slams, dash strikes for all 6 classes; knockback/launch on hits
+- [x] Perfect parry: riposte window (x1.5 + style), enemy stagger, freeze-frame + DEFLECT cinematic
+- [x] Fighting styles (Flowing River, Iron Mountain, Wind Step, Ember Fang) at the Dojo / Styles menu (profile v2)
+- [x] Movement: eased directional dash with afterimages + air dashes, double jump flip, sprint, attack step-in, plunge, momentum lean, leg stances, hit-stop, combo counter
+- [x] Enemies/bosses step into every strike; enemy/boss hits knock players back
+- [x] Terrain palette (moss/earth/white gravel), flagstone + stepping-stone paths, junction signposts
+- [x] New areas: Steaming Springs (heals), Ashen Village, Falling Petal Gorge (waterfall + river), Thousand-Step Stair
+- [x] Objective waypoint beacon + distance + screen-edge arrow
+
 ## Phase 2 - Chapter 1 + depth
 - [x] BossConfig entries for the 4 Chapter 1 bosses (Hollow Abbot, Twin Cinder Sisters, Rustwood Matriarch, Gatekeeper of Rust - 3 phases)
 - [x] Chapter 1 enemies: Rustwood Stalker, Rust-Eaten Sentinel
@@ -134,6 +144,10 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 4. RaidService (8-player reserved-server raid), chapter gates, Chapter 2 content.
 
 ## Known risks
+- Movement (dash/knockback/surge) uses client-side LinearVelocity on the player's own character;
+  the server trusts positions (no speed sanity check yet) - add one before launch.
+- Air detection for air slams uses the server's view of Humanoid.FloorMaterial/state, which can
+  lag slightly behind the client.
 - Map generation creates ~2,100 parts plus terrain; if performance suffers on phones, lower
   MapConfig counts (SakuraCount, bamboo per grove) or replace with a Studio build.
 - Weapon swing directions (AnimationConfig weaponWindup/weaponStrike) are tuned by reasoning,

@@ -66,6 +66,7 @@ EnemyConfig.DespawnAfterDeath = 4
 EnemyConfig.DefaultRespawnSeconds = 20
 EnemyConfig.DefaultSpawnScatter = 6 -- studs; spawn Parts can override with attribute Scatter
 EnemyConfig.PostureBrokenSeconds = 2.5
+EnemyConfig.DefaultStep = 2.5 -- studs every enemy strike steps forward
 EnemyConfig.HitKnockback = 10 -- studs/s pushback when an enemy hit lands
 EnemyConfig.PerilousKnockback = 38
 EnemyConfig.ComboGap = 0.12 -- seconds between strikes in a combo (instead of full recovery)

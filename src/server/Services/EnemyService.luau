@@ -207,9 +207,8 @@ local function strike(b: Brain, attackId: string, token: number)
 		if b.c.dead or b.token ~= token or os.clock() < b.stunnedUntil then
 			return
 		end
-		if a.lunge then
-			lunge(b, a.lunge, a.active)
-		end
+		-- Every strike steps the body into the swing; lunge attacks surge much further.
+		lunge(b, a.lunge or EnemyConfig.DefaultStep, a.active)
 		local pos = b.c.root.Position
 		local look = b.c.root.CFrame.LookVector
 		for _, player in Players:GetPlayers() do

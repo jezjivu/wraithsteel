@@ -53,6 +53,8 @@ export type BossDef = {
 local BossConfig = {}
 
 -- Pushback (studs/s) when boss hits land on players.
+BossConfig.StrikeStep = 5 -- studs a boss steps into regular strikes
+BossConfig.StrikeStepSpeed = 2.5 -- walk speed multiplier while stepping
 BossConfig.Knockback = { normal = 16, wide = 30, perilous = 45, perilousLaunch = 18 }
 
 local PLACEHOLDER_ANIM = "rbxassetid://0"
