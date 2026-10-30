@@ -35,6 +35,8 @@ EffectsConfig.Routes = { Finisher = { 255, 190, 90 }, Air = { 150, 210, 255 }, D
 -- Freeze-frame lengths (seconds) for impact feel.
 EffectsConfig.HitStop = { hit = 0.05, riposte = 0.12, parry = 0.2 }
 EffectsConfig.Combo = { window = 2.5, color = { 255, 215, 120 }, hotColor = { 255, 90, 60 }, hotAt = 15 }
+EffectsConfig.Crit = { color = { 255, 230, 60 }, sizeScale = 1.35 } -- critical hit numbers
+EffectsConfig.HealColor = { 110, 255, 140 }
 
 EffectsConfig.Bars = {
 	width = 120,

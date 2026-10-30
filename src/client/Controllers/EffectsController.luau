@@ -237,9 +237,21 @@ local function onDamage(e: { [string]: any })
 	if e.outcome == "Hit" or e.outcome == "Blocked" then
 		if (e.damage or 0) > 0 then
 			local cfg = EffectsConfig.DamageNumber
-			local color = if mine then rgb(EffectsConfig.Outcome.TakenHit.color) else rgb(outcome.color)
+			local color = if mine then rgb(EffectsConfig.Outcome.TakenHit.color)
+				elseif e.crit then rgb(EffectsConfig.Crit.color)
+				elseif type(e.color) == "table" then rgb(e.color)
+				else rgb(outcome.color)
 			local size = if e.damage >= cfg.bigHitThreshold then cfg.bigHitSize else cfg.size
-			floatText(part, FormatNumber.Short(math.floor(e.damage + 0.5)), color, size)
+			local text = FormatNumber.Short(math.floor(e.damage + 0.5))
+			if e.crit and not mine then
+				text ..= "!"
+				size = math.floor(size * EffectsConfig.Crit.sizeScale)
+				Fx.Burst(part.Position, { color = rgb(EffectsConfig.Crit.color), count = 16, speed = 28, size = 0.5, lifetime = 0.35 })
+				if fromMe then
+					Fx.CameraPunch(EffectsConfig.Shake.bigHitFov * 0.6)
+				end
+			end
+			floatText(part, text, color, size)
 		end
 		if e.outcome == "Blocked" then
 			floatText(part, outcome.text :: string, rgb(outcome.color), 18)
@@ -421,6 +433,12 @@ function EffectsController.Start()
 			end
 		elseif e.kind == "Guard" then
 			onGuard(e)
+		elseif e.kind == "Heal" then
+			local model = EffectsController.ModelFor(e.targetId)
+			local part = model and anchorPart(model)
+			if part and (tonumber(e.amount) or 0) >= 1 then
+				floatText(part, "+" .. FormatNumber.Short(math.floor(e.amount + 0.5)), rgb(EffectsConfig.HealColor), EffectsConfig.DamageNumber.size)
+			end
 		end
 	end)
 

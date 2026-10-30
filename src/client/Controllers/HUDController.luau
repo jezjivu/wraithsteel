@@ -104,6 +104,7 @@ local function setMeter(m: Meter, frac: number, text: string?)
 end
 
 local health: Meter? = nil
+local shieldFill: Frame? = nil
 local posture: Meter? = nil
 local ultimate: Meter? = nil
 local bossFrame: Frame? = nil
@@ -198,7 +199,17 @@ local function bindCharacter(character: Model)
 	end
 	local function refresh()
 		if health then
-			setMeter(health, humanoid.Health / math.max(humanoid.MaxHealth, 1), string.format("%d / %d", math.ceil(humanoid.Health), humanoid.MaxHealth))
+			local shield = tonumber(character:GetAttribute("Shield")) or 0
+			local text = string.format("%d / %d", math.ceil(humanoid.Health), humanoid.MaxHealth)
+			if shield > 0 then
+				text ..= string.format("  +%d shield", math.ceil(shield * humanoid.MaxHealth))
+			end
+			setMeter(health, humanoid.Health / math.max(humanoid.MaxHealth, 1), text)
+			local sf = shieldFill
+			if sf then
+				sf.Size = UDim2.fromScale(math.clamp(shield, 0, 1), 1)
+				sf.Visible = shield > 0
+			end
 		end
 		if posture then
 			local p = tonumber(character:GetAttribute("Posture")) or 0
@@ -213,6 +224,7 @@ local function bindCharacter(character: Model)
 	humanoid.HealthChanged:Connect(refresh)
 	character:GetAttributeChangedSignal("Posture"):Connect(refresh)
 	character:GetAttributeChangedSignal("Ultimate"):Connect(refresh)
+	character:GetAttributeChangedSignal("Shield"):Connect(refresh)
 	refresh()
 end
 
@@ -236,6 +248,19 @@ function HUDController.Init()
 
 	-- Player meters (bottom center, above the default toolbar area).
 	health = meter(gui, UDim2.new(0.5, -160, 1, -92), UDim2.fromOffset(320, 22), Color3.fromRGB(190, 55, 50), "Health")
+	-- Shield overlay (pale jade over the health bar).
+	local sf = Instance.new("Frame")
+	sf.Size = UDim2.fromScale(0, 1)
+	sf.BackgroundColor3 = Color3.fromRGB(150, 255, 200)
+	sf.BackgroundTransparency = 0.45
+	sf.BorderSizePixel = 0
+	sf.Visible = false
+	sf.ZIndex = 1
+	sf.Parent = (health :: Meter).frame
+	local sc = Instance.new("UICorner")
+	sc.CornerRadius = UDim.new(0, 6)
+	sc.Parent = sf
+	shieldFill = sf
 	posture = meter(gui, UDim2.new(0.5, -160, 1, -66), UDim2.fromOffset(320, 14), Color3.fromRGB(235, 185, 70), "Posture")
 	ultimate = meter(gui, UDim2.new(0.5, -160, 1, -48), UDim2.fromOffset(320, 10), Color3.fromRGB(120, 170, 255), "")
 

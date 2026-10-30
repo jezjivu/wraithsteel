@@ -11,6 +11,7 @@
 --   MovementController.Dash()
 --   MovementController.Surge(studs, seconds)
 --   MovementController.Plunge()
+--   MovementController.Blink(dir, distance) -> (from, to)  -- Ghost Step teleport
 
 local ContextActionService = game:GetService("ContextActionService")
 local Debris = game:GetService("Debris")
@@ -227,6 +228,32 @@ function MovementController.Plunge()
 		Fx.Burst(p, { color = color, count = 20, speed = 30, size = 0.5, lifetime = 0.4 })
 		Fx.CameraPunch(6)
 	end)
+end
+
+-- Ghost Step: teleport along `dir`, stopping short of walls.
+function MovementController.Blink(dir: Vector3, distance: number): (Vector3?, Vector3?)
+	local character, _, root = parts()
+	if character == nil or root == nil then
+		return nil, nil
+	end
+	local flat = Vector3.new(dir.X, 0, dir.Z)
+	if flat.Magnitude < 1e-3 then
+		return nil, nil
+	end
+	flat = flat.Unit
+	local from = root.Position
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character, workspace:FindFirstChild("SpiritFollowers") or character }
+	local hit = workspace:Raycast(from, flat * distance, params)
+	local travel = if hit then math.max(0, (hit.Position - from).Magnitude - 2) else distance
+	local to = from + flat * travel
+	afterimage(character, styleColor())
+	root.CFrame = CFrame.lookAt(to, to + flat)
+	root.AssemblyLinearVelocity = flat * 20
+	Fx.CameraPunch(8)
+	blurPulse(10, 0.25)
+	return from, to
 end
 
 function MovementController.Knockback(velocity: Vector3, seconds: number)

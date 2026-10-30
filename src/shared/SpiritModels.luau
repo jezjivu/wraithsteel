@@ -153,6 +153,57 @@ shapes.Wraith = function(ctx)
 	return body
 end
 
+-- Particle aura per Spirit (built-in rbxasset textures only).
+local AURA_TEXTURE = {
+	Embers = "rbxasset://textures/particles/fire_main.dds",
+	Sparks = "rbxasset://textures/particles/sparkles_main.dds",
+	Mist = "rbxasset://textures/particles/smoke_main.dds",
+	Leaves = "rbxasset://textures/particles/sparkles_main.dds",
+	Bubbles = "rbxasset://textures/particles/sparkles_main.dds",
+	Void = "rbxasset://textures/particles/smoke_main.dds",
+	Glimmer = "rbxasset://textures/particles/sparkles_main.dds",
+}
+
+local function aura(core: BasePart, kind: string, color: Color3, size: number)
+	local e = Instance.new("ParticleEmitter")
+	e.Name = "Aura"
+	e.Texture = AURA_TEXTURE[kind] or AURA_TEXTURE.Glimmer
+	e.Color = ColorSequence.new(color)
+	e.LightEmission = if kind == "Void" then 0.2 else 1
+	e.LightInfluence = 0
+	local s = if kind == "Mist" or kind == "Void" then 0.9 else 0.22
+	e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, s * size), NumberSequenceKeypoint.new(1, 0) })
+	e.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, if kind == "Mist" or kind == "Void" then 0.6 else 0.1), NumberSequenceKeypoint.new(1, 1) })
+	e.Lifetime = NumberRange.new(0.5, 1.1)
+	e.Rate = if kind == "Mist" or kind == "Void" then 8 else 14
+	e.Speed = NumberRange.new(0.5, 2)
+	e.SpreadAngle = Vector2.new(180, 180)
+	e.Acceleration = if kind == "Embers" or kind == "Sparks" then Vector3.new(0, 3, 0) elseif kind == "Leaves" then Vector3.new(0, -2, 0) else Vector3.zero
+	e.RotSpeed = NumberRange.new(-90, 90)
+	e.Parent = core
+end
+
+local function crest(ctx: Ctx, kind: string)
+	if kind == "Halo" then
+		local ring = part(ctx, "Halo", Vector3.new(0.08, 1.1, 1.1), CFrame.new(0, 1.05, 0.1) * CFrame.Angles(0, 0, math.rad(90)), ctx.accent, Enum.Material.Neon, Enum.PartType.Cylinder)
+		ring.Transparency = 0.25
+		ring:SetAttribute("Spin", 1)
+	elseif kind == "Crown" then
+		for i = -1, 1 do
+			local spike = wedge(ctx, "Crown", Vector3.new(0.08, 0.32, 0.14), CFrame.new(i * 0.18, 0.95, -0.15) * CFrame.Angles(0, 0, math.rad(i * -15)), ctx.accent, Enum.Material.Neon)
+			spike.Transparency = 0.05
+		end
+	elseif kind == "Flame" then
+		local f = wedge(ctx, "Flame", Vector3.new(0.12, 0.45, 0.25), CFrame.new(0, 0.8, -0.1), Color3.fromRGB(255, 200, 90), Enum.Material.Neon)
+		f:SetAttribute("Tail", 1)
+	elseif kind == "Orbit" then
+		for i = 1, 2 do
+			local orb = part(ctx, "Orbit", Vector3.new(0.2, 0.2, 0.2), CFrame.new(if i == 1 then 0.9 else -0.9, 0.2, 0), ctx.accent, Enum.Material.Neon, Enum.PartType.Ball)
+			orb:SetAttribute("Orbit", i)
+		end
+	end
+end
+
 -- Builds a companion model. Returns nil for unknown spirits.
 function SpiritModels.Build(spiritId: string, mutation: string?, rarity: string?): Model?
 	local def = SpiritConfig.Spirits[spiritId]
@@ -186,7 +237,32 @@ function SpiritModels.Build(spiritId: string, mutation: string?, rarity: string?
 		local gem = part(ctx, "RarityGem", Vector3.new(0.22, 0.22, 0.22), CFrame.new(0, 1.15, 0) * CFrame.Angles(math.rad(45), 0, math.rad(45)), r.color, Enum.Material.Neon)
 		gem.Transparency = 0.1
 	end
+	if v.aura then
+		aura(core, v.aura, accent, v.size)
+	end
+	if v.crest then
+		crest(ctx, v.crest)
+	end
+	-- Legendary and better leave a glowing streak as they fly.
+	if r and r.order >= 5 then
+		local a0 = Instance.new("Attachment")
+		a0.Position = Vector3.new(0, 0.25 * v.size, 0)
+		a0.Parent = core
+		local a1 = Instance.new("Attachment")
+		a1.Position = Vector3.new(0, -0.25 * v.size, 0)
+		a1.Parent = core
+		local trail = Instance.new("Trail")
+		trail.Attachment0 = a0
+		trail.Attachment1 = a1
+		trail.Color = ColorSequence.new(accent)
+		trail.LightEmission = 1
+		trail.Lifetime = 0.35
+		trail.Transparency = NumberSequence.new(0.3, 1)
+		trail.FaceCamera = true
+		trail.Parent = core
+	end
 	model:SetAttribute("SpiritId", spiritId)
+	model:SetAttribute("Accent", accent)
 	return model
 end
 

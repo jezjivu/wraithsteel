@@ -130,6 +130,8 @@ function AnimationController.StyleFor(action: string, moveId: string?, route: st
 		return "SlashLeft" -- enemy alternate swing
 	elseif action == "Flinch" then
 		return "Flinch"
+	elseif string.sub(action, 1, 4) == "Cast" and AnimationConfig.Styles[action] then
+		return action
 	end
 	if moveId then
 		local explicit = AnimationConfig.MoveStyles[moveId]

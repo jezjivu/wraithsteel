@@ -16,7 +16,11 @@ InputConfig.Bindings = {
 	Skill1 = { inputs = { Enum.KeyCode.One, Enum.KeyCode.ButtonX }, touchButton = true, title = "Skill 1" },
 	Skill2 = { inputs = { Enum.KeyCode.Two, Enum.KeyCode.ButtonY }, touchButton = true, title = "Skill 2" },
 	Ultimate = { inputs = { Enum.KeyCode.G, Enum.KeyCode.ButtonL2 }, touchButton = true, title = "Ultimate" },
-	SpiritCall = { inputs = { Enum.KeyCode.T, Enum.KeyCode.DPadUp }, touchButton = false, title = "Spirit" },
+	SpiritCall = { inputs = { Enum.KeyCode.T, Enum.KeyCode.DPadUp }, touchButton = true, title = "Burst" },
+	-- Qi arts (SpellController handles these; CombatController ignores them).
+	Spell1 = { inputs = { Enum.KeyCode.Z, Enum.KeyCode.DPadLeft }, touchButton = true, title = "Art 1" },
+	Spell2 = { inputs = { Enum.KeyCode.X, Enum.KeyCode.DPadRight }, touchButton = true, title = "Art 2" },
+	Spell3 = { inputs = { Enum.KeyCode.C, Enum.KeyCode.DPadDown }, touchButton = true, title = "Art 3" },
 } :: { [string]: Binding }
 
 -- Client-side input buffer: a press during a move is remembered this long and re-sent when

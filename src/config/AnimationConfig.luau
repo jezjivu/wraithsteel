@@ -117,7 +117,44 @@ AnimationConfig.Styles = {
 		weaponWindup = { -150, 0, 0 },
 		weaponStrike = { 40, 0, 0 },
 	},
+	-- Qi arts (SpellController plays these by name with explicit timing).
+	CastPush = {
+		windup = { shoulder = { 40, 30, 0 }, leftShoulder = { 40, -30, 0 }, elbow = { 70, 0, 0 }, waist = { 0, 30, 0 }, leftHip = { -10, 0, 0 }, rightHip = { 20, 0, 0 } },
+		strike = { shoulder = { 95, 0, 0 }, leftShoulder = { 95, 0, 0 }, elbow = { 0, 0, 0 }, waist = { 0, -15, 0 }, root = { -6, 0, 0 }, leftHip = { -35, 0, 0 }, rightHip = { 30, 0, 0 }, leftKnee = { -30, 0, 0 } },
+		weaponWindup = { -40, 0, 0 },
+		weaponStrike = { -20, 0, 0 },
+	},
+	CastSky = {
+		windup = { shoulder = { 60, 0, 0 }, leftShoulder = { 60, 0, 0 }, root = { 8, 0, 0 }, leftKnee = { -30, 0, 0 }, rightKnee = { -30, 0, 0 }, leftHip = { 15, 0, 0 }, rightHip = { 15, 0, 0 } },
+		strike = { shoulder = { 175, 0, -15 }, leftShoulder = { 175, 0, 15 }, waist = { -15, 0, 0 }, root = { -8, 0, 0 } },
+		weaponWindup = { -60, 0, 0 },
+		weaponStrike = { -150, 0, 0 },
+	},
+	CastSpin = {
+		windup = { shoulder = { 90, 0, 60 }, leftShoulder = { 90, 0, -60 }, leftHip = { -20, 0, -15 }, rightHip = { 20, 0, 15 } },
+		strike = { shoulder = { 90, 0, 80 }, leftShoulder = { 90, 0, -80 }, leftHip = { -25, 0, -20 }, rightHip = { 25, 0, 20 } },
+		spin = true,
+		weaponWindup = { -20, 0, -80 },
+		weaponStrike = { 0, 0, 80 },
+	},
+	CastGuard = {
+		windup = { shoulder = { 80, -60, 0 }, leftShoulder = { 80, 60, 0 }, elbow = { 80, 0, 0 }, waist = { 10, 0, 0 }, leftKnee = { -25, 0, 0 }, rightKnee = { -25, 0, 0 } },
+		strike = { shoulder = { 60, 40, 0 }, leftShoulder = { 60, -40, 0 }, elbow = { 20, 0, 0 }, waist = { -10, 0, 0 } },
+		weaponWindup = { 0, 0, 85 },
+		weaponStrike = { 0, 0, 40 },
+	},
 } :: { [string]: Style }
+
+-- Which cast pose each art kind uses.
+AnimationConfig.CastStyles = {
+	Projectile = "CastPush",
+	Blink = "DashStrike",
+	Barrier = "CastGuard",
+	Seal = "CastSky",
+	Storm = "CastSpin",
+	Lance = "CastPush",
+	Bell = "CastSky",
+} :: { [string]: string }
 
 -- Trails glow from slightly before the active window until slightly after it.
 AnimationConfig.TrailLead = 0.04

@@ -169,6 +169,41 @@ local function aimDirection(): Vector3?
 	return best or flatLook
 end
 
+CombatController.AimDirection = aimDirection
+
+-- Where a targeted art should land: the lock-on / aim-assist enemy, else nil.
+function CombatController.AimTarget(maxRange: number): Vector3?
+	local character = localPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if root == nil or not root:IsA("BasePart") then
+		return nil
+	end
+	local locked = CameraController.Target()
+	local lockedRoot = locked and locked:FindFirstChild("HumanoidRootPart")
+	if lockedRoot and lockedRoot:IsA("BasePart") then
+		return lockedRoot.Position
+	end
+	local dir = aimDirection()
+	if dir == nil then
+		return nil
+	end
+	local best, bestD = nil, maxRange
+	for _, model in CollectionService:GetTagged("Combatant") do
+		if model:IsA("Model") and model ~= character and Players:GetPlayerFromCharacter(model) == nil then
+			local hum = model:FindFirstChildOfClass("Humanoid")
+			local troot = model:FindFirstChild("HumanoidRootPart")
+			if hum and hum.Health > 0 and troot and troot:IsA("BasePart") then
+				local d = troot.Position - root.Position
+				local flat = Vector3.new(d.X, 0, d.Z)
+				if flat.Magnitude < bestD and flat.Magnitude > 0.1 and flat.Unit:Dot(dir) > 0.8 then
+					best, bestD = troot.Position, flat.Magnitude
+				end
+			end
+		end
+	end
+	return best
+end
+
 local function faceToward(dir: Vector3)
 	local character = localPlayer.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
@@ -177,6 +212,8 @@ local function faceToward(dir: Vector3)
 		root.CFrame = CFrame.lookAt(pos, pos + dir)
 	end
 end
+
+CombatController.FaceToward = faceToward
 
 local function send(action: string)
 	seq += 1
@@ -219,6 +256,9 @@ local function send(action: string)
 end
 
 local function onAction(action: string)
+	if string.sub(action, 1, 5) == "Spell" then
+		return -- Qi arts: SpellController
+	end
 	local now = os.clock()
 	if now < predictedBusyUntil and action ~= "Dodge" then
 		buffered = { action = action, at = now }
