@@ -8,8 +8,10 @@
 -- If a move has a real uploaded animationId, CombatController plays that instead.
 --
 -- API:
---   AnimationController.Play(model, action, moveId?, timing?)
---   AnimationController.StyleFor(action, moveId?) -> string
+--   AnimationController.Play(model, action, moveId?, timing?, route?, speed?)
+--   AnimationController.StyleFor(action, moveId?, route?) -> string
+--   AnimationController.HitStop(seconds, scale)   -- freeze-frame feel on big impacts
+-- Player characters also lean into their movement (momentum lean) every frame.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -20,6 +22,7 @@ local Config = ReplicatedStorage:WaitForChild("Config")
 local AnimationConfig = require(Config:WaitForChild("AnimationConfig"))
 local WeaponConfig = require(Config:WaitForChild("WeaponConfig"))
 local CombatConfig = require(Config:WaitForChild("CombatConfig"))
+local MovementConfig = require(Config:WaitForChild("MovementConfig"))
 
 local AnimationController = { Name = "AnimationController", Priority = 15 }
 
@@ -29,6 +32,10 @@ type Joints = {
 	leftShoulder: Motor6D?,
 	waist: Motor6D?,
 	root: Motor6D?,
+	leftHip: Motor6D?,
+	rightHip: Motor6D?,
+	leftKnee: Motor6D?,
+	rightKnee: Motor6D?,
 }
 
 type Playing = {
@@ -85,11 +92,33 @@ local function joints(model: Model): Joints
 		leftShoulder = findMotor(model, "LeftUpperArm", "LeftShoulder"),
 		waist = findMotor(model, "UpperTorso", "Waist"),
 		root = findMotor(model, "LowerTorso", "Root"),
+		leftHip = findMotor(model, "LeftUpperLeg", "LeftHip"),
+		rightHip = findMotor(model, "RightUpperLeg", "RightHip"),
+		leftKnee = findMotor(model, "LeftLowerLeg", "LeftKnee"),
+		rightKnee = findMotor(model, "RightLowerLeg", "RightKnee"),
 	}
 end
 
-function AnimationController.StyleFor(action: string, moveId: string?): string
-	if action == "Parry" then
+-- Virtual animation clock: advances slower during hit-stop.
+local vnow = 0
+local timeScale = 1
+local stopUntil = 0
+
+function AnimationController.HitStop(seconds: number, scale: number)
+	stopUntil = math.max(stopUntil, os.clock() + seconds)
+	timeScale = math.min(timeScale, scale)
+end
+
+function AnimationController.StyleFor(action: string, moveId: string?, route: string?): string
+	if route == "Air" then
+		return "AirSlam"
+	elseif route == "Dash" then
+		return "DashStrike"
+	elseif route == "Finisher" then
+		return "Finisher"
+	elseif action == "Flip" or action == "Stagger" then
+		return action
+	elseif action == "Parry" then
 		return "Guard"
 	elseif action == "Dodge" then
 		return "Dodge"
@@ -130,8 +159,8 @@ end
 export type Timing = { windup: number, active: number, recovery: number }
 
 -- timing overrides the move's frame data (used for enemy telegraphs, which have no moveId here).
-function AnimationController.Play(model: Model, action: string, moveId: string?, timing: Timing?)
-	local styleName = AnimationController.StyleFor(action, moveId)
+function AnimationController.Play(model: Model, action: string, moveId: string?, timing: Timing?, route: string?, speed: number?)
+	local styleName = AnimationController.StyleFor(action, moveId, route)
 	local style = AnimationConfig.Styles[styleName]
 	if style == nil then
 		return
@@ -148,7 +177,8 @@ function AnimationController.Play(model: Model, action: string, moveId: string?,
 		if move == nil then
 			return
 		end
-		windup, active, recovery = move.windup, math.max(move.active, 0.08), move.recovery
+		local sp = speed or 1
+		windup, active, recovery = move.windup / sp, math.max(move.active, 0.08), move.recovery / sp
 	end
 	local previous = playing[model]
 	if previous then
@@ -157,7 +187,7 @@ function AnimationController.Play(model: Model, action: string, moveId: string?,
 	local grip, trail = weaponParts(model)
 	playing[model] = {
 		style = style,
-		start = os.clock(),
+		start = vnow,
 		windup = windup,
 		active = active,
 		recovery = recovery,
@@ -185,7 +215,7 @@ local function ease(t: number): number
 	return 1 - (1 - t) * (1 - t)
 end
 
-local JOINTS = { "shoulder", "elbow", "leftShoulder", "waist", "root" }
+local JOINTS = { "shoulder", "elbow", "leftShoulder", "waist", "root", "leftHip", "rightHip", "leftKnee", "rightKnee" }
 
 -- Returns the attack/guard offsets for this frame, or nil when the animation has finished.
 local function attackOffsets(p: Playing, now: number): { [string]: CFrame }?
@@ -235,7 +265,8 @@ local function attackOffsets(p: Playing, now: number): { [string]: CFrame }?
 	for _, name in JOINTS do
 		local offset = lerpAngles((fromPose :: any)[name], (toPose :: any)[name], k)
 		if name == "root" and spinAngle ~= 0 then
-			offset = (offset or CFrame.new()) * CFrame.Angles(0, math.rad(spinAngle), 0)
+			local spin = if p.style.spinAxis == "X" then CFrame.Angles(math.rad(-spinAngle), 0, 0) else CFrame.Angles(0, math.rad(spinAngle), 0)
+			offset = (offset or CFrame.new()) * spin
 		end
 		if offset then
 			offsets[name] = offset
@@ -316,8 +347,34 @@ function AnimationController.Start()
 		npcs[m :: any] = nil
 	end)
 
-	RunService.Stepped:Connect(function(_, dt)
-		local now = os.clock()
+	local lean: { [Model]: CFrame } = {}
+	RunService.Stepped:Connect(function(_, dt: number)
+		if os.clock() >= stopUntil then
+			timeScale = 1
+		end
+		vnow += dt * timeScale
+		local now = vnow
+		-- Momentum lean for every player character (forward lean when running, bank on turns).
+		local L = MovementConfig.Lean
+		for _, plr in Players:GetPlayers() do
+			local ch = plr.Character
+			local rootPart = ch and ch:FindFirstChild("HumanoidRootPart")
+			local motor = ch and findMotor(ch, "LowerTorso", "Root")
+			if ch and rootPart and rootPart:IsA("BasePart") and motor then
+				local v = rootPart.CFrame:VectorToObjectSpace(rootPart.AssemblyLinearVelocity)
+				local fwd = math.clamp(-v.Z / L.fullSpeed, -1, 1)
+				local side = math.clamp(v.X / L.fullSpeed, -1, 1)
+				local target = CFrame.Angles(math.rad(-L.forwardDegrees * fwd), 0, math.rad(-L.sideDegrees * side))
+				local cur = (lean[ch] or CFrame.new()):Lerp(target, math.min(1, dt * L.smoothing))
+				lean[ch] = cur
+				motor.Transform = motor.Transform * cur
+			end
+		end
+		for ch in lean do
+			if ch.Parent == nil then
+				lean[ch] = nil
+			end
+		end
 		-- Players: layer attack poses on top of the default Animate script's pose.
 		for model, p in playing do
 			if model.Parent == nil then

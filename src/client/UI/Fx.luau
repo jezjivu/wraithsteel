@@ -160,9 +160,95 @@ function Fx.ScreenFlash(color: Color3, alpha: number, seconds: number)
 	Debris:AddItem(f, seconds + 0.05)
 end
 
+-- Brief color-grade pulse (desaturate + contrast), e.g. the perfect-parry "time stop" look.
+function Fx.ColorPulse(saturation: number, contrast: number, tint: Color3, seconds: number)
+	local Lighting = game:GetService("Lighting")
+	local cc = Instance.new("ColorCorrectionEffect")
+	cc.Saturation = saturation
+	cc.Contrast = contrast
+	cc.TintColor = tint
+	cc.Parent = Lighting
+	TweenService:Create(cc, TweenInfo.new(seconds, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+		Saturation = 0,
+		Contrast = 0,
+		TintColor = Color3.new(1, 1, 1),
+	}):Play()
+	Debris:AddItem(cc, seconds + 0.05)
+end
+
+local overlay: ScreenGui? = nil
+local function overlayGui(): ScreenGui
+	if overlay == nil then
+		local g = Instance.new("ScreenGui")
+		g.Name = "FxOverlay"
+		g.IgnoreGuiInset = true
+		g.DisplayOrder = 45
+		g.ResetOnSpawn = false
+		g.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+		overlay = g
+	end
+	return overlay :: ScreenGui
+end
+
+-- Radial speed streaks bursting from the screen center.
+function Fx.Streaks(color: Color3, count: number?, seconds: number?)
+	local g = overlayGui()
+	local t = seconds or 0.35
+	for i = 1, count or 18 do
+		local angle = (i / (count or 18)) * 360 + math.random(-6, 6)
+		local line = Instance.new("Frame")
+		line.AnchorPoint = Vector2.new(0, 0.5)
+		line.Position = UDim2.fromScale(0.5, 0.5)
+		line.Size = UDim2.new(0.05, 0, 0, math.random(2, 4))
+		line.Rotation = angle
+		line.BackgroundColor3 = color
+		line.BorderSizePixel = 0
+		line.Parent = g
+		local grad = Instance.new("UIGradient")
+		grad.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.4, 0.1), NumberSequenceKeypoint.new(1, 1) })
+		grad.Parent = line
+		-- Lines slide outward along their angle.
+		local rad = math.rad(angle)
+		local dx, dy = math.cos(rad) * 0.45, math.sin(rad) * 0.45
+		TweenService:Create(line, TweenInfo.new(t, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.fromScale(0.5 + dx * 0.6, 0.5 + dy * 0.6),
+			Size = UDim2.new(0.22, 0, 0, 1),
+			BackgroundTransparency = 1,
+		}):Play()
+		Debris:AddItem(line, t + 0.05)
+	end
+end
+
+-- Big stamped word in the middle of the screen (DEFLECT, RIPOSTE...).
+function Fx.CenterText(text: string, color: Color3, size: number, seconds: number)
+	local g = overlayGui()
+	local l = Instance.new("TextLabel")
+	l.AnchorPoint = Vector2.new(0.5, 0.5)
+	l.Position = UDim2.fromScale(0.5, 0.36)
+	l.Size = UDim2.new(1, 0, 0, size + 10)
+	l.BackgroundTransparency = 1
+	l.Font = Enum.Font.Antique
+	l.TextSize = size
+	l.TextColor3 = color
+	l.TextStrokeColor3 = Color3.new(0, 0, 0)
+	l.TextStrokeTransparency = 0.2
+	l.Text = text
+	l.Parent = g
+	local scale = Instance.new("UIScale")
+	scale.Scale = 1.6
+	scale.Parent = l
+	TweenService:Create(scale, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	TweenService:Create(l, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, seconds), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+	Debris:AddItem(l, seconds + 0.35)
+end
+
 -- Quick field-of-view kick for impact (always returns to the first-seen FOV, so rapid
 -- punches cannot drift the camera).
 local baseFov: number? = nil
+-- The FOV punches return to (sprinting raises it).
+function Fx.SetBaseFov(fov: number)
+	baseFov = fov
+end
 function Fx.CameraPunch(amount: number)
 	local cam = workspace.CurrentCamera
 	if cam == nil then

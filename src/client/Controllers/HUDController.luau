@@ -16,12 +16,46 @@ local Config = ReplicatedStorage:WaitForChild("Config")
 local Net = require(Shared:WaitForChild("Net"))
 local FormatNumber = require(Shared:WaitForChild("FormatNumber"))
 local BossConfig = require(Config:WaitForChild("BossConfig"))
+local EffectsConfig = require(Config:WaitForChild("EffectsConfig"))
 
 local UI = script.Parent.Parent:WaitForChild("UI")
 local Kit = require(UI:WaitForChild("Kit"))
 local DataController = require(script.Parent.DataController)
 
 local HUDController = { Name = "HUDController", Priority = 41 }
+
+-- Combo counter (right side): consecutive hits/parries within EffectsConfig.Combo.window.
+local comboLabel: TextLabel? = nil
+local comboCount = 0
+local comboExpires = 0
+function HUDController.ComboHit()
+	local l = comboLabel
+	if l == nil then
+		return
+	end
+	local cfg = EffectsConfig.Combo
+	local now = os.clock()
+	comboCount = if now <= comboExpires then comboCount + 1 else 1
+	comboExpires = now + cfg.window
+	if comboCount < 2 then
+		return
+	end
+	local hot = comboCount >= cfg.hotAt
+	local c = if hot then cfg.hotColor else cfg.color
+	l.TextColor3 = Color3.fromRGB(c[1], c[2], c[3])
+	l.Text = comboCount .. " HITS"
+	l.TextTransparency = 0
+	l.TextStrokeTransparency = 0.3
+	local scale = l:FindFirstChildOfClass("UIScale") :: UIScale
+	scale.Scale = if hot then 1.5 else 1.3
+	TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	local mine = comboCount
+	task.delay(cfg.window, function()
+		if comboCount == mine and os.clock() >= comboExpires then
+			TweenService:Create(l, TweenInfo.new(0.4), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+		end
+	end)
+end
 
 local C = Kit.Colors
 local localPlayer = Players.LocalPlayer
@@ -225,6 +259,20 @@ function HUDController.Init()
 	bossHp = meter(bf, UDim2.fromOffset(0, 28), UDim2.new(1, 0, 0, 18), Color3.fromRGB(180, 40, 40), "")
 	bossPosture = meter(bf, UDim2.fromOffset(60, 50), UDim2.new(1, -120, 0, 10), Color3.fromRGB(240, 190, 70), "")
 	bossFrame = bf
+
+	local combo = Instance.new("TextLabel")
+	combo.AnchorPoint = Vector2.new(1, 0.5)
+	combo.Position = UDim2.new(1, -24, 0.55, 0)
+	combo.Size = UDim2.fromOffset(260, 60)
+	combo.BackgroundTransparency = 1
+	combo.Font = Enum.Font.Antique
+	combo.TextSize = 46
+	combo.TextXAlignment = Enum.TextXAlignment.Right
+	combo.TextTransparency = 1
+	combo.TextStrokeTransparency = 1
+	combo.Parent = gui
+	Instance.new("UIScale").Parent = combo
+	comboLabel = combo
 
 	local zb = Instance.new("TextLabel")
 	zb.AnchorPoint = Vector2.new(0.5, 0)

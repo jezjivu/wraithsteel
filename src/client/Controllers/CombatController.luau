@@ -7,7 +7,6 @@
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -17,9 +16,11 @@ local Signal = require(Shared:WaitForChild("Signal"))
 local WeaponConfig = require(Config:WaitForChild("WeaponConfig"))
 local InputConfig = require(Config:WaitForChild("InputConfig"))
 local CombatConfig = require(Config:WaitForChild("CombatConfig"))
+local StyleConfig = require(Config:WaitForChild("StyleConfig"))
 
 local InputController = require(script.Parent.InputController)
 local AnimationController = require(script.Parent.AnimationController)
+local MovementController = require(script.Parent.MovementController)
 local CameraController = require(script.Parent.CameraController)
 local DataController = require(script.Parent.DataController)
 
@@ -66,15 +67,44 @@ end
 local comboIndex = 0
 local lastLightAt = -math.huge
 
+local lastDashAt = -math.huge
+local airUsed = false
+local predictedKind: string? = nil
+
+-- Mirrors Logic/CombatRules routes: air slam, dash strike, combo finisher, combo, skills.
 local function predictMove(action: string): string?
 	local weapon = WeaponConfig.Weapons[DataController.Get("equippedWeapon") or ""]
+	predictedKind = nil
 	if weapon == nil then
 		return nil
 	end
+	local character = localPlayer.Character
+	local hum = character and character:FindFirstChildOfClass("Humanoid")
+	local inAir = hum ~= nil and hum.FloorMaterial == Enum.Material.Air
+	if not inAir then
+		airUsed = false
+	end
+	local now = os.clock()
 	if action == "HeavyAttack" then
+		if now - lastLightAt <= CombatConfig.Validation.ComboResetSeconds and comboIndex >= 2 then
+			comboIndex = 0
+			predictedKind = "Finisher"
+			return weapon.finisher
+		end
 		return weapon.heavy
 	elseif action == "LightAttack" then
-		local now = os.clock()
+		if inAir and not airUsed then
+			airUsed = true
+			comboIndex = 0
+			predictedKind = "Air"
+			return weapon.air
+		end
+		if now - lastDashAt <= CombatConfig.DashAttackWindow then
+			lastDashAt = -math.huge
+			comboIndex = 0
+			predictedKind = "Dash"
+			return weapon.dash
+		end
 		if now - lastLightAt <= CombatConfig.Validation.ComboResetSeconds and comboIndex < #weapon.lightCombo then
 			comboIndex += 1
 		else
@@ -86,32 +116,6 @@ local function predictMove(action: string): string?
 	return weapon.skills[action]
 end
 
--- Dodge dash: the client owns its character's physics, so it moves itself; the server only
--- grants i-frames (and will sanity-check positions later, see PROGRESS risks).
-local function dash()
-	local character = localPlayer.Character
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local root = character and character:FindFirstChild("HumanoidRootPart")
-	if humanoid == nil or root == nil or not root:IsA("BasePart") then
-		return
-	end
-	local dir = humanoid.MoveDirection
-	if dir.Magnitude < 0.1 then
-		dir = -root.CFrame.LookVector -- no input: hop backward
-	end
-	dir = Vector3.new(dir.X, 0, dir.Z).Unit
-	local speed = CombatConfig.DodgeDistance / CombatConfig.DodgeDuration
-	local untilT = os.clock() + CombatConfig.DodgeDuration
-	local conn: RBXScriptConnection
-	conn = RunService.Heartbeat:Connect(function()
-		if os.clock() >= untilT or root.Parent == nil then
-			conn:Disconnect()
-			return
-		end
-		local v = root.AssemblyLinearVelocity
-		root.AssemblyLinearVelocity = Vector3.new(dir.X * speed, v.Y, dir.Z * speed)
-	end)
-end
 
 -- Soft lock-on: the nearest living enemy in front of the camera within AimAssist range,
 -- otherwise the camera's horizontal look direction.
@@ -180,22 +184,38 @@ local function send(action: string)
 	if aim and CombatConfig.AimAssist.faceOnAttack then
 		faceToward(aim)
 	end
+	if action == "Dodge" and not MovementController.CanDash() then
+		seq -= 1
+		return -- out of air dashes
+	end
 	Net.Client.Fire("CombatAction", { action = action, seq = seq, aim = aim })
 	local character = localPlayer.Character
 	if action == "Dodge" then
-		dash()
+		lastDashAt = os.clock()
+		MovementController.Dash()
 	end
 	local moveId = if action == "Dodge" or action == "Parry" then nil else predictMove(action)
 	local move = moveId and WeaponConfig.Moves[moveId]
+	local style = StyleConfig.Get(DataController.Get("fightingStyle"))
 	if move then
-		predictedBusyUntil = os.clock() + move.windup + move.active + move.recovery
+		local windup = move.windup / style.speed
+		predictedBusyUntil = os.clock() + windup + move.active + move.recovery / style.speed
+		-- Body follows the blade: step into the strike, or dive for an air slam.
+		local kind = predictedKind
+		task.delay(windup, function()
+			if kind == "Air" then
+				MovementController.Plunge()
+			elseif move.step then
+				MovementController.Surge(move.step, move.active + 0.05)
+			end
+		end)
 	end
 	if move and move.animationId ~= PLACEHOLDER_ANIM then
 		playAnimation(move.animationId)
-	elseif character then
-		AnimationController.Play(character, action, moveId)
+	elseif character and action ~= "Dodge" then
+		AnimationController.Play(character, action, moveId, nil, predictedKind, style.speed)
 	end
-	CombatController.LocalAction:Fire(action, moveId)
+	CombatController.LocalAction:Fire(action, moveId, predictedKind)
 end
 
 local function onAction(action: string)
@@ -231,6 +251,8 @@ function CombatController.Start()
 		if payload.kind == "Rejected" then
 			predictedBusyUntil = 0
 			comboIndex = 0
+		elseif payload.kind == "Knockback" and typeof(payload.velocity) == "Vector3" then
+			MovementController.Knockback(payload.velocity, tonumber(payload.seconds) or 0.18)
 		end
 		CombatController.EventReceived:Fire(payload)
 	end)

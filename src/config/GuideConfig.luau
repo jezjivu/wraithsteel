@@ -18,13 +18,14 @@ GuideConfig.Text = {
 }
 
 GuideConfig.Controls = {
-	"Left click - Strike (combo)",
-	"R - Heavy attack",
-	"F - Parry (perfect timing reflects posture)",
-	"Q - Dodge (dash, avoids red ! attacks)",
-	"1 / 2 - Skills      G - Ultimate",
-	"Tab - Lock on to an enemy",
-	"E - Use stations      H - Toggle this card",
+	"Click - Strike combo   R - Heavy",
+	"Strike x2 then R - Finisher (launch!)",
+	"Q - Dash (in air too)   Q then Click - Dash strike",
+	"Space x2 - Double jump   Click in air - Air slam",
+	"F - Parry (perfect = DEFLECT + riposte)",
+	"Shift - Sprint   Tab - Lock on",
+	"1 / 2 - Skills   G - Ultimate   E - Use stations",
+	"H - Toggle this card",
 }
 
 return GuideConfig

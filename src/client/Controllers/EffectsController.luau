@@ -23,6 +23,7 @@ local AnimationConfig = require(Config:WaitForChild("AnimationConfig"))
 local CombatConfig = require(Config:WaitForChild("CombatConfig"))
 
 local CombatController = require(script.Parent.CombatController)
+local HUDController = require(script.Parent.HUDController)
 local DataController = require(script.Parent.DataController)
 local Fx = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Fx"))
 local AnimationController = require(script.Parent.AnimationController)
@@ -247,6 +248,17 @@ local function onDamage(e: { [string]: any })
 		playSound(EffectsConfig.Sounds.hit, part, 0.7)
 		local sparkColor = if e.outcome == "Blocked" then rgb(EffectsConfig.Guard.color) elseif mine then Color3.fromRGB(255, 90, 70) else rgb(EffectsConfig.Sparks.color)
 		Fx.Burst(part.Position, { color = sparkColor, count = if (e.damage or 0) >= EffectsConfig.DamageNumber.bigHitThreshold then 28 else 14, speed = 22, size = 0.45, lifetime = 0.35 })
+		if fromMe then
+			AnimationController.HitStop(EffectsConfig.HitStop.hit, 0.15)
+			HUDController.ComboHit()
+			if e.riposte then
+				AnimationController.HitStop(EffectsConfig.HitStop.riposte, 0.08)
+				Fx.CenterText("RIPOSTE", rgb(EffectsConfig.Riposte.color), 54, 0.6)
+				Fx.Burst(part.Position, { texture = Fx.Textures.Fire, color = rgb(EffectsConfig.Riposte.color), count = 40, speed = 34, size = 1.1, lifetime = 0.55 })
+				Fx.Shockwave(part.Position - Vector3.new(0, 2, 0), rgb(EffectsConfig.Riposte.color), 12, 0.35)
+				Fx.CameraPunch(EffectsConfig.Shake.bigHitFov * 1.5)
+			end
+		end
 		Fx.LightFlash(part.Position, sparkColor, 10, 0.15)
 		if fromMe and (e.damage or 0) >= EffectsConfig.DamageNumber.bigHitThreshold then
 			Fx.CameraPunch(EffectsConfig.Shake.bigHitFov)
@@ -262,8 +274,15 @@ local function onDamage(e: { [string]: any })
 		Fx.Burst(part.Position, { color = rgb(outcome.color), count = 36, speed = 30, size = 0.6, lifetime = 0.45 })
 		Fx.Shockwave(part.Position - Vector3.new(0, 2, 0), rgb(outcome.color), 8, 0.3)
 		if mine then
-			Fx.ScreenFlash(rgb(outcome.color), 0.25, 0.2)
-			Fx.CameraPunch(-EffectsConfig.Shake.bigHitFov)
+			-- Perfect parry: freeze-frame, drained colors, radial streaks, DEFLECT stamp.
+			AnimationController.HitStop(EffectsConfig.HitStop.parry, 0.05)
+			Fx.ColorPulse(-0.7, 0.35, Color3.fromRGB(255, 240, 210), 0.45)
+			Fx.Streaks(rgb(outcome.color), 22, 0.35)
+			Fx.CenterText("DEFLECT", rgb(outcome.color), 64, 0.45)
+			Fx.ScreenFlash(Color3.new(1, 1, 1), 0.35, 0.18)
+			Fx.CameraPunch(-EffectsConfig.Shake.bigHitFov * 1.5)
+			Fx.Pillar(part.Position - Vector3.new(0, 2.5, 0), rgb(outcome.color), 14)
+			HUDController.ComboHit()
 		end
 		if mine or fromMe then
 			shake(EffectsConfig.Shake.parry)
@@ -361,7 +380,7 @@ local function onAction(e: { [string]: any })
 	if model == nil or isLocal(model) then
 		return -- own character already animated by CombatController prediction
 	end
-	AnimationController.Play(model, e.action, e.moveId)
+	AnimationController.Play(model, e.action, e.moveId, nil, e.route, tonumber(e.speed))
 	local part = anchorPart(model)
 	if e.moveId and part then
 		playSound(if e.action == "HeavyAttack" then EffectsConfig.Sounds.heavy else EffectsConfig.Sounds.swing, part)
@@ -391,12 +410,30 @@ function EffectsController.Start()
 			onAction(e)
 		elseif e.kind == "Flinch" then
 			onFlinch(e)
+		elseif e.kind == "Stagger" then
+			local model = EffectsController.ModelFor(e.sourceId)
+			local part = model and anchorPart(model)
+			if model and part then
+				local seconds = math.max(0.4, tonumber(e.seconds) or 0.7)
+				AnimationController.Play(model, "Stagger", nil, { windup = 0.08, active = seconds - 0.25, recovery = 0.2 })
+				floatText(part, "STAGGERED", rgb(EffectsConfig.Riposte.color), 24)
+				flash(model, rgb(EffectsConfig.Riposte.color), seconds, 0.5)
+			end
 		elseif e.kind == "Guard" then
 			onGuard(e)
 		end
 	end)
 
-	CombatController.LocalAction:Connect(function(action, moveId)
+	CombatController.LocalAction:Connect(function(action, moveId, route)
+		local ch = localPlayer.Character
+		local hrp = ch and ch:FindFirstChild("HumanoidRootPart")
+		if route and hrp and hrp:IsA("BasePart") then
+			local c = rgb(EffectsConfig.Routes[route] or EffectsConfig.Ultimate.color)
+			Fx.Burst(hrp.Position, { color = c, count = 16, speed = 16, size = 0.5, lifetime = 0.35 })
+			if route == "Finisher" then
+				Fx.Shockwave(hrp.Position - Vector3.new(0, 2.5, 0), c, 9, 0.35)
+			end
+		end
 		local character = localPlayer.Character
 		local part = character and anchorPart(character)
 		if moveId and part then

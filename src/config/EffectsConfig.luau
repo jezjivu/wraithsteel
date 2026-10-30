@@ -30,6 +30,11 @@ EffectsConfig.Guard = { color = { 120, 180, 255 } } -- blocks / enemy guard
 EffectsConfig.Ultimate = { color = { 255, 210, 110 } }
 EffectsConfig.LevelUp = { color = { 255, 225, 140 } }
 EffectsConfig.Death = { color = { 255, 140, 60 }, seconds = 1.2 }
+EffectsConfig.Riposte = { color = { 255, 120, 60 } }
+EffectsConfig.Routes = { Finisher = { 255, 190, 90 }, Air = { 150, 210, 255 }, Dash = { 160, 255, 210 } }
+-- Freeze-frame lengths (seconds) for impact feel.
+EffectsConfig.HitStop = { hit = 0.05, riposte = 0.12, parry = 0.2 }
+EffectsConfig.Combo = { window = 2.5, color = { 255, 215, 120 }, hotColor = { 255, 90, 60 }, hotAt = 15 }
 
 EffectsConfig.Bars = {
 	width = 120,
