@@ -1,0 +1,245 @@
+--!strict
+-- CombatRules: pure, server-authoritative combat validation (guide §8.2 rule 3).
+-- The client only REQUESTS actions; this module decides whether a request is legal right now,
+-- which move it maps to, whether a hit connects geometrically, and how a hit resolves against
+-- the defender's parry/block/dodge state. No Instances here so it is unit-testable.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Config = ReplicatedStorage:WaitForChild("Config")
+local CombatConfig = require(Config:WaitForChild("CombatConfig"))
+local WeaponConfig = require(Config:WaitForChild("WeaponConfig"))
+
+local CombatRules = {}
+
+local BLOCK_HOLD_SECONDS = 0.6 -- after the parry window, the guard stays up as a block this long
+
+export type State = {
+	lastSeq: number,
+	busyUntil: number, -- in a move's windup/active/recovery
+	cancelable: boolean, -- current move can be dodge-canceled
+	stunnedUntil: number,
+	cooldowns: { [string]: number }, -- moveId -> readyAt
+	comboIndex: number,
+	lastLightAt: number,
+	parryUntil: number, -- perfect-parry window end
+	blockUntil: number, -- block window end
+	parryReadyAt: number,
+	whiffStreak: number,
+	dodgeReadyAt: number,
+	iframeUntil: number,
+	counterUntil: number, -- counter stance (treated as perfect parry)
+	ultimateCharge: number,
+	recentActions: { number }, -- timestamps in the last second
+}
+
+function CombatRules.NewState(): State
+	return {
+		lastSeq = 0,
+		busyUntil = 0,
+		cancelable = false,
+		stunnedUntil = 0,
+		cooldowns = {},
+		comboIndex = 0,
+		lastLightAt = -math.huge,
+		parryUntil = 0,
+		blockUntil = 0,
+		parryReadyAt = 0,
+		whiffStreak = 0,
+		dodgeReadyAt = 0,
+		iframeUntil = 0,
+		counterUntil = 0,
+		ultimateCharge = 0,
+		recentActions = {},
+	}
+end
+
+local function rateOk(state: State, now: number): boolean
+	local kept = {}
+	for _, t in state.recentActions do
+		if now - t < 1 then
+			table.insert(kept, t)
+		end
+	end
+	state.recentActions = kept
+	return #kept < CombatConfig.Validation.MaxActionsPerSecond
+end
+
+export type Decision = {
+	ok: boolean,
+	reason: string?,
+	action: string,
+	moveId: string?,
+}
+
+-- Validates a request. Does not change state except seq/rate bookkeeping; call Commit after.
+function CombatRules.Validate(state: State, weaponId: string, action: string, seq: number, now: number): Decision
+	local weapon = WeaponConfig.Weapons[weaponId]
+	if weapon == nil then
+		return { ok = false, reason = "NoWeapon", action = action }
+	end
+	if type(seq) ~= "number" or seq < state.lastSeq + CombatConfig.Validation.MinSeqStep then
+		return { ok = false, reason = "Seq", action = action }
+	end
+	state.lastSeq = seq
+	if not rateOk(state, now) then
+		return { ok = false, reason = "Rate", action = action }
+	end
+	if now < state.stunnedUntil then
+		return { ok = false, reason = "Stunned", action = action }
+	end
+	local busy = now < state.busyUntil
+
+	if action == "Dodge" then
+		if now < state.dodgeReadyAt then
+			return { ok = false, reason = "Cooldown", action = action }
+		end
+		if busy and not state.cancelable then
+			return { ok = false, reason = "Busy", action = action }
+		end
+		return { ok = true, action = action }
+	end
+
+	if busy then
+		return { ok = false, reason = "Busy", action = action }
+	end
+
+	if action == "Parry" then
+		if now < state.parryReadyAt then
+			return { ok = false, reason = "Cooldown", action = action }
+		end
+		return { ok = true, action = action }
+	elseif action == "LightAttack" then
+		local idx = 1
+		if now - state.lastLightAt <= CombatConfig.Validation.ComboResetSeconds and state.comboIndex < #weapon.lightCombo then
+			idx = state.comboIndex + 1
+		end
+		return { ok = true, action = action, moveId = weapon.lightCombo[idx] }
+	elseif action == "HeavyAttack" then
+		return { ok = true, action = action, moveId = weapon.heavy }
+	elseif action == "Skill1" or action == "Skill2" or action == "Ultimate" then
+		local moveId = weapon.skills[action]
+		if moveId == nil then
+			return { ok = false, reason = "NoSkill", action = action }
+		end
+		if now < (state.cooldowns[moveId] or 0) then
+			return { ok = false, reason = "Cooldown", action = action }
+		end
+		if action == "Ultimate" and state.ultimateCharge < WeaponConfig.UltimateChargeMax then
+			return { ok = false, reason = "NoCharge", action = action }
+		end
+		return { ok = true, action = action, moveId = moveId }
+	end
+	-- SpiritCall and unknown actions: not available yet (Phase 2).
+	return { ok = false, reason = "Unavailable", action = action }
+end
+
+-- Applies a validated decision to the state. Returns the move's total duration (0 for non-moves).
+function CombatRules.Commit(state: State, d: Decision, now: number, dodgeCooldownMult: number?): number
+	table.insert(state.recentActions, now)
+	if d.action == "Dodge" then
+		state.busyUntil = now + CombatConfig.DodgeDuration
+		state.cancelable = false
+		state.iframeUntil = now + CombatConfig.DodgeIFrames
+		state.dodgeReadyAt = now + CombatConfig.DodgeCooldown * (dodgeCooldownMult or 1)
+		return CombatConfig.DodgeDuration
+	elseif d.action == "Parry" then
+		state.parryUntil = now + CombatConfig.ParryWindow
+		state.blockUntil = now + CombatConfig.ParryWindow + BLOCK_HOLD_SECONDS
+		-- Assume a whiff; ResolveIncoming resets the streak on a successful parry.
+		state.parryReadyAt = now + CombatConfig.ParryCooldown + state.whiffStreak * CombatConfig.ParrySpamPenalty
+		state.whiffStreak += 1
+		return 0
+	end
+	local move = d.moveId and WeaponConfig.Moves[d.moveId]
+	if not move then
+		return 0
+	end
+	local total = move.windup + move.active + move.recovery
+	state.busyUntil = now + total
+	state.cancelable = move.dodgeCancelable == true
+	if d.action == "LightAttack" then
+		local weapon = nil
+		for _, w in WeaponConfig.Weapons do
+			if table.find(w.lightCombo, d.moveId :: string) then
+				weapon = w
+				break
+			end
+		end
+		state.comboIndex = if weapon then table.find(weapon.lightCombo, d.moveId :: string) or 1 else 1
+		state.lastLightAt = now
+	end
+	if move.cooldown then
+		state.cooldowns[d.moveId :: string] = now + move.cooldown
+	end
+	if d.action == "Ultimate" then
+		state.ultimateCharge = 0
+	end
+	if WeaponConfig.CounterStanceMoves[d.moveId :: string] then
+		state.counterUntil = now + move.windup + move.active
+	end
+	return total
+end
+
+-- 2D (XZ-plane) hit test: is target within range (+tolerance) and inside the arc around look?
+function CombatRules.InArc(ax: number, az: number, lookX: number, lookZ: number, tx: number, tz: number, range: number, arcDegrees: number): boolean
+	local dx, dz = tx - ax, tz - az
+	local dist = math.sqrt(dx * dx + dz * dz)
+	if dist > range + CombatConfig.Validation.RangeTolerance then
+		return false
+	end
+	if dist < 1e-3 or arcDegrees >= 360 then
+		return true
+	end
+	local ll = math.sqrt(lookX * lookX + lookZ * lookZ)
+	if ll < 1e-6 then
+		return false
+	end
+	local cos = (dx * lookX + dz * lookZ) / (dist * ll)
+	local half = math.rad(math.min(arcDegrees, CombatConfig.Validation.FacingConeDegrees * 2) / 2)
+	return cos >= math.cos(half)
+end
+
+export type Incoming = { damage: number, postureDamage: number, perilous: boolean? }
+export type Resolution = {
+	outcome: "Hit" | "Blocked" | "Parried" | "Dodged",
+	damage: number, -- health damage to defender
+	postureDamage: number, -- posture damage to defender
+	reflectPosture: number, -- posture damage back to attacker (parry)
+}
+
+-- Resolves an incoming attack against a defender's state at `now`.
+function CombatRules.ResolveIncoming(state: State, hit: Incoming, now: number): Resolution
+	if now < state.iframeUntil then
+		return { outcome = "Dodged", damage = 0, postureDamage = 0, reflectPosture = 0 }
+	end
+	if not hit.perilous then
+		if now < state.parryUntil or now < state.counterUntil then
+			state.whiffStreak = 0
+			state.parryReadyAt = now -- successful parry refunds the cooldown
+			state.ultimateCharge = math.min(WeaponConfig.UltimateChargeMax, state.ultimateCharge + WeaponConfig.UltimateChargePerParry)
+			return {
+				outcome = "Parried",
+				damage = 0,
+				postureDamage = hit.postureDamage * 0.25,
+				reflectPosture = hit.postureDamage * CombatConfig.ParryPostureReflect,
+			}
+		end
+		if now < state.blockUntil then
+			return {
+				outcome = "Blocked",
+				damage = hit.damage * CombatConfig.BlockDamageMultiplier,
+				postureDamage = hit.postureDamage * CombatConfig.BlockPostureMultiplier,
+				reflectPosture = 0,
+			}
+		end
+	end
+	return { outcome = "Hit", damage = hit.damage, postureDamage = hit.postureDamage * 0.5, reflectPosture = 0 }
+end
+
+-- Outgoing damage scaled by attacker Power. `roll` in [0,1) supplies the variance.
+function CombatRules.ScaleDamage(base: number, power: number, roll: number): number
+	local variance = 1 + (roll * 2 - 1) * CombatConfig.DamageVariance
+	return base * (1 + power / CombatConfig.PowerToDamageScale) * variance
+end
+
+return CombatRules
