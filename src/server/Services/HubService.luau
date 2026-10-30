@@ -30,9 +30,39 @@ local function rgb(c: { number }): Color3
 	return Color3.fromRGB(c[1], c[2], c[3])
 end
 
+-- Ground height the hub is built on. Found by raycasting down (so the hub sits on whatever
+-- ground the place has: baseplate, generated terrain or a Studio-built map) instead of a
+-- hard-coded Y that can leave stalls buried.
+local groundY: number? = nil
+
+local function findGround(): number
+	local o = HubConfig.Origin
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ignore = {}
+	for _, name in { "Hub", "SpiritFollowers" } do
+		local f = workspace:FindFirstChild(name)
+		if f then
+			table.insert(ignore, f)
+		end
+	end
+	params.FilterDescendantsInstances = ignore
+	-- Sample the center and a ring; use the highest hit so nothing ends up below the surface.
+	local best: number? = nil
+	for i = 0, 6 do
+		local offset = if i == 0 then Vector3.zero else Vector3.new(math.cos(i), 0, math.sin(i)) * (HubConfig.PlazaRadius * 0.6)
+		local from = Vector3.new(o[1], o[2] + 400, o[3]) + offset
+		local hit = workspace:Raycast(from, Vector3.new(0, -800, 0), params)
+		if hit and hit.Instance and not (hit.Instance:IsA("BasePart") and not hit.Instance.CanCollide) then
+			best = math.max(best or -math.huge, hit.Position.Y)
+		end
+	end
+	return best or o[2]
+end
+
 local function center(): Vector3
 	local o = HubConfig.Origin
-	return Vector3.new(o[1], o[2], o[3])
+	return Vector3.new(o[1], groundY or o[2], o[3])
 end
 HubService.Center = center
 
@@ -123,7 +153,7 @@ local function stall(parent: Instance, def: HubConfig.StationDef): BasePart
 	local roofColor = rgb(def.color)
 	local wood = Color3.fromRGB(95, 65, 40)
 
-	block(model, "Floor", Vector3.new(16, 0.4, 12), face * CFrame.new(0, 0.05, 0), Color3.fromRGB(120, 100, 80), Enum.Material.WoodPlanks)
+	block(model, "Floor", Vector3.new(16, 0.4, 12), face * CFrame.new(0, -0.05, 0), Color3.fromRGB(120, 100, 80), Enum.Material.WoodPlanks)
 	block(model, "BackWall", Vector3.new(16, 9, 0.8), face * CFrame.new(0, 5, 5.6), wood, Enum.Material.WoodPlanks)
 	for _, x in { -7.5, 7.5 } do
 		for _, z in { -5.5, 5.5 } do
@@ -156,7 +186,7 @@ end
 -- point sits 6.5 studs in front of it).
 local function flatFrame(point: BasePart): CFrame
 	local p = point.Position
-	local ground = Vector3.new(p.X, HubConfig.Origin[2], p.Z)
+	local ground = Vector3.new(p.X, center().Y, p.Z)
 	local c = center()
 	return CFrame.lookAt(ground, Vector3.new(c.X, ground.Y, c.Z)) * CFrame.new(0, 0, 6.5)
 end
@@ -344,6 +374,7 @@ function HubService.Start()
 	if existing then
 		wireExisting(existing)
 	else
+		groundY = findGround()
 		build()
 	end
 end
