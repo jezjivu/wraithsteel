@@ -76,6 +76,15 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Balance: faster early Ember/XP, cheaper Prologue weapons, shorter boss fights; out-of-combat regen; heal on level up
 - [x] Dusk lighting/atmosphere/bloom (AmbienceService + LightingConfig)
 
+## Combat & world pass (night 1, part 4)
+- [x] Hub snaps to the real ground height (raycast) - stalls no longer sunk in custom places
+- [x] Weapons swing around their grip for every rig (players + enemies), with glowing trails in active frames
+- [x] Parry cue: enemy blades glint exactly when a parry press would land; red glint on dodge-only attacks
+- [x] Fx: particle sparks/smoke/embers (built-in textures), light flashes, shockwaves, screen flashes, FOV punch, level-up pillar, ember dissolve on death, ultimate burst
+- [x] Enemies: combos, lunges, flinch when hit outside active frames, guard (soaks health, takes extra posture)
+- [x] Japanese-inspired generated world (MapService/MapConfig): terrain valley, torii path + tunnel, stone lanterns, sakura/maple, bamboo, graveyard, zen garden, pond + bridge, pagoda, boss shrines, temple bell tower, Carillon Hollow, mountains; named zones; `tools/render_map.py`
+- [~] Hand-built map/hub in Studio can replace the generated ones (folders + attributes documented)
+
 ## Phase 2 - Chapter 1 + depth
 - [x] BossConfig entries for the 4 Chapter 1 bosses (Hollow Abbot, Twin Cinder Sisters, Rustwood Matriarch, Gatekeeper of Rust - 3 phases)
 - [x] Chapter 1 enemies: Rustwood Stalker, Rust-Eaten Sentinel
@@ -115,6 +124,10 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 4. RaidService (8-player reserved-server raid), chapter gates, Chapter 2 content.
 
 ## Known risks
+- Map generation creates ~2,100 parts plus terrain; if performance suffers on phones, lower
+  MapConfig counts (SakuraCount, bamboo per grove) or replace with a Studio build.
+- Weapon swing directions (AnimationConfig weaponWindup/weaponStrike) are tuned by reasoning,
+  not by eye; adjust signs if a swing looks backwards.
 - RigBuilder relies on Players:CreateHumanoidModelFromDescription and Model:ScaleTo; if either
   fails at runtime the code falls back to block placeholders (warning in Output).
 - Trades change two profiles that save separately. Both are saved immediately after a swap,

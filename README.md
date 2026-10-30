@@ -50,10 +50,12 @@ The hub town (Ninefold Crossing) is generated automatically if `Workspace.Hub` d
 ## Quick playtest without Rojo
 
 `rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` makes a place file with all code
-plus a tiny test map (hub town, enemy spawns, Rust Tiger + Hollow Abbot arenas). Open it in Studio and press Play.
+and nothing else: on Play the server generates the Japanese-inspired world (MapService), the hub
+town (HubService), enemy spawns and boss shrines. To use your own map instead, create
+`Workspace.World` (or set Workspace attribute `UseStudioMap = true`) plus `EnemySpawns`/`BossArenas`. Open it in Studio and press Play.
 Studio-only chat commands: `/ember 1000`, `/odds paper_lantern`, `/open paper_lantern`,
 `/spirits`, `/equipall`, `/daily`, `/stats`, `/worldboss`, `/chapter 1` (DebugService; disabled in live servers).
-Preview tools (no Studio): `python3 tools/render_weapons.py <luau>`, `python3 tools/render_spirits.py <luau>`, `python3 tools/render_hub.py <luau>`.
+Preview tools (no Studio): `python3 tools/render_weapons.py <luau>`, `python3 tools/render_spirits.py <luau>`, `python3 tools/render_hub.py <luau>`, `python3 tools/render_map.py <luau>`.
 
 ## For developers / agents
 

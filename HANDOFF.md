@@ -70,6 +70,13 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
 - Companions: `SpiritParty` player attribute -> SpiritFollowerController (client-only parts).
 - Guide: objective chain in GuideController/GuideConfig; extend when chapters grow.
 
+## World generation (part 4)
+- Service order: Ambience(5) -> Map(27) -> Hub(29) -> Enemy(30) -> Boss(31). MapService builds
+  terrain/props/spawns first, HubService raycasts the ground and builds on it.
+- Replace generated content by adding `Workspace.World` / `Workspace.Hub` in Studio (then the
+  generators skip) and keep `EnemySpawns`, `BossArenas`, `Station` attributes.
+- Enemy behaviour knobs live in EnemyConfig (combos, comboChance, lunge, flinch, guardChance).
+
 ## Things for Studio agents
 - See README "What you need to build in Studio" and `AssetLog.md`.
 - Enemy spawns: `Workspace.EnemySpawns/<Part>` (attrs `EnemyId`, `Count`, `RespawnSeconds`).
