@@ -51,6 +51,18 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
   `ArePaidRandomItemsRestricted`; client hides them. Trading checks `IsPaidItemTradingAllowed`.
   Policy load failure = restrictive.
 
+## Hub, weapons and UI (added on request)
+- `HubService` builds a blockout hub only when `Workspace.Hub` is missing. A Studio hub just needs
+  parts with attribute `Station` (WeaponSmith, LanternShrine (+LanternId), SpiritShrine,
+  ExpeditionBoard, QuestBoard, Store, CodeStone); prompts are added automatically.
+- Weapons: `WeaponConfig.ClassMoves` gives each class its moveset; weapons add stats/price/look.
+  `Shared/WeaponModels` builds models from `visual`; `tools/render_weapons.py` renders icons.
+- UI: `src/client/UI/Kit` + `UI/Panels/*` (contract in `UI/PanelTypes`), driven by
+  `UIController`. Restyle freely; keep the Lantern panel's "odds before Open" order.
+- Open question: Jade-priced weapons (Ninth-Bell Jian, Skypiercer) are fixed-price, not random,
+  but are slightly stronger than Ember weapons of the same chapter (Power is still capped per
+  chapter). Confirm this is acceptable or make them cosmetic-equal.
+
 ## Things for Studio agents
 - See README "What you need to build in Studio" and `AssetLog.md`.
 - Enemy spawns: `Workspace.EnemySpawns/<Part>` (attrs `EnemyId`, `Count`, `RespawnSeconds`).

@@ -43,8 +43,8 @@ HubConfig.Stations = {
 -- Lantern pedestals at the Lantern Shrine (in display order).
 HubConfig.ShrineLanterns = { "paper_lantern", "rustwood_lantern", "jade_lantern" }
 
--- Training yard dummies (EnemyConfig.training_dummy), placed behind the plaza center.
+-- Training yard dummies (EnemyConfig.training_dummy).
 HubConfig.TrainingDummies = 3
-HubConfig.TrainingYardOffset = { 0, 0, 30 }
+HubConfig.TrainingYardOffset = { 0, 0, 76 } -- just outside the plaza, behind the Jade Merchant
 
 return HubConfig
