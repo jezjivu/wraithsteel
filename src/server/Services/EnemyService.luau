@@ -293,7 +293,7 @@ end
 
 local function rewardKill(c: Combatant, contributions: { [Player]: number })
 	local def = c.defId and EnemyConfig.Enemies[c.defId]
-	if def == nil then
+	if def == nil or def.training then
 		return
 	end
 	for player, dealt in contributions do
@@ -315,8 +315,9 @@ local function runSpawner(spawnPart: BasePart)
 	end
 	local count = tonumber(spawnPart:GetAttribute("Count")) or 1
 	local respawn = tonumber(spawnPart:GetAttribute("RespawnSeconds")) or EnemyConfig.DefaultRespawnSeconds
+	local scatter = tonumber(spawnPart:GetAttribute("Scatter")) or EnemyConfig.DefaultSpawnScatter
 	local function spawnOne()
-		local offset = Vector3.new(rng:NextNumber(-6, 6), 3, rng:NextNumber(-6, 6))
+		local offset = Vector3.new(rng:NextNumber(-scatter, scatter), 3, rng:NextNumber(-scatter, scatter))
 		EnemyService.Spawn(enemyId, spawnPart.CFrame + offset, function()
 			task.delay(respawn, spawnOne)
 		end)

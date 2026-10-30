@@ -31,6 +31,7 @@ export type EnemyDef = {
 	emberReward: number,
 	xpReward: number,
 	modelId: number,
+	training: boolean?, -- training dummy: never attacks, gives no rewards or quest progress
 }
 
 local EnemyConfig = {}
@@ -44,6 +45,7 @@ EnemyConfig.AttackTokenCooldown = 0.6 -- seconds before a returned token can be 
 EnemyConfig.StateReplicationRate = 10 -- Hz, batched EnemyState remote
 EnemyConfig.DespawnAfterDeath = 4
 EnemyConfig.DefaultRespawnSeconds = 20
+EnemyConfig.DefaultSpawnScatter = 6 -- studs; spawn Parts can override with attribute Scatter
 EnemyConfig.PostureBrokenSeconds = 2.5
 EnemyConfig.SpawnFolderName = "EnemySpawns" -- TODO(Studio/Agent D): Workspace folder of spawn Parts
 EnemyConfig.TemplateFolderName = "Enemies" -- TODO(Studio/Agent C): ServerStorage folder of rigs
@@ -51,6 +53,23 @@ EnemyConfig.TemplateFolderName = "Enemies" -- TODO(Studio/Agent C): ServerStorag
 local PLACEHOLDER_ANIM = "rbxassetid://0"
 
 EnemyConfig.Enemies = {
+	training_dummy = {
+		name = "Training Dummy",
+		chapter = 0,
+		maxHealth = 400,
+		maxPosture = 120,
+		postureRegen = 20,
+		walkSpeed = 0,
+		aggroRange = 0,
+		leashRange = 0,
+		preferredRange = 0,
+		attackCooldown = 99,
+		attacks = {},
+		emberReward = 0,
+		xpReward = 0,
+		modelId = 0,
+		training = true,
+	},
 	rustbound_bandit = {
 		name = "Rustbound Bandit",
 		chapter = 0,

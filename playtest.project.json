@@ -45,24 +45,6 @@
           "Locked": true
         }
       },
-      "SpawnLocation": {
-        "$className": "SpawnLocation",
-        "$properties": {
-          "Anchored": true,
-          "Size": [
-            12,
-            1,
-            12
-          ],
-          "Position": [
-            0,
-            0.5,
-            0
-          ],
-          "Material": "Wood",
-          "Duration": 0
-        }
-      },
       "EnemySpawns": {
         "$className": "Folder",
         "BanditCamp": {

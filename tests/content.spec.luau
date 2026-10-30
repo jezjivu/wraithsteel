@@ -89,7 +89,7 @@ cases["Content: lanterns, spirits, quests, weapons reference valid ids"] = funct
 		for _ in e.attacks do
 			n += 1
 		end
-		expectTrue(n > 0, id .. " has attacks")
+		expectTrue(n > 0 or e.training == true, id .. " has attacks")
 	end
 end
 
