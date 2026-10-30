@@ -20,6 +20,7 @@ local Signal = require(Shared:WaitForChild("Signal"))
 local SpellConfig = require(Config:WaitForChild("SpellConfig"))
 local SpiritConfig = require(Config:WaitForChild("SpiritConfig"))
 local AnimationConfig = require(Config:WaitForChild("AnimationConfig"))
+local EffectsConfig = require(Config:WaitForChild("EffectsConfig"))
 
 local UI = script.Parent.Parent:WaitForChild("UI")
 local Kit = require(UI:WaitForChild("Kit"))
@@ -307,6 +308,12 @@ local function onSpell(e: { [string]: any })
 	local point: Vector3 = if typeof(e.point) == "Vector3" then e.point else origin
 	if mine then
 		Fx.CenterText(string.upper(spell.name), color, 30, 0.5)
+	end
+	SpellFx.Sound(EffectsConfig.Sounds.cast, origin, if spell.kind == "Bell" then 0.6 else 1.2)
+	if spell.kind == "Bell" or spell.kind == "Seal" then
+		task.delay(spell.delay or 0.5, function()
+			SpellFx.Sound(EffectsConfig.Sounds.boom, point, if spell.kind == "Bell" then 0.5 else 1.4, 0.9)
+		end)
 	end
 	if spell.kind == "Projectile" then
 		SpellFx.Bolt(origin + Vector3.new(0, 1, 0) + dir * 2, point, color, tonumber(e.travel) or 0.3, 1.6)

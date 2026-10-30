@@ -249,6 +249,20 @@ function SpellService.Start()
 		end
 	end)
 
+	CombatService.Died:Connect(function(target: Combatant, contributions: { [Player]: number })
+		if target.team ~= "Enemies" then
+			return
+		end
+		for player in contributions do
+			local c = CombatService.GetByPlayer(player)
+			if c and not c.dead then
+				local st = stateFor(player, c)
+				SpellLogic.AddQi(st, SpellConfig.Qi.onKill)
+				syncQi(c, st)
+			end
+		end
+	end)
+
 	Players.PlayerRemoving:Connect(function(player)
 		states[player] = nil
 		owners[player] = nil

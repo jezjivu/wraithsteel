@@ -46,6 +46,7 @@ SpellConfig.Qi = {
 	regenPerSecond = 6,
 	onHit = 3, -- per hit you land
 	onParry = 15, -- per perfect parry
+	onKill = 10, -- per enemy you helped defeat
 	start = 60, -- Qi on spawn
 }
 

@@ -13,6 +13,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = ReplicatedStorage:WaitForChild("Config")
 local SpiritModels = require(Shared:WaitForChild("SpiritModels"))
 local SpiritConfig = require(Config:WaitForChild("SpiritConfig"))
+local EffectsConfig = require(Config:WaitForChild("EffectsConfig"))
 
 local UI = script.Parent.Parent:WaitForChild("UI")
 local Fx = require(UI:WaitForChild("Fx"))
@@ -138,6 +139,7 @@ local function onSpiritCast(e: { [string]: any })
 	if from == nil then
 		return
 	end
+	SpellFx.Sound(EffectsConfig.Sounds.chime, from, 0.8 + (tonumber(e.slot) or 1) * 0.15, 0.25)
 	if kind == "Bolt" and first then
 		SpellFx.Bolt(from, first, color, 0.25, 0.8)
 	elseif kind == "Chain" then

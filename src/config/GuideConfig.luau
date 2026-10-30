@@ -27,6 +27,7 @@ GuideConfig.Controls = {
 	"Space x2 - Double jump   Click in air - Air slam",
 	"F - Parry (perfect = DEFLECT + riposte)",
 	"Shift - Sprint   Tab - Lock on",
+	"Z / X / C - Qi arts (spells)   T - Spirit Burst",
 	"1 / 2 - Skills   G - Ultimate   E - Use stations",
 	"H - Toggle this card",
 }

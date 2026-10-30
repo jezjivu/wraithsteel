@@ -60,6 +60,9 @@ EffectsConfig.Sounds = {
 	heavy = "rbxasset://sounds/swordlunge.wav",
 	hit = "rbxasset://sounds/swordslash.wav",
 	parry = "rbxasset://sounds/swordlunge.wav",
+	cast = "rbxasset://sounds/unsheath.wav", -- Qi arts
+	boom = "rbxasset://sounds/collide.wav", -- bell slams, seals
+	chime = "rbxasset://sounds/electronicpingshort.wav", -- spirit abilities
 	volume = 0.5,
 }
 

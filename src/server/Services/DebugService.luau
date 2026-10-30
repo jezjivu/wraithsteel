@@ -10,6 +10,8 @@
 --   /stats               show level/power
 --   /worldboss           summon the world boss now
 --   /chapter 1           jump to a chapter (unlocks Chapter 1 weapons/lanterns)
+--   /level 15            set your level (unlocks every Qi art)
+--   /spirit thunder_pangolin   grant one Spirit (try all ten!)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -100,6 +102,31 @@ local commands: { [string]: (Player, string?) -> () } = {
 			ProgressionService.RefreshPower(player)
 			say(player, "Chapter set to " .. data.chapter)
 		end
+	end,
+	["/level"] = function(player, arg)
+		local data = DataService.GetData(player)
+		if data then
+			data.level = math.clamp(tonumber(arg) or (data.level + 1), 1, 100)
+			data.xp = 0
+			DataService.Changed(player, "level", "xp")
+			ProgressionService.RefreshPower(player)
+			say(player, "Level set to " .. data.level)
+		end
+	end,
+	["/spirit"] = function(player, arg)
+		local id = arg or ""
+		local def = SpiritConfig.Spirits[id]
+		if def == nil then
+			local ids = {}
+			for k in SpiritConfig.Spirits do
+				table.insert(ids, k)
+			end
+			table.sort(ids)
+			say(player, "Spirits: " .. table.concat(ids, ", "))
+			return
+		end
+		SpiritService.Grant(player, id, def.rarity, "None")
+		say(player, "Granted " .. def.name)
 	end,
 	["/stats"] = function(player)
 		local data = DataService.GetData(player)

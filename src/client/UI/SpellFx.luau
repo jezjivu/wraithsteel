@@ -10,6 +10,21 @@ local Fx = require(script.Parent:WaitForChild("Fx"))
 
 local SpellFx = {}
 
+-- One-shot positional sound.
+function SpellFx.Sound(id: string, position: Vector3, pitch: number?, volume: number?)
+	local holder = Instance.new("Attachment")
+	holder.WorldPosition = position
+	holder.Parent = workspace.Terrain
+	local s = Instance.new("Sound")
+	s.SoundId = id
+	s.Volume = volume or 0.5
+	s.PlaybackSpeed = (pitch or 1) * (0.94 + math.random() * 0.12)
+	s.RollOffMaxDistance = 140
+	s.Parent = holder
+	s:Play()
+	Debris:AddItem(holder, 3)
+end
+
 local function neon(size: Vector3, cf: CFrame, color: Color3, shape: Enum.PartType?, material: Enum.Material?): Part
 	local p = Instance.new("Part")
 	p.Anchored = true
