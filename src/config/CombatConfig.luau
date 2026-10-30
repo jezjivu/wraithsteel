@@ -37,6 +37,13 @@ CombatConfig.Validation = {
 	ComboResetSeconds = 1.1, -- light combo resets if next press is later than this
 }
 
+-- Client aim assist (presentation only; the server still checks range/arc from its own positions).
+CombatConfig.AimAssist = {
+	range = 16, -- studs: enemies this close can be soft-locked
+	coneDegrees = 80, -- ...if within this cone of the camera direction
+	faceOnAttack = true, -- turn the character toward the aim direction when attacking
+}
+
 -- Perilous attacks (red flash): cannot be parried or blocked; must be dodged.
 CombatConfig.PerilousTelegraphSeconds = 0.6
 

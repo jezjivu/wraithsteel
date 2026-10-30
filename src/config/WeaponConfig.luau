@@ -309,8 +309,10 @@ WeaponConfig.UltimateChargeMax = 100
 WeaponConfig.UltimateChargePerParry = 12
 WeaponConfig.UltimateChargePerPostureDamage = 0.25
 
--- How a held weapon sits in the hand (degrees, applied to RightGripAttachment).
--- TODO(Studio/Agent B): tune after the first look in Studio.
+-- How a held weapon sits in the hand: rotation (degrees) relative to the hand part, and how far
+-- down the hand the grip sits (fraction of the hand's height). {-90, 0, 0} points the blade
+-- along the hand's forward axis. TODO(Studio/Agent B): tune by eye after the first look.
 WeaponConfig.GripRotation = { -90, 0, 0 }
+WeaponConfig.GripDepth = 0.5
 
 return WeaponConfig

@@ -1,6 +1,6 @@
 --!strict
 -- CombatService: server-authoritative combat (guide §8.2 rule 3).
--- Clients send CombatAction requests ({action, seq}); this service validates them with
+-- Clients send CombatAction requests ({action, seq, aim?}); this service validates them with
 -- Logic/CombatRules, runs the move on the server timeline, does its own hit detection from the
 -- server-side character position/facing, and applies damage. Clients never report hits.
 --
@@ -232,10 +232,11 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 end
 
 -- Finds enemies of `attacker` inside the move's arc, using server positions only.
-function CombatService.TargetsInArc(attacker: Combatant, range: number, arcDegrees: number): { Combatant }
+-- aim (optional): horizontal unit direction to swing toward; defaults to the root's facing.
+function CombatService.TargetsInArc(attacker: Combatant, range: number, arcDegrees: number, aim: Vector3?): { Combatant }
 	local out = {}
 	local pos = attacker.root.Position
-	local look = attacker.root.CFrame.LookVector
+	local look = aim or attacker.root.CFrame.LookVector
 	for _, c in combatants do
 		if c.team ~= attacker.team and not c.dead and c.humanoid.Health > 0 then
 			local tp = c.root.Position
@@ -251,6 +252,20 @@ function CombatService.TargetsInArc(attacker: Combatant, range: number, arcDegre
 		table.remove(out)
 	end
 	return out
+end
+
+-- Client aim is only a direction (range/arc/cooldowns stay server-side), so accepting it is
+-- safe; anything that is not a finite, roughly unit Vector3 is ignored.
+local function sanitizeAim(v: any): Vector3?
+	if typeof(v) ~= "Vector3" then
+		return nil
+	end
+	local flat = Vector3.new(v.X, 0, v.Z)
+	local m = flat.Magnitude
+	if m ~= m or m < 0.5 or m > 1.5 then
+		return nil
+	end
+	return flat / m
 end
 
 local function onCombatAction(player: Player, req: { [string]: any })
@@ -280,13 +295,14 @@ local function onCombatAction(player: Player, req: { [string]: any })
 		return
 	end
 	local power = ProgressionService.GetPower(player)
+	local aim = sanitizeAim(req.aim)
 	task.delay(move.windup, function()
 		-- Interrupted by posture break or death during windup: no hit.
 		local rules = c.rules :: CombatRules.State
 		if c.dead or os.clock() < rules.stunnedUntil or byPlayer[player] ~= c then
 			return
 		end
-		for _, target in CombatService.TargetsInArc(c, move.range, move.arcDegrees) do
+		for _, target in CombatService.TargetsInArc(c, move.range, move.arcDegrees, aim) do
 			CombatService.ApplyHit(c, target, {
 				damage = CombatRules.ScaleDamage(move.damage, power, rng:NextNumber()),
 				postureDamage = move.postureDamage,

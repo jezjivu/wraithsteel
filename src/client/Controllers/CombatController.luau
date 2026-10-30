@@ -5,6 +5,7 @@
 -- The server decides everything; this is presentation + requests only.
 -- Animations: uploaded animationIds play when present, otherwise AnimationController poses.
 
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -111,9 +112,64 @@ local function dash()
 	end)
 end
 
+-- Soft lock-on: the nearest living enemy in front of the camera within AimAssist range,
+-- otherwise the camera's horizontal look direction.
+local function aimDirection(): Vector3?
+	local character = localPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local cam = workspace.CurrentCamera
+	if root == nil or not root:IsA("BasePart") or cam == nil then
+		return nil
+	end
+	local look = cam.CFrame.LookVector
+	local flatLook = Vector3.new(look.X, 0, look.Z)
+	if flatLook.Magnitude < 1e-3 then
+		return nil
+	end
+	flatLook = flatLook.Unit
+	local cfg = CombatConfig.AimAssist
+	local best, bestScore = nil, math.huge
+	local cosLimit = math.cos(math.rad(cfg.coneDegrees))
+	for _, model in CollectionService:GetTagged("Combatant") do
+		if model:IsA("Model") and model ~= character and Players:GetPlayerFromCharacter(model) == nil then
+			local hum = model:FindFirstChildOfClass("Humanoid")
+			local troot = model:FindFirstChild("HumanoidRootPart")
+			if hum and hum.Health > 0 and troot and troot:IsA("BasePart") then
+				local d = troot.Position - root.Position
+				local flat = Vector3.new(d.X, 0, d.Z)
+				local dist = flat.Magnitude
+				if dist > 0.1 and dist <= cfg.range then
+					local dir = flat / dist
+					local dot = dir:Dot(flatLook)
+					if dot >= cosLimit then
+						local score = dist * (2 - dot)
+						if score < bestScore then
+							best, bestScore = dir, score
+						end
+					end
+				end
+			end
+		end
+	end
+	return best or flatLook
+end
+
+local function faceToward(dir: Vector3)
+	local character = localPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if root and root:IsA("BasePart") then
+		local pos = root.Position
+		root.CFrame = CFrame.lookAt(pos, pos + dir)
+	end
+end
+
 local function send(action: string)
 	seq += 1
-	Net.Client.Fire("CombatAction", { action = action, seq = seq })
+	local aim = if action == "Dodge" or action == "Parry" then nil else aimDirection()
+	if aim and CombatConfig.AimAssist.faceOnAttack then
+		faceToward(aim)
+	end
+	Net.Client.Fire("CombatAction", { action = action, seq = seq, aim = aim })
 	local character = localPlayer.Character
 	if action == "Dodge" then
 		dash()

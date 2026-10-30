@@ -48,10 +48,11 @@ local function attach(player: Player)
 	end
 	model.Name = HELD_NAME
 	local handle = model.PrimaryPart :: BasePart
-	local gripAttachment = hand:FindFirstChild("RightGripAttachment")
-	local gripCf = if gripAttachment and gripAttachment:IsA("Attachment") then gripAttachment.CFrame else CFrame.new(0, -1, 0)
+	-- Grip at the bottom of the hand; the blade (+Y of the model) points along the hand's
+	-- forward (-Z), so with the arm hanging the weapon points ahead of the character.
+	-- Uses only the hand part's own axes, so it works the same for R15 and R6 rigs.
 	local r = WeaponConfig.GripRotation
-	local offset = gripCf * CFrame.Angles(math.rad(r[1]), math.rad(r[2]), math.rad(r[3]))
+	local offset = CFrame.new(0, -hand.Size.Y * WeaponConfig.GripDepth, 0) * CFrame.Angles(math.rad(r[1]), math.rad(r[2]), math.rad(r[3]))
 	model:PivotTo(hand.CFrame * offset)
 	local weld = Instance.new("Weld")
 	weld.Part0 = hand
