@@ -38,6 +38,11 @@ local function part(parent: Instance, name: string, size: Vector3, cf: CFrame, c
 	if shape then
 		p.Shape = shape
 	end
+	-- Performance: static decor never needs touch events, and small pieces cast no shadows.
+	p.CanTouch = false
+	if math.max(size.X, size.Y, size.Z) < MapConfig.Perf.ShadowMinSize then
+		p.CastShadow = false
+	end
 	p.Parent = parent
 	return p
 end
@@ -50,6 +55,8 @@ local function wedge(parent: Instance, name: string, size: Vector3, cf: CFrame, 
 	w.CFrame = cf
 	w.Color = rgb(color)
 	w.Material = material or Enum.Material.SmoothPlastic
+	w.CanTouch = false
+	w.CastShadow = math.max(size.X, size.Y, size.Z) >= MapConfig.Perf.ShadowMinSize
 	w.Parent = parent
 	return w
 end
@@ -216,6 +223,8 @@ local function torii(parent: Instance, base: Vector3, facing: number, width: num
 	part(m, "Gakuzuka", Vector3.new(0.8, height * 0.22, 0.8), cf * CFrame.new(0, height * 0.87, 0), C.ToriiBlack, Enum.Material.Wood)
 end
 
+-- Only every Nth lantern carries a real light (lights are the most expensive decor).
+local lanternCount = 0
 local function stoneLantern(parent: Instance, base: Vector3, scale: number?)
 	local s = scale or 1
 	local m = model("StoneLantern", parent)
@@ -223,7 +232,10 @@ local function stoneLantern(parent: Instance, base: Vector3, scale: number?)
 	column(m, "Post", 2.6 * s, 0.9 * s, base + Vector3.new(0, 0.6 * s, 0), C.Stone, Enum.Material.Slate)
 	part(m, "Platform", Vector3.new(1.8, 0.4, 1.8) * s, CFrame.new(base + Vector3.new(0, 3.4 * s, 0)), C.Stone, Enum.Material.Slate)
 	local box = part(m, "LightBox", Vector3.new(1.2, 1.2, 1.2) * s, CFrame.new(base + Vector3.new(0, 4.2 * s, 0)), C.LanternGlow, Enum.Material.Neon)
-	light(box, C.LanternGlow, 14 * s, 1.2)
+	lanternCount += 1
+	if lanternCount % MapConfig.Perf.LanternLightEvery == 0 then
+		light(box, C.LanternGlow, 16 * s, 1.3)
+	end
 	part(m, "Roof", Vector3.new(2.6, 0.5, 2.6) * s, CFrame.new(base + Vector3.new(0, 5.05 * s, 0)), C.Stone, Enum.Material.Slate)
 	part(m, "Cap", Vector3.new(1.2, 0.5, 1.2) * s, CFrame.new(base + Vector3.new(0, 5.5 * s, 0)), C.Stone, Enum.Material.Slate)
 	part(m, "Jewel", Vector3.new(0.5, 0.5, 0.5) * s, CFrame.new(base + Vector3.new(0, 6, 0) * s), C.Stone, Enum.Material.Slate, Enum.PartType.Ball)
@@ -282,7 +294,7 @@ local function bambooGrove(parent: Instance, center: Vector3, radius: number, co
 			local h = rng:NextNumber(14, 24)
 			local color = if rng:NextNumber() < 0.5 then C.Bamboo else C.BambooDark
 			column(m, "Stalk", h, 0.55, p, color, Enum.Material.SmoothPlastic)
-			for y = 3, h - 2, 3.2 do
+			for y = 3, h - 2, MapConfig.Perf.BambooNodeSpacing do
 				column(m, "Node", 0.25, 0.68, p + Vector3.new(0, y, 0), C.BambooDark, Enum.Material.SmoothPlastic)
 			end
 			local leaf = wedge(m, "Leaves", Vector3.new(0.2, 2.2, 3), CFrame.new(p + Vector3.new(0, h - 0.5, 0)) * CFrame.Angles(0, rng:NextNumber(0, 6.28), math.rad(70)), C.Bamboo)

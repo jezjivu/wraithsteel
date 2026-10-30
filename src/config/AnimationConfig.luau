@@ -117,6 +117,9 @@ AnimationConfig.Walk = {
 	idleBreathDegrees = 1.5,
 }
 
+-- Animation level of detail for NPCs (studs from the camera).
+AnimationConfig.Lod = { near = 60, far = 160 }
+
 -- Enemy telegraph highlight colors (windup flash before their attacks land).
 AnimationConfig.TelegraphColor = { 255, 245, 220 }
 AnimationConfig.PerilousColor = { 255, 40, 40 }

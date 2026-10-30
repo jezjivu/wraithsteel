@@ -76,6 +76,8 @@ local function block(parent: Instance, name: string, size: Vector3, cf: CFrame, 
 	p.Material = material or Enum.Material.SmoothPlastic
 	p.TopSurface = Enum.SurfaceType.Smooth
 	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.CanTouch = false -- static decor: no touch events
+	p.CastShadow = math.max(size.X, size.Y, size.Z) >= 3
 	p.Parent = parent
 	return p
 end

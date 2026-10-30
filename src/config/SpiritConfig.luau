@@ -112,6 +112,7 @@ SpiritConfig.Follow = {
 	height = 3, -- above the ground-ish (relative to the root)
 	bob = 0.35,
 	smoothing = 8, -- higher = snappier follow
+	cullDistance = 180, -- companions of players farther than this from the camera are hidden
 }
 
 SpiritConfig.LevelCap = 50

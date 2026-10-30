@@ -68,16 +68,33 @@ local function watch(player: Player)
 	rebuild(player)
 end
 
+local bulkParts: { BasePart } = {}
+local bulkCFrames: { CFrame } = {}
+
 local function update(dt: number)
 	local cfg = SpiritConfig.Follow
 	local now = os.clock()
 	local alpha = 1 - math.exp(-cfg.smoothing * dt)
+	local cam = workspace.CurrentCamera
+	local camPos = if cam then cam.CFrame.Position else Vector3.zero
+	table.clear(bulkParts)
+	table.clear(bulkCFrames)
 	for player, list in followers do
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		if root and root:IsA("BasePart") then
+			-- Far-away companions are hidden entirely (no rendering, no updates).
+			local visible = (root.Position - camPos).Magnitude <= cfg.cullDistance
 			local n = #list
 			for i, f in list do
+				if not visible then
+					if f.model.Parent ~= nil then
+						f.model.Parent = nil
+					end
+					continue
+				elseif f.model.Parent == nil then
+					f.model.Parent = folder
+				end
 				-- Fan out behind the player.
 				local spread = (i - (n + 1) / 2) * cfg.spacing
 				local bob = math.sin(now * 2 + f.seed) * cfg.bob
@@ -96,10 +113,15 @@ local function update(dt: number)
 					elseif a.tail then
 						rel = CFrame.Angles(0, tailAngle, 0) * rel
 					end
-					a.part.CFrame = f.pivot * rel
+					table.insert(bulkParts, a.part)
+					table.insert(bulkCFrames, f.pivot * rel)
 				end
 			end
 		end
+	end
+	-- One engine call moves every companion part (much cheaper than setting CFrame per part).
+	if #bulkParts > 0 then
+		workspace:BulkMoveTo(bulkParts, bulkCFrames, Enum.BulkMoveMode.FireCFrameChanged)
 	end
 end
 

@@ -248,6 +248,7 @@ end
 -- joints completely: a procedural walk cycle plus any attack pose, written as absolute values.
 type Npc = { motors: { [string]: Motor6D }, phase: number }
 local npcs: { [Model]: Npc } = {}
+local frame = 0
 
 local NPC_JOINTS: { [string]: { string } } = {
 	shoulder = { "RightUpperArm", "RightShoulder" },
@@ -336,11 +337,23 @@ function AnimationController.Start()
 			end
 		end
 		-- NPCs: absolute pose = walk cycle combined with any attack pose.
+		-- LOD: NPCs far from the camera are not animated at all (unless mid-attack), and
+		-- mid-distance ones update every other frame.
+		local cam = workspace.CurrentCamera
+		local camPos = if cam then cam.CFrame.Position else Vector3.zero
+		frame += 1
 		for model, npc in npcs do
 			if model.Parent == nil then
 				npcs[model] = nil
 				playing[model] = nil
 				continue
+			end
+			local root = model.PrimaryPart
+			if root and playing[model] == nil then
+				local d = (root.Position - camPos).Magnitude
+				if d > AnimationConfig.Lod.far or (d > AnimationConfig.Lod.near and frame % 2 == 0) then
+					continue
+				end
 			end
 			local pose = walkOffsets(model, npc, dt)
 			local p = playing[model]

@@ -73,6 +73,13 @@ MapConfig.ScatterBounds = { -210, 210, -250, 110 } -- minX, maxX, minZ, maxZ for
 MapConfig.HillCount = 14 -- low grassy mounds between areas
 MapConfig.PetalRate = 25 -- ambient falling petals per second over the valley
 
+-- Performance knobs (lower counts / fewer lights for weak devices).
+MapConfig.Perf = {
+	ShadowMinSize = 3, -- parts smaller than this (largest side) cast no shadow
+	LanternLightEvery = 2, -- every Nth stone lantern has a PointLight (the rest just glow)
+	BambooNodeSpacing = 4.5, -- studs between bamboo node rings
+}
+
 MapConfig.Colors = {
 	ToriiRed = { 190, 40, 30 },
 	ToriiBlack = { 30, 25, 25 },

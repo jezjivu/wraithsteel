@@ -278,6 +278,8 @@ function BossService.StartEncounter(bossId: string, cframe: CFrame, participants
 	humanoid.Health = hp
 	humanoid.WalkSpeed = def.walkSpeed
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None -- boss bar UI instead
+	-- With instance streaming, send the whole rig at once (animations need every joint).
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 	model.Parent = workspace
 	root:SetNetworkOwner(nil)
 

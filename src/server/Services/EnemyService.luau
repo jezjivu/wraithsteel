@@ -328,6 +328,8 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 	humanoid.Health = def.maxHealth
 	humanoid.WalkSpeed = def.walkSpeed
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None -- client draws its own bars
+	-- With instance streaming, send the whole rig at once (animations need every joint).
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 	model.Parent = workspace
 	root:SetNetworkOwner(nil)
 
