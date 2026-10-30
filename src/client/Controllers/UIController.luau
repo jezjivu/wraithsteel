@@ -6,7 +6,7 @@
 --
 -- API:
 --   UIController.Open(panelName, opts?)   panelName = "Weapons" | "Lanterns" | "Spirits" |
---                                          "Expeditions" | "Quests" | "Store" | "Codes" | "Party"
+--                                          "Expeditions" | "Quests" | "Store" | "Codes" | "Party" | "Trade"
 --   UIController.Close()
 
 local Players = game:GetService("Players")
@@ -21,6 +21,7 @@ local PanelsFolder = UI:WaitForChild("Panels")
 local DataController = require(script.Parent.DataController)
 local InputController = require(script.Parent.InputController)
 local NotificationController = require(script.Parent.NotificationController)
+local TradeController = require(script.Parent.TradeController)
 
 local UIController = { Name = "UIController", Priority = 45 }
 
@@ -43,6 +44,7 @@ local MENU = {
 	{ panel = "Expeditions", label = "Expeditions" },
 	{ panel = "Store", label = "Store" },
 	{ panel = "Party", label = "Party" },
+	{ panel = "Trade", label = "Trade" },
 	{ panel = "Codes", label = "Codes" },
 }
 
@@ -183,6 +185,13 @@ function UIController.Start()
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if not processed and input.KeyCode == Enum.KeyCode.Escape then
 			UIController.Close()
+		end
+	end)
+
+	-- A trade session opening pops the Trade panel up for both players.
+	TradeController.Started:Connect(function()
+		if current == nil or current.name ~= "Trade" then
+			UIController.Open("Trade")
 		end
 	end)
 
