@@ -43,7 +43,7 @@ not touched by Rojo - save the place file as usual.
   `ServerStorage.Enemies/<enemyId>` and `ServerStorage.Bosses/<bossId>`.
 
 Controls: Left click = strike, R = heavy, F = parry, Q = dodge, 1/2 = skills, G = ultimate.
-E = use a hub station. Menu buttons (bottom-left): Spirits, Weapons, Quests, Expeditions, Store, Codes.
+E = use a hub station. Menu buttons (bottom-left): Spirits, Weapons, Quests, Expeditions, Store, Party, Trade, Codes.
 
 The hub town (Ninefold Crossing) is generated automatically if `Workspace.Hub` does not exist.
 
@@ -52,7 +52,8 @@ The hub town (Ninefold Crossing) is generated automatically if `Workspace.Hub` d
 `rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` makes a place file with all code
 plus a tiny test map (hub town, enemy spawns, Rust Tiger + Hollow Abbot arenas). Open it in Studio and press Play.
 Studio-only chat commands: `/ember 1000`, `/odds paper_lantern`, `/open paper_lantern`,
-`/spirits`, `/equipall`, `/daily`, `/stats` (DebugService; disabled in live servers).
+`/spirits`, `/equipall`, `/daily`, `/stats`, `/worldboss`, `/chapter 1` (DebugService; disabled in live servers).
+Preview tools (no Studio): `python3 tools/render_weapons.py <luau>` and `python3 tools/render_hub.py <luau>`.
 
 ## For developers / agents
 

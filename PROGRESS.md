@@ -22,7 +22,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] AnalyticsService (onboarding funnel once per profile, economy + custom events)
 - [x] ProgressionService (Ember, Jade, XP/levels, Power with chapter caps, multipliers)
 - [x] MarketService (idempotent ProcessReceipt, pass cache, gifted passes incl. offline via profile messages, boosts, gift tokens)
-- [x] Pure-Luau test harness + specs (`tools/run_tests.py`, 50 tests) and luau-lsp type check (`tools/check.sh`)
+- [x] Pure-Luau test harness + specs (`tools/run_tests.py`, 57 tests) and luau-lsp type check (`tools/check.sh`)
 - [ ] Create passes/products on the Creator Dashboard and fill ids (MonetizationConfig)
 
 ## Phase 1 - Prologue vertical slice
@@ -62,6 +62,10 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Shops/menus UI (code-built placeholder look): Weapon Smith, Lantern Shrine (odds first), Spirit Shrine, Expedition Board, Quest Board, Jade Merchant, Code Stone + menu bar
 - [~] Real hub build, UI art, weapon animations per class (Studio)
 - [ ] Upload weapon icons as images and record ids (optional; viewports already work)
+- [x] Hub fix: every walkable surface flat (<= 0.4 studs), station prompts on reachable points in front of counters (`tools/render_hub.py` renders/checks the hub)
+- [x] Procedural combat animations for all 6 classes (`AnimationController` + `AnimationConfig`), dodge dash
+- [x] Damage numbers, PARRY/BLOCK/DODGE/POSTURE BROKEN text, hit flash, parry sparks, camera shake, swing/hit sounds (built-in), enemy telegraph flashes ("!" for dodge-only attacks), enemy health/posture bars, HUD health/posture/ultimate meters, boss bar, zone banner
+- [~] Real uploaded animations/SFX (Studio) - uploaded animationIds automatically replace the procedural poses
 
 ## Phase 2 - Chapter 1 + depth
 - [x] BossConfig entries for the 4 Chapter 1 bosses (Hollow Abbot, Twin Cinder Sisters, Rustwood Matriarch, Gatekeeper of Rust - 3 phases)
@@ -73,14 +77,15 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [ ] More Spirit passives
 
 ## Phase 3 - Co-op + world bosses + Chapters 2-3
-- [ ] PartyService (stub) - 4-player parties, party Ember bonus
-- [ ] WorldBossService (stub)
-- [ ] ZoneService (stub) zone tracking + gates
+- [x] PartyService + PartyLogic: 4-player parties, invites, leader/kick, +5% Ember per member, shared kill rewards, party boss fights; Party panel
+- [x] World bosses: The Hollow Carillon (3 phases), open-world encounters (join by proximity, contribution-based rewards), WorldBossService timed rotation; `/worldboss` debug command
+- [x] ZoneService: named zones + zone banner, `CanEnter` for chapter gates
+- [ ] Physical chapter gates using `ZoneService.CanEnter` (Studio zones)
 - [ ] Chapters 2-3 content
 
 ## Phase 4 - Raid + trading + Chapters 4-5
 - [ ] RaidService (stub) - 8-player reserved-server raid
-- [ ] TradeService (stub, already policy-checked) - two-step confirm, atomic swap
+- [x] TradeService + TradeLogic: Spirits-only trades, confirm reset on change, countdown, re-validated swap, policy-gated; Trade panel
 - [ ] Chapters 4-5 content, final boss
 
 ## Phase 5 - Launch polish / LiveOps
@@ -91,16 +96,20 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - `rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` -> open in Studio -> Play.
   You spawn in the hub (south). The Wilds (north, through the red gate): bandits, ghouls,
   Rustwood stalkers, a sentinel, Rust Tiger + Hollow Abbot arenas. Press E at stalls.
-  Studio-only chat commands via DebugService (`/ember`, `/odds`, `/open`, `/spirits`, `/equipall`, `/daily`, `/stats`).
+  Studio-only chat commands via DebugService (`/ember`, `/odds`, `/open`, `/spirits`, `/equipall`, `/daily`, `/stats`, `/worldboss`, `/chapter`).
 
 ## Next up (for the next run)
 1. Add `WRAITHSTEEL_AGENT_GUIDE.md` to the repo and reconcile `Shared/Types`, `NetSchema`,
    service APIs and this checklist with §8.3/§11.
 2. Studio session: build EnemySpawns + BossArenas in a test place, playtest combat timings.
-3. Feedback from the first Studio playtest (combat timings, enemy movement on placeholder rigs).
-4. Phase 3 code: PartyService (4-player parties, party bonus), WorldBossService, ZoneService.
+3. Feedback from the Studio playtest (hub, weapon grip, animation angles, combat timings).
+4. RaidService (8-player reserved-server raid), chapter gates, Chapter 2 content.
 
 ## Known risks
+- Trades change two profiles that save separately. Both are saved immediately after a swap,
+  but a server crash between the two saves could duplicate or lose a traded Spirit. Before
+  launch, add a trade ledger (ProfileStore MessageAsync per side, idempotent by trade id).
+- Procedural animation joint angles (AnimationConfig) are educated guesses for R15; tune in Studio.
 - Weapon grip angle (`WeaponConfig.GripRotation`) and rack/viewport framing are computed, not
   eyeballed in Studio; expect small tweaks after the first look.
 - Shop purchases do not check that the player is standing at the stall (server validates price,

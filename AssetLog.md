@@ -16,7 +16,8 @@ the row. Only original assets (made by us or licensed for this game) may be used
 | Rustbound Bandit rig + 2 anims | `ServerStorage.Enemies.rustbound_bandit`, `EnemyConfig` attacks | placeholder block / 0 | Rig + anims | C | |
 | Lantern Ghoul rig + 2 anims | `ServerStorage.Enemies.lantern_ghoul`, `EnemyConfig` attacks | placeholder block / 0 | Rig + anims | C | |
 | Rust Tiger rig + 6 anims | `ServerStorage.Bosses.rust_tiger`, `BossConfig` moves | placeholder block / 0 | Rig + anims | C | Root-motion pounce/charge |
-| Combat SFX / music | AudioController (stub) | none | Sounds | D | parry clang, posture break, bell toll |
+| Combat SFX / music | `src/config/EffectsConfig.luau` Sounds | built-in rbxasset://sounds/swordslash.wav, swordlunge.wav | Original SFX + music | D | parry clang, posture break, bell toll |
+| Hollow Carillon rig + anims | `ServerStorage.Bosses.hollow_carillon`, `BossConfig` moves | placeholder block / 0 | Rig + anims | C | World boss |
 | Touch button images | InputController (TODO) | none | Icons | D | |
 | Hub town build | `Workspace.Hub` (generated blockout until built) | procedural | Real build with Station attributes | D | See HubConfig |
 | Training dummy rig | `ServerStorage.Enemies.training_dummy` | placeholder block | Rig | C | |
