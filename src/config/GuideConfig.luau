@@ -23,6 +23,7 @@ GuideConfig.Controls = {
 	"F - Parry (perfect timing reflects posture)",
 	"Q - Dodge (dash, avoids red ! attacks)",
 	"1 / 2 - Skills      G - Ultimate",
+	"Tab - Lock on to an enemy",
 	"E - Use stations      H - Toggle this card",
 }
 

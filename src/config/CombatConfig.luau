@@ -46,6 +46,16 @@ CombatConfig.AimAssist = {
 	faceOnAttack = true, -- turn the character toward the aim direction when attacking
 }
 
+-- Lock-on camera (CameraController): Tab / middle mouse / R3.
+CombatConfig.LockOn = {
+	range = 45, -- studs to acquire a target
+	breakRange = 70, -- lock releases beyond this
+	distance = 11, -- camera distance behind the player
+	height = 4.5,
+	shoulder = 2.5, -- sideways offset (over the right shoulder)
+	smoothing = 10,
+}
+
 -- Perilous attacks (red flash): cannot be parried or blocked; must be dodged.
 CombatConfig.PerilousTelegraphSeconds = 0.6
 

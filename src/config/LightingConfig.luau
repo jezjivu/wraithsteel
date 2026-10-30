@@ -26,6 +26,7 @@ LightingConfig.Atmosphere = {
 
 LightingConfig.Bloom = { Intensity = 0.7, Size = 28, Threshold = 1.6 }
 LightingConfig.ColorCorrection = { Saturation = 0.08, Contrast = 0.06, TintColor = { 255, 245, 235 } }
+LightingConfig.Clouds = { Cover = 0.55, Density = 0.6, Color = { 255, 225, 215 } }
 LightingConfig.SunRays = { Intensity = 0.06, Spread = 0.7 }
 
 return LightingConfig

@@ -59,6 +59,14 @@ function AmbienceService.Start()
 	cc.Contrast = LightingConfig.ColorCorrection.Contrast
 	cc.TintColor = rgb(LightingConfig.ColorCorrection.TintColor)
 
+	-- Dynamic clouds (live under Terrain).
+	local clouds = workspace.Terrain:FindFirstChildOfClass("Clouds") or Instance.new("Clouds")
+	local cc2 = clouds :: Clouds
+	cc2.Cover = LightingConfig.Clouds.Cover
+	cc2.Density = LightingConfig.Clouds.Density
+	cc2.Color = rgb(LightingConfig.Clouds.Color)
+	cc2.Parent = workspace.Terrain
+
 	local rays = effect("SunRaysEffect", "WraithsteelSunRays") :: SunRaysEffect
 	rays.Intensity = LightingConfig.SunRays.Intensity
 	rays.Spread = LightingConfig.SunRays.Spread

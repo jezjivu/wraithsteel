@@ -27,6 +27,7 @@ local C = Kit.Colors
 local localPlayer = Players.LocalPlayer
 
 local stats: TextLabel? = nil
+local showDeathScreen: () -> ()
 
 type Meter = { frame: Frame, fill: Frame, label: TextLabel }
 
@@ -110,6 +111,52 @@ local function showZoneBanner()
 	end
 end
 
+-- "Fallen" overlay while waiting to respawn in the hub.
+local hudGui: ScreenGui? = nil
+showDeathScreen = function()
+	local g = hudGui
+	if g == nil then
+		return
+	end
+	local f = Instance.new("Frame")
+	f.Size = UDim2.fromScale(1, 1)
+	f.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
+	f.BackgroundTransparency = 1
+	f.ZIndex = 20
+	f.Parent = g
+	local t = Instance.new("TextLabel")
+	t.AnchorPoint = Vector2.new(0.5, 0.5)
+	t.Position = UDim2.fromScale(0.5, 0.42)
+	t.Size = UDim2.new(1, 0, 0, 80)
+	t.BackgroundTransparency = 1
+	t.Font = Enum.Font.Antique
+	t.TextSize = 72
+	t.TextColor3 = Color3.fromRGB(220, 50, 40)
+	t.TextTransparency = 1
+	t.Text = "FALLEN"
+	t.ZIndex = 21
+	t.Parent = f
+	local s2 = t:Clone()
+	s2.Position = UDim2.fromScale(0.5, 0.52)
+	s2.Font = Enum.Font.GothamMedium
+	s2.TextSize = 22
+	s2.TextColor3 = Color3.fromRGB(230, 220, 210)
+	s2.Text = "Your spirit returns to Ninefold Crossing..."
+	s2.Parent = f
+	TweenService:Create(f, TweenInfo.new(0.8), { BackgroundTransparency = 0.45 }):Play()
+	TweenService:Create(t, TweenInfo.new(0.8), { TextTransparency = 0 }):Play()
+	TweenService:Create(s2, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.4), { TextTransparency = 0 }):Play()
+	localPlayer.CharacterAdded:Once(function()
+		local fade = TweenInfo.new(0.6)
+		TweenService:Create(f, fade, { BackgroundTransparency = 1 }):Play()
+		TweenService:Create(t, fade, { TextTransparency = 1 }):Play()
+		TweenService:Create(s2, fade, { TextTransparency = 1 }):Play()
+		task.delay(0.7, function()
+			f:Destroy()
+		end)
+	end)
+end
+
 local function bindCharacter(character: Model)
 	local humanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
 	if humanoid == nil then
@@ -128,6 +175,7 @@ local function bindCharacter(character: Model)
 			setMeter(ultimate, u, if u >= 1 then "Ultimate READY (G)" else "Ultimate")
 		end
 	end
+	humanoid.Died:Connect(showDeathScreen)
 	humanoid.HealthChanged:Connect(refresh)
 	character:GetAttributeChangedSignal("Posture"):Connect(refresh)
 	character:GetAttributeChangedSignal("Ultimate"):Connect(refresh)
@@ -136,6 +184,7 @@ end
 
 function HUDController.Init()
 	local gui = Kit.Screen(localPlayer:WaitForChild("PlayerGui"), "HUD", 3)
+	hudGui = gui
 
 	local s = Instance.new("TextLabel")
 	s.Position = UDim2.fromOffset(10, 10)

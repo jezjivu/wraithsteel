@@ -20,6 +20,7 @@ local CombatConfig = require(Config:WaitForChild("CombatConfig"))
 
 local InputController = require(script.Parent.InputController)
 local AnimationController = require(script.Parent.AnimationController)
+local CameraController = require(script.Parent.CameraController)
 local DataController = require(script.Parent.DataController)
 
 local PLACEHOLDER_ANIM = "rbxassetid://0"
@@ -127,6 +128,16 @@ local function aimDirection(): Vector3?
 		return nil
 	end
 	flatLook = flatLook.Unit
+	-- A lock-on target always wins.
+	local locked = CameraController.Target()
+	local lockedRoot = locked and locked:FindFirstChild("HumanoidRootPart")
+	if lockedRoot and lockedRoot:IsA("BasePart") then
+		local d = lockedRoot.Position - root.Position
+		local flat = Vector3.new(d.X, 0, d.Z)
+		if flat.Magnitude > 0.1 then
+			return flat.Unit
+		end
+	end
 	local cfg = CombatConfig.AimAssist
 	local best, bestScore = nil, math.huge
 	local cosLimit = math.cos(math.rad(cfg.coneDegrees))
