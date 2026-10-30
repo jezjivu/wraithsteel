@@ -123,12 +123,11 @@ task = {
 	end,
 }
 
--- Tiny deterministic RNG for tests (LCG). Returns floats in [0,1).
+-- Deterministic RNG for tests. Returns floats in [0,1).
 function __rng(seed)
-	local state = seed or 1
+	math.randomseed(seed or 1)
 	return function()
-		state = (state * 1103515245 + 12345) % 2147483648
-		return state / 2147483648
+		return math.random()
 	end
 end
 
