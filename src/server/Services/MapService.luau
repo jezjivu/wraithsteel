@@ -907,15 +907,30 @@ end
 
 function MapService.Init() end
 
-function MapService.Start()
-	if workspace:GetAttribute("UseStudioMap") == true or workspace:FindFirstChild("World") then
+-- Generates the world (also callable in edit mode through ServerScriptService.EditTools, so
+-- the map can be seen and tweaked in Studio; a saved Workspace.World is then used as-is).
+function MapService.Build()
+	if workspace:FindFirstChild("World") then
 		return
 	end
 	local ok, err = pcall(build :: any)
 	if not ok then
 		warn("[MapService] map generation failed:", err)
 	end
+	if world then
+		world:SetAttribute("Generated", true)
+	end
 	spawnFolders()
+end
+
+function MapService.Start()
+	if workspace:GetAttribute("UseStudioMap") == true or workspace:FindFirstChild("World") then
+		return
+	end
+	MapService.Build()
+	if game:GetService("RunService"):IsStudio() then
+		print("[Wraithsteel] Tip: to see and edit this world without pressing Play, stop the game, open View -> Command Bar and run:  require(game.ServerScriptService.EditTools).BuildWorld()  then File -> Save.")
+	end
 end
 
 return MapService

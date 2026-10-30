@@ -370,11 +370,17 @@ local function build()
 	spawn.Neutral = true
 	spawn.Parent = hub
 
+	hub:SetAttribute("Generated", true)
+	hub:SetAttribute("GroundY", c.Y)
 	hub.Parent = workspace
 end
 
 -- Wires prompts for a Studio-built hub (parts tagged with the Station attribute).
 local function wireExisting(hub: Instance)
+	local g = hub:GetAttribute("GroundY")
+	if type(g) == "number" then
+		groundY = g
+	end
 	for _, d in hub:GetDescendants() do
 		if d:IsA("BasePart") then
 			local kind = d:GetAttribute("Station")
@@ -390,6 +396,15 @@ end
 
 function HubService.StationPosition(kind: string): Vector3?
 	return stationPositions[kind]
+end
+
+-- Builds the hub town (also callable in edit mode through ServerScriptService.EditTools).
+function HubService.Build()
+	if workspace:FindFirstChild("Hub") then
+		return
+	end
+	groundY = findGround()
+	build()
 end
 
 function HubService.Init() end

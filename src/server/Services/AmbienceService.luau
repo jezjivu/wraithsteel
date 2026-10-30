@@ -27,10 +27,8 @@ end
 
 function AmbienceService.Init() end
 
-function AmbienceService.Start()
-	if Lighting:GetAttribute("KeepStudioLighting") == true then
-		return
-	end
+-- Applies the look (also callable in edit mode through ServerScriptService.EditTools).
+function AmbienceService.Apply()
 	local L = LightingConfig.Lighting
 	Lighting.ClockTime = L.ClockTime
 	Lighting.Brightness = L.Brightness
@@ -70,6 +68,12 @@ function AmbienceService.Start()
 	local rays = effect("SunRaysEffect", "WraithsteelSunRays") :: SunRaysEffect
 	rays.Intensity = LightingConfig.SunRays.Intensity
 	rays.Spread = LightingConfig.SunRays.Spread
+end
+
+function AmbienceService.Start()
+	if Lighting:GetAttribute("KeepStudioLighting") ~= true then
+		AmbienceService.Apply()
+	end
 end
 
 return AmbienceService
