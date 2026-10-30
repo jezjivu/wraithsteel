@@ -25,7 +25,8 @@ You do this once per computer, then every time you want the latest code.
    The code appears in:
    - `ReplicatedStorage.Shared` (from `src/shared`) and `ReplicatedStorage.Config` (`src/config`)
    - `ServerScriptService` (`src/server`: `Bootstrap`, `Services`, `Logic`, `Packages`, `ServerConfig`)
-   - `StarterPlayer.StarterPlayerScripts` (`src/client`: `ClientBootstrap`, `Controllers`)
+   - `StarterPlayer.StarterPlayerScripts` (`src/client`: `ClientBootstrap`, `Controllers`, `UI`)
+   - `ReplicatedFirst` (`src/first`: loading screen)
 5. **Enable data saving in Studio** (optional): Game Settings -> Security ->
    "Enable Studio Access to API Services". Without it, saves use a temporary mock store.
 6. Press **Play**. The output should show `[Bootstrap] N services started`.
@@ -43,7 +44,7 @@ not touched by Rojo - save the place file as usual.
   `ServerStorage.Enemies/<enemyId>` and `ServerStorage.Bosses/<bossId>`.
 
 Controls: Left click = strike, R = heavy, F = parry, Q = dodge, 1/2 = skills, G = ultimate.
-E = use a hub station, H = controls card. Attacks auto-aim at the nearest enemy in front of you. Menu buttons (bottom-left): Spirits, Weapons, Quests, Expeditions, Store, Party, Trade, Codes.
+E = use a hub station, H = controls card, Tab = lock on. Attacks auto-aim at the nearest enemy in front of you. Menu buttons (bottom-left): Spirits, Weapons, Quests, Expeditions, Store, Party, Trade, Codes.
 
 The hub town (Ninefold Crossing) is generated automatically if `Workspace.Hub` does not exist.
 

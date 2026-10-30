@@ -85,6 +85,16 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Japanese-inspired generated world (MapService/MapConfig): terrain valley, torii path + tunnel, stone lanterns, sakura/maple, bamboo, graveyard, zen garden, pond + bridge, pagoda, boss shrines, temple bell tower, Carillon Hollow, mountains; named zones; `tools/render_map.py`
 - [~] Hand-built map/hub in Studio can replace the generated ones (folders + attributes documented)
 
+## Performance & polish pass (night 1, part 5)
+- [x] Instance streaming on (playtest place), enemy/boss rigs stream atomically
+- [x] Spirit companions: one BulkMoveTo per frame, hidden beyond 180 studs
+- [x] NPC animation LOD (skip > 160 studs, half-rate > 60)
+- [x] Map/hub decor: no touch events, no shadows on small parts, fewer lights, fewer bamboo rings
+- [x] Title/loading screen (ReplicatedFirst)
+- [x] Cinematic boss intro / enrage / VICTORY (with rewards) / defeat / chapter cards (StoryController)
+- [x] Lock-on camera (Tab / middle mouse / R3) with reticle; attacks aim at the lock
+- [x] FALLEN death screen, dynamic clouds, polished menu look (gradients, accent line, button feedback, pop-in)
+
 ## Phase 2 - Chapter 1 + depth
 - [x] BossConfig entries for the 4 Chapter 1 bosses (Hollow Abbot, Twin Cinder Sisters, Rustwood Matriarch, Gatekeeper of Rust - 3 phases)
 - [x] Chapter 1 enemies: Rustwood Stalker, Rust-Eaten Sentinel

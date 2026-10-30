@@ -3,6 +3,8 @@
 -- menu works before Agent D designs the real UI. Consistent dark-ink + gold wuxia palette.
 -- TODO(Studio/Agent D): restyle or replace with designed ScreenGuis; panels only use this API.
 
+local TweenService = game:GetService("TweenService")
+
 local Kit = {}
 
 Kit.Colors = {
@@ -72,12 +74,34 @@ function Kit.Window(parent: Instance, titleText: string): Window
 	stroke.Transparency = 0.5
 	stroke.Thickness = 2
 	stroke.Parent = root
+	-- Lacquered panel: subtle vertical gradient from warm ink to deep ink.
+	local panelGrad = Instance.new("UIGradient")
+	panelGrad.Color = ColorSequence.new(Color3.fromRGB(52, 40, 44), Color3.fromRGB(26, 23, 30))
+	panelGrad.Rotation = 90
+	panelGrad.Parent = root
 
 	local bar = Instance.new("Frame")
 	bar.Size = UDim2.new(1, 0, 0, 44)
 	bar.BackgroundColor3 = Kit.Colors.Ink
 	bar.Parent = root
 	corner(bar, 12)
+	-- Red brush accent under the title bar.
+	local accent = Instance.new("Frame")
+	accent.AnchorPoint = Vector2.new(0, 1)
+	accent.Position = UDim2.new(0, 12, 1, 0)
+	accent.Size = UDim2.new(0.5, 0, 0, 3)
+	accent.BackgroundColor3 = Kit.Colors.Accent
+	accent.BorderSizePixel = 0
+	accent.Parent = bar
+	local accentGrad = Instance.new("UIGradient")
+	accentGrad.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) })
+	accentGrad.Parent = accent
+
+	-- Pop-in: grow from 92% with a quick fade.
+	local scale = Instance.new("UIScale")
+	scale.Scale = 0.92
+	scale.Parent = root
+	TweenService:Create(scale, TweenInfo.new(0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 
 	local title = Instance.new("TextLabel")
 	title.Position = UDim2.fromOffset(16, 0)
@@ -204,6 +228,19 @@ function Kit.Button(parent: Instance, text: string, color: Color3, onClick: () -
 	b.LayoutOrder = nextOrder()
 	b.Parent = parent
 	corner(b, 8)
+	-- Top-lit sheen + hover/press feedback.
+	local sheen = Instance.new("UIGradient")
+	sheen.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(190, 190, 190))
+	sheen.Rotation = 90
+	sheen.Parent = b
+	local scale = Instance.new("UIScale")
+	scale.Parent = b
+	b.MouseEnter:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.08), { Scale = 1.04 }):Play()
+	end)
+	b.MouseLeave:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.08), { Scale = 1 }):Play()
+	end)
 	local busy = false
 	b.Activated:Connect(function()
 		if busy then
