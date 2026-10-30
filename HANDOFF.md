@@ -77,6 +77,15 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
   generators skip) and keep `EnemySpawns`, `BossArenas`, `Station` attributes.
 - Enemy behaviour knobs live in EnemyConfig (combos, comboChance, lunge, flinch, guardChance).
 
+## Spirits & Qi arts (part 7)
+- `Shared/SpiritStats` is the single source for Spirit stat numbers (UI + server). Totals are capped per stat (`SpiritConfig.StatInfo`).
+- `SpiritAbilityService` (priority 31) auto-casts companion abilities every 0.25 s while the owner is in combat and handles SpiritCall (T) via `CombatService.OnSpiritCall`. Events: `CombatEvent` kinds `SpiritCast`, `SpiritBurst`, `BurstCooldown`.
+- `SpellService` (priority 32) + `Logic/SpellLogic` (tested). Remotes `CastSpell(spellId, aim?, point?)`, `SetSpellSlot(slot, spellId)`. Qi lives server-side, mirrored as character attributes `Qi`/`QiMax`. Events: `Spell`, `SpellRejected`.
+- `CombatService.Hit` gained `crit`, `source`, `color`; combatants gained `shield`/`shieldUntil` (attribute `Shield` = fraction of max HP). New helpers: `PlayerStats`, `RollCrit`, `Heal`, `AddShield`, `ClearStatCache`.
+- Profile v3: `spellLoadout` (migration 3). Spirit `passive`/`Passives` were replaced by `stats` + `ability` (SpiritConfig is config, not a frozen type).
+- AnimationController now poses joints through `Motor6D.C0 = baseC0 * offset` (base saved in attribute `BaseC0` on each motor).
+- `ServerScriptService.EditTools`: BuildWorld()/ClearWorld() for edit mode; Map/Hub/Ambience services expose `Build()`/`Apply()`; generated containers carry attribute `Generated = true`.
+
 ## Things for Studio agents
 - See README "What you need to build in Studio" and `AssetLog.md`.
 - Enemy spawns: `Workspace.EnemySpawns/<Part>` (attrs `EnemyId`, `Count`, `RespawnSeconds`).

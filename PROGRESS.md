@@ -38,7 +38,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] LanternController odds formatting + "odds shown before open" guard
 - [~] Lantern/odds/inventory/fusion UI (Studio)
 - [x] Spirit followers in the world (procedural companion models)
-- [ ] SpiritCall action (currently rejected as "Unavailable")
+- [x] SpiritCall action -> Spirit Burst on T (SpiritAbilityService)
 ### C - Warden (enemies + bosses)
 - [x] Combatant registry (CombatService), batched staggered 10 Hz AI scheduler, attack-token director
 - [x] EnemyConfig: Rustbound Bandit, Lantern Ghoul; EnemyService spawning/AI/rewards
@@ -105,6 +105,18 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] New areas: Steaming Springs (heals), Ashen Village, Falling Petal Gorge (waterfall + river), Thousand-Step Stair
 - [x] Objective waypoint beacon + distance + screen-edge arrow
 
+## Spirits, spells & feel pass (night 1, part 7)
+- [x] Body/arm animations actually show: joints posed via Motor6D.C0 offsets (Transform was overwritten by the Animator)
+- [x] Ground dash fixed (LinearVelocity PerAxis force limits), dash rebound to Ctrl (gamepad B)
+- [x] Spirits: real stats (Shared/SpiritStats, same numbers in UI and server), rarity/mutation/level scaling, mutation bonus stats, caps
+- [x] Spirits fight: 10 unique auto-cast abilities (bolt, dive, pounce, heal, shield, nova, chain lightning, bloom, bell toll); companions act them out
+- [x] Spirit Burst (T): all companions cast at once, stronger, shared cooldown; spirits earn XP from kills
+- [x] Unique looks: particle auras, crests (flame, halo, crown, orbiting orbs), trails for Legendary+
+- [x] Crits (yellow numbers), lifesteal, shields (HUD overlay), heal numbers
+- [x] Qi arts (spells): 7 arts on Z/X/C (Lantern Flare, Ghost Step, Jade Barrier, Thunder Seal, Petal Storm, Mist Lance, Nine Bells), Qi bar, cooldown sweeps, Arts panel; profile v3 `spellLoadout`
+- [x] Edit-mode world: `require(game.ServerScriptService.EditTools).BuildWorld()` in the Command Bar builds map/hub/lighting so it can be edited and saved
+- [ ] Tune spell/spirit numbers after a real playtest; real VFX/sound assets (currently built-in textures/sounds)
+
 ## Phase 2 - Chapter 1 + depth
 - [x] BossConfig entries for the 4 Chapter 1 bosses (Hollow Abbot, Twin Cinder Sisters, Rustwood Matriarch, Gatekeeper of Rust - 3 phases)
 - [x] Chapter 1 enemies: Rustwood Stalker, Rust-Eaten Sentinel
@@ -112,7 +124,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] ExpeditionService + ExpeditionConfig (3 routes, 2 slots + 1 with Long Road pass, deterministic Ember + Spirit XP)
 - [x] Spirit leveling (Spirit XP from expeditions, `SpiritConfig.XpToNext`, level cap 50); away Spirits locked from equip/fuse/release
 - [~] Expedition board UI (Studio)
-- [ ] More Spirit passives
+- [x] Spirit stats replace passives (Attack, Crit Chance/Damage, Health, Lifesteal, Posture, Guard, Haste, Qi Regen, Ember Find, Luck)
 
 ## Phase 3 - Co-op + world bosses + Chapters 2-3
 - [x] PartyService + PartyLogic: 4-player parties, invites, leader/kick, +5% Ember per member, shared kill rewards, party boss fights; Party panel
@@ -134,7 +146,8 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - `rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` -> open in Studio -> Play.
   You spawn in the hub (south). The Wilds (north, through the red gate): bandits, ghouls,
   Rustwood stalkers, a sentinel, Rust Tiger + Hollow Abbot arenas. Press E at stalls.
-  Studio-only chat commands via DebugService (`/ember`, `/odds`, `/open`, `/spirits`, `/equipall`, `/daily`, `/stats`, `/worldboss`, `/chapter`).
+  Studio-only chat commands via DebugService (`/ember`, `/odds`, `/open`, `/spirits`, `/equipall`, `/daily`, `/stats`, `/worldboss`, `/chapter`, `/level`, `/spirit`).
+  To edit the world in Studio: Command Bar -> `require(game.ServerScriptService.EditTools).BuildWorld()` -> save.
 
 ## Next up (for the next run)
 1. Add `WRAITHSTEEL_AGENT_GUIDE.md` to the repo and reconcile `Shared/Types`, `NetSchema`,
@@ -144,6 +157,10 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 4. RaidService (8-player reserved-server raid), chapter gates, Chapter 2 content.
 
 ## Known risks
+- Spells and spirit abilities find victims from server positions; the Ghost Step blink moves the
+  player client-side (server grants i-frames and cuts the path from its own position). No
+  server-side teleport distance check yet.
+- Motor6D.C0 posing assumes nothing else edits C0 at runtime (R15 rescaling would reset base C0s).
 - Movement (dash/knockback/surge) uses client-side LinearVelocity on the player's own character;
   the server trusts positions (no speed sanity check yet) - add one before launch.
 - Air detection for air slams uses the server's view of Humanoid.FloorMaterial/state, which can
