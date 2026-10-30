@@ -68,14 +68,12 @@ local function drive(root: BasePart, seconds: number, velocityAt: (t: number) ->
 	local lv = Instance.new("LinearVelocity")
 	lv.Attachment0 = att
 	lv.RelativeTo = Enum.ActuatorRelativeTo.World
-	if keepY then
-		lv.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane
-		lv.PrimaryTangentAxis = Vector3.xAxis
-		lv.SecondaryTangentAxis = Vector3.zAxis
-		lv.MaxPlanarAxesForce = Vector2.new(1e6, 1e6)
-	else
-		lv.MaxForce = 1e6
-	end
+	-- PerAxis force limits: the default (Magnitude, MaxForce 1000) is far too weak against the
+	-- humanoid's ground friction, which is why ground dashes barely moved. keepY = no vertical
+	-- force at all, so gravity / jumps still act normally.
+	lv.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
+	lv.ForceLimitMode = Enum.ForceLimitMode.PerAxis
+	lv.MaxAxesForce = if keepY then Vector3.new(1e6, 0, 1e6) else Vector3.new(1e6, 1e6, 1e6)
 	lv.Parent = root
 	local start = os.clock()
 	local conn: RBXScriptConnection
@@ -88,11 +86,7 @@ local function drive(root: BasePart, seconds: number, velocityAt: (t: number) ->
 			return
 		end
 		local v = velocityAt(t)
-		if keepY then
-			lv.PlaneVelocity = Vector2.new(v.X, v.Z)
-		else
-			lv.VectorVelocity = v
-		end
+		lv.VectorVelocity = if keepY then Vector3.new(v.X, 0, v.Z) else v
 	end)
 end
 
@@ -166,10 +160,14 @@ function MovementController.Dash()
 	local distance = cfg.distance * style().dashDistance
 	-- Eased burst: v(t) = v0 * (1 - t)^1.5, integral over the dash = distance.
 	local v0 = distance / (0.4 * cfg.seconds)
-	local hop = if inAir then 0 else cfg.hop
+	if not inAir then
+		-- Small hop so the dash clears bumps and doesn't scrape along the floor.
+		local v = root.AssemblyLinearVelocity
+		root.AssemblyLinearVelocity = Vector3.new(v.X, math.max(v.Y, cfg.hop), v.Z)
+	end
 	drive(root, cfg.seconds, function(t)
 		local k = (1 - t) ^ 1.5
-		return dir * v0 * k + Vector3.new(0, if inAir then 0 else hop * (1 - t), 0)
+		return dir * v0 * k
 	end, not inAir)
 
 	local color = styleColor()

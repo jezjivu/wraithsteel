@@ -276,7 +276,7 @@ local function attackOffsets(p: Playing, now: number): { [string]: CFrame }?
 end
 
 -- NPC rigs (code-built enemies/bosses) have no Animate script, so this controller owns their
--- joints completely: a procedural walk cycle plus any attack pose, written as absolute values.
+-- joints completely: a procedural walk cycle plus any attack pose.
 type Npc = { motors: { [string]: Motor6D }, phase: number }
 local npcs: { [Model]: Npc } = {}
 local frame = 0
@@ -334,6 +334,46 @@ local function walkOffsets(model: Model, npc: Npc, dt: number): { [string]: CFra
 	}
 end
 
+-- Joint posing writes Motor6D.C0 = original C0 * offset (Transform is owned by the Animator
+-- and gets overwritten every frame, so offsets written there never show up). Every motor posed
+-- this frame is collected first, then written once; motors posed last frame but not this frame
+-- snap back to their original C0.
+local baseC0: { [Motor6D]: CFrame } = setmetatable({}, { __mode = "k" }) :: any
+local pending: { [Motor6D]: CFrame } = {}
+local posedLast: { [Motor6D]: boolean } = {}
+
+local function pose(motor: Motor6D, offset: CFrame)
+	if not baseC0[motor] then
+		local saved = motor:GetAttribute("BaseC0")
+		baseC0[motor] = if typeof(saved) == "CFrame" then saved else motor.C0
+		motor:SetAttribute("BaseC0", baseC0[motor])
+	end
+	local cur = pending[motor]
+	pending[motor] = if cur then cur * offset else offset
+end
+
+local lastOffset: { [Motor6D]: CFrame } = setmetatable({}, { __mode = "k" }) :: any
+
+local function flushPoses()
+	for motor, offset in pending do
+		lastOffset[motor] = offset
+		if motor.Parent then
+			motor.C0 = (baseC0[motor] :: CFrame) * offset
+		end
+		posedLast[motor] = true
+	end
+	for motor in posedLast do
+		if not pending[motor] then
+			posedLast[motor] = nil
+			local base = baseC0[motor]
+			if base and motor.Parent then
+				motor.C0 = base
+			end
+		end
+	end
+	table.clear(pending)
+end
+
 function AnimationController.Init() end
 
 function AnimationController.Start()
@@ -367,7 +407,7 @@ function AnimationController.Start()
 				local target = CFrame.Angles(math.rad(-L.forwardDegrees * fwd), 0, math.rad(-L.sideDegrees * side))
 				local cur = (lean[ch] or CFrame.new()):Lerp(target, math.min(1, dt * L.smoothing))
 				lean[ch] = cur
-				motor.Transform = motor.Transform * cur
+				pose(motor, cur)
 			end
 		end
 		for ch in lean do
@@ -387,7 +427,7 @@ function AnimationController.Start()
 					for name, offset in offsets do
 						local motor = (p.joints :: any)[name] :: Motor6D?
 						if motor and motor.Parent then
-							motor.Transform = motor.Transform * offset
+							pose(motor, offset)
 						end
 					end
 				end
@@ -408,11 +448,20 @@ function AnimationController.Start()
 			local root = model.PrimaryPart
 			if root and playing[model] == nil then
 				local d = (root.Position - camPos).Magnitude
-				if d > AnimationConfig.Lod.far or (d > AnimationConfig.Lod.near and frame % 2 == 0) then
+				if d > AnimationConfig.Lod.far then
+					continue
+				elseif d > AnimationConfig.Lod.near and frame % 2 == 0 then
+					-- Skipped frame: hold the last pose instead of snapping back.
+					for _, motor in npc.motors do
+						local last = lastOffset[motor]
+						if last then
+							pose(motor, last)
+						end
+					end
 					continue
 				end
 			end
-			local pose = walkOffsets(model, npc, dt)
+			local npcPose = walkOffsets(model, npc, dt)
 			local p = playing[model]
 			if p then
 				local attack = attackOffsets(p, now)
@@ -420,16 +469,18 @@ function AnimationController.Start()
 					playing[model] = nil
 				else
 					for name, offset in attack do
-						pose[name] = (pose[name] or CFrame.new()) * offset
+						npcPose[name] = (npcPose[name] or CFrame.new()) * offset
 					end
 				end
 			end
 			for name, motor in npc.motors do
-				if motor.Parent then
-					motor.Transform = pose[name] or CFrame.new()
+				local offset = npcPose[name]
+				if offset and motor.Parent then
+					pose(motor, offset)
 				end
 			end
 		end
+		flushPoses()
 	end)
 end
 

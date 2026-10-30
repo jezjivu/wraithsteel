@@ -23,7 +23,7 @@ GuideConfig.Waypoint = { color = { 255, 215, 120 }, beamHeight = 60, hideWithin 
 GuideConfig.Controls = {
 	"Click - Strike combo   R - Heavy",
 	"Strike x2 then R - Finisher (launch!)",
-	"Q - Dash (in air too)   Q then Click - Dash strike",
+	"Ctrl - Dash (in air too)   Ctrl then Click - Dash strike",
 	"Space x2 - Double jump   Click in air - Air slam",
 	"F - Parry (perfect = DEFLECT + riposte)",
 	"Shift - Sprint   Tab - Lock on",

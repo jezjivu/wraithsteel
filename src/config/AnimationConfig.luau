@@ -2,7 +2,7 @@
 -- AnimationConfig: procedural (code-driven) combat poses used until real animations are
 -- uploaded. AnimationController blends R15 joints between these poses using each move's
 -- windup / active / recovery timing from WeaponConfig, so every weapon class moves differently.
--- Angles are degrees {x, y, z} applied to Motor6D.Transform.
+-- Angles are degrees {x, y, z} applied on top of each joint's Motor6D.C0.
 -- TODO(Studio/Agent B): tune by eye in Studio; replace with real animations when uploaded
 -- (a move with a non-placeholder animationId plays that instead).
 

@@ -12,7 +12,7 @@ InputConfig.Bindings = {
 	LightAttack = { inputs = { Enum.UserInputType.MouseButton1, Enum.KeyCode.ButtonR2 }, touchButton = true, title = "Strike" },
 	HeavyAttack = { inputs = { Enum.KeyCode.R, Enum.KeyCode.ButtonR1 }, touchButton = true, title = "Heavy" },
 	Parry = { inputs = { Enum.KeyCode.F, Enum.KeyCode.ButtonL1 }, touchButton = true, title = "Parry" },
-	Dodge = { inputs = { Enum.KeyCode.Q, Enum.KeyCode.ButtonB }, touchButton = true, title = "Dodge" },
+	Dodge = { inputs = { Enum.KeyCode.LeftControl, Enum.KeyCode.RightControl, Enum.KeyCode.ButtonB }, touchButton = true, title = "Dodge" },
 	Skill1 = { inputs = { Enum.KeyCode.One, Enum.KeyCode.ButtonX }, touchButton = true, title = "Skill 1" },
 	Skill2 = { inputs = { Enum.KeyCode.Two, Enum.KeyCode.ButtonY }, touchButton = true, title = "Skill 2" },
 	Ultimate = { inputs = { Enum.KeyCode.G, Enum.KeyCode.ButtonL2 }, touchButton = true, title = "Ultimate" },
