@@ -34,7 +34,7 @@ function ProfileTemplate.New(): Types.ProfileData
 		nextUid = 1,
 		lanternPity = {},
 		hatchedTotal = 0,
-		freeLanterns = {},
+		freeLanterns = { paper_lantern = 1 }, -- new players get one free first lantern
 
 		expeditions = {},
 		lastSeenAt = 0,
