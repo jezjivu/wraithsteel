@@ -22,7 +22,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] AnalyticsService (onboarding funnel once per profile, economy + custom events)
 - [x] ProgressionService (Ember, Jade, XP/levels, Power with chapter caps, multipliers)
 - [x] MarketService (idempotent ProcessReceipt, pass cache, gifted passes incl. offline via profile messages, boosts, gift tokens)
-- [x] Pure-Luau test harness + specs (`tools/run_tests.py`, 57 tests) and luau-lsp type check (`tools/check.sh`)
+- [x] Pure-Luau test harness + specs (`tools/run_tests.py`, 60 tests) and luau-lsp type check (`tools/check.sh`)
 - [ ] Create passes/products on the Creator Dashboard and fill ids (MonetizationConfig)
 
 ## Phase 1 - Prologue vertical slice
@@ -37,7 +37,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] SpiritService, LanternService (server RNG via Odds, pity, policy gating), FusionService (deterministic)
 - [x] LanternController odds formatting + "odds shown before open" guard
 - [~] Lantern/odds/inventory/fusion UI (Studio)
-- [ ] Spirit followers in the world (models + follow AI)
+- [x] Spirit followers in the world (procedural companion models)
 - [ ] SpiritCall action (currently rejected as "Unavailable")
 ### C - Warden (enemies + bosses)
 - [x] Combatant registry (CombatService), batched staggered 10 Hz AI scheduler, attack-token director
@@ -66,6 +66,15 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Procedural combat animations for all 6 classes (`AnimationController` + `AnimationConfig`), dodge dash
 - [x] Damage numbers, PARRY/BLOCK/DODGE/POSTURE BROKEN text, hit flash, parry sparks, camera shake, swing/hit sounds (built-in), enemy telegraph flashes ("!" for dodge-only attacks), enemy health/posture bars, HUD health/posture/ultimate meters, boss bar, zone banner
 - [~] Real uploaded animations/SFX (Studio) - uploaded animationIds automatically replace the procedural poses
+
+## Playability pass (night 1, part 3)
+- [x] Attack aim + soft lock-on (nearest enemy in front of the camera), character turns to face it; server uses the sanitized direction
+- [x] Held weapon grip relative to the hand part (predictable for R15/R6)
+- [x] Enemies and bosses are code-built R15 humanoids (RigBuilder): colors, headwear, held weapons, giant scaled bosses; procedural NPC walk cycle
+- [x] Spirit companions: part-built models (winged/beast variants/fish/wraith) following every player, mutation tints, rarity gem; hatch reveal cards and 3D icons in menus; `assets/spirit_icons`
+- [x] Onboarding: free first Paper Lantern, objective tracker, controls card (H)
+- [x] Balance: faster early Ember/XP, cheaper Prologue weapons, shorter boss fights; out-of-combat regen; heal on level up
+- [x] Dusk lighting/atmosphere/bloom (AmbienceService + LightingConfig)
 
 ## Phase 2 - Chapter 1 + depth
 - [x] BossConfig entries for the 4 Chapter 1 bosses (Hollow Abbot, Twin Cinder Sisters, Rustwood Matriarch, Gatekeeper of Rust - 3 phases)
@@ -106,6 +115,8 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 4. RaidService (8-player reserved-server raid), chapter gates, Chapter 2 content.
 
 ## Known risks
+- RigBuilder relies on Players:CreateHumanoidModelFromDescription and Model:ScaleTo; if either
+  fails at runtime the code falls back to block placeholders (warning in Output).
 - Trades change two profiles that save separately. Both are saved immediately after a swap,
   but a server crash between the two saves could duplicate or lose a traded Spirit. Before
   launch, add a trade ledger (ProfileStore MessageAsync per side, idempotent by trade id).

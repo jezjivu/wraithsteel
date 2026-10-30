@@ -11,7 +11,8 @@ the row. Only original assets (made by us or licensed for this game) may be used
 | Weapon models (16) | built from parts by `Shared/WeaponModels` (`WeaponConfig.*.visual`) | n/a (procedural) | Optional sculpted models -> `modelId` | B | Works today without uploads |
 | Weapon icons (16) | `assets/weapon_icons/*.png` (rendered by `tools/render_weapons.py`) | not uploaded | Upload as Images if wanted | D | UI currently uses live 3D viewports |
 | Class move animations (6 classes, ~45 moves) | `WeaponConfig.Moves.*.animationId` | rbxassetid://0 | Animate + upload | B | Jian, Dao, Spear, Fan, Staff, Greatblade |
-| Spirit models + icons (10) | `src/config/SpiritConfig.luau` Spirits.*.modelId / iconId | 0 | Model + icon | B/D | |
+| Spirit models + icons (10) | built from parts by `Shared/SpiritModels` (`SpiritConfig.*.visual`); PNGs in `assets/spirit_icons` | procedural | Optional sculpted models -> modelId | B/D | Works today without uploads |
+| Enemy/boss rigs | built by `World/RigBuilder` from `look` in EnemyConfig/BossConfig | procedural R15 | Optional Studio rigs in ServerStorage.Enemies/Bosses | C | Studio rigs take priority |
 | Lantern models (3) | `src/config/LanternConfig.luau` Lanterns.*.modelId | 0 | Model | D | |
 | Rustbound Bandit rig + 2 anims | `ServerStorage.Enemies.rustbound_bandit`, `EnemyConfig` attacks | placeholder block / 0 | Rig + anims | C | |
 | Lantern Ghoul rig + 2 anims | `ServerStorage.Enemies.lantern_ghoul`, `EnemyConfig` attacks | placeholder block / 0 | Rig + anims | C | |

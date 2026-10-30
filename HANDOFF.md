@@ -63,6 +63,13 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
   but are slightly stronger than Ember weapons of the same chapter (Power is still capped per
   chapter). Confirm this is acceptable or make them cosmetic-equal.
 
+## Playability systems (part 3)
+- Rig priority for enemies/bosses: `ServerStorage.Enemies|Bosses/<id>` > RigBuilder (config `look`) > block placeholder.
+- AnimationController owns NPC joints (absolute) and layers onto player joints; uploaded
+  animationIds on moves replace procedural poses for players.
+- Companions: `SpiritParty` player attribute -> SpiritFollowerController (client-only parts).
+- Guide: objective chain in GuideController/GuideConfig; extend when chapters grow.
+
 ## Things for Studio agents
 - See README "What you need to build in Studio" and `AssetLog.md`.
 - Enemy spawns: `Workspace.EnemySpawns/<Part>` (attrs `EnemyId`, `Count`, `RespawnSeconds`).
