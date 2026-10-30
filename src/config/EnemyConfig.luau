@@ -43,6 +43,10 @@ EnemyConfig.AttackTokenDuration = 2.5 -- seconds a token is held before it must 
 EnemyConfig.AttackTokenCooldown = 0.6 -- seconds before a returned token can be re-granted
 EnemyConfig.StateReplicationRate = 10 -- Hz, batched EnemyState remote
 EnemyConfig.DespawnAfterDeath = 4
+EnemyConfig.DefaultRespawnSeconds = 20
+EnemyConfig.PostureBrokenSeconds = 2.5
+EnemyConfig.SpawnFolderName = "EnemySpawns" -- TODO(Studio/Agent D): Workspace folder of spawn Parts
+EnemyConfig.TemplateFolderName = "Enemies" -- TODO(Studio/Agent C): ServerStorage folder of rigs
 
 local PLACEHOLDER_ANIM = "rbxassetid://0"
 
