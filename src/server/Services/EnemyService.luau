@@ -239,7 +239,7 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 	humanoid.MaxHealth = def.maxHealth
 	humanoid.Health = def.maxHealth
 	humanoid.WalkSpeed = def.walkSpeed
-	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
+	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None -- client draws its own bars
 	model.Parent = workspace
 	root:SetNetworkOwner(nil)
 

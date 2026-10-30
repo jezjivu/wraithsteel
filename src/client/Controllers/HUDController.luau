@@ -1,75 +1,183 @@
 --!strict
--- HUDController: PLACEHOLDER debug HUD (Ember, Jade, Level, Power, boss bar text) so the game
--- is playtestable before Agent D builds the real HUD in Studio.
--- TODO(Studio/Agent D): replace with the designed HUD (ScreenGui in StarterGui), keep the same
--- data sources: DataController.Changed, player attributes Power/Level, BossState remote.
+-- HUDController: code-built HUD (placeholder style until Agent D designs the real one).
+--   * top-left: Ember, Jade, Level, Power
+--   * bottom-center: your Health, Posture and Ultimate meters
+--   * top-center: boss bar (name, title, HP, posture, phase) during boss encounters
+-- Data sources: DataController, character Humanoid + attributes (Posture, Ultimate set by
+-- CombatService), player attributes (Power, Level), BossState remote.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = ReplicatedStorage:WaitForChild("Config")
 local Net = require(Shared:WaitForChild("Net"))
 local FormatNumber = require(Shared:WaitForChild("FormatNumber"))
+local BossConfig = require(Config:WaitForChild("BossConfig"))
 
+local UI = script.Parent.Parent:WaitForChild("UI")
+local Kit = require(UI:WaitForChild("Kit"))
 local DataController = require(script.Parent.DataController)
 
 local HUDController = { Name = "HUDController", Priority = 41 }
 
-local stats: TextLabel? = nil
-local bossBar: TextLabel? = nil
+local C = Kit.Colors
+local localPlayer = Players.LocalPlayer
 
-local function refresh()
+local stats: TextLabel? = nil
+
+type Meter = { frame: Frame, fill: Frame, label: TextLabel }
+
+local function meter(parent: Instance, pos: UDim2, size: UDim2, color: Color3, text: string): Meter
+	local frame = Instance.new("Frame")
+	frame.Position = pos
+	frame.Size = size
+	frame.BackgroundColor3 = C.Ink
+	frame.BorderSizePixel = 0
+	frame.Parent = parent
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = frame
+	local fill = Instance.new("Frame")
+	fill.Size = UDim2.fromScale(1, 1)
+	fill.BackgroundColor3 = color
+	fill.BorderSizePixel = 0
+	fill.Parent = frame
+	local c2 = Instance.new("UICorner")
+	c2.CornerRadius = UDim.new(0, 6)
+	c2.Parent = fill
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.GothamBold
+	label.TextSize = 13
+	label.TextColor3 = C.Text
+	label.TextStrokeTransparency = 0.4
+	label.Text = text
+	label.ZIndex = 2
+	label.Parent = frame
+	return { frame = frame, fill = fill, label = label }
+end
+
+local function setMeter(m: Meter, frac: number, text: string?)
+	m.fill.Size = UDim2.fromScale(math.clamp(frac, 0, 1), 1)
+	if text then
+		m.label.Text = text
+	end
+end
+
+local health: Meter? = nil
+local posture: Meter? = nil
+local ultimate: Meter? = nil
+local bossFrame: Frame? = nil
+local bossName: TextLabel? = nil
+local bossHp: Meter? = nil
+local bossPosture: Meter? = nil
+
+local function refreshStats()
 	local label = stats
 	if label == nil then
 		return
 	end
-	local player = Players.LocalPlayer
 	label.Text = string.format(
 		"Ember %s   Jade %s   Lv %s   Power %s",
 		FormatNumber.Short(DataController.Get("ember") or 0),
 		FormatNumber.Short(DataController.Get("jade") or 0),
 		tostring(DataController.Get("level") or 1),
-		FormatNumber.Short(tonumber(player:GetAttribute("Power")) or 0)
+		FormatNumber.Short(tonumber(localPlayer:GetAttribute("Power")) or 0)
 	)
 end
 
-local function makeLabel(parent: Instance, pos: UDim2, size: UDim2): TextLabel
-	local l = Instance.new("TextLabel")
-	l.Position = pos
-	l.Size = size
-	l.BackgroundTransparency = 0.4
-	l.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-	l.TextColor3 = Color3.fromRGB(240, 220, 180)
-	l.TextScaled = true
-	l.Font = Enum.Font.GothamBold
-	l.Text = ""
-	l.Parent = parent
-	return l
+local function bindCharacter(character: Model)
+	local humanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
+	if humanoid == nil then
+		return
+	end
+	local function refresh()
+		if health then
+			setMeter(health, humanoid.Health / math.max(humanoid.MaxHealth, 1), string.format("%d / %d", math.ceil(humanoid.Health), humanoid.MaxHealth))
+		end
+		if posture then
+			local p = tonumber(character:GetAttribute("Posture")) or 0
+			setMeter(posture, p, if p >= 0.75 then "Posture - careful!" else "Posture")
+		end
+		if ultimate then
+			local u = tonumber(character:GetAttribute("Ultimate")) or 0
+			setMeter(ultimate, u, if u >= 1 then "Ultimate READY (G)" else "Ultimate")
+		end
+	end
+	humanoid.HealthChanged:Connect(refresh)
+	character:GetAttributeChangedSignal("Posture"):Connect(refresh)
+	character:GetAttributeChangedSignal("Ultimate"):Connect(refresh)
+	refresh()
 end
 
 function HUDController.Init()
-	local gui = Instance.new("ScreenGui")
-	gui.Name = "DebugHUD"
-	gui.ResetOnSpawn = false
-	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
-	stats = makeLabel(gui, UDim2.new(0, 10, 0, 10), UDim2.new(0, 380, 0, 28))
-	local bar = makeLabel(gui, UDim2.new(0.3, 0, 0, 44), UDim2.new(0.4, 0, 0, 26))
-	bar.Visible = false
-	bossBar = bar
+	local gui = Kit.Screen(localPlayer:WaitForChild("PlayerGui"), "HUD", 3)
+
+	local s = Instance.new("TextLabel")
+	s.Position = UDim2.fromOffset(10, 10)
+	s.Size = UDim2.fromOffset(400, 30)
+	s.BackgroundColor3 = C.Ink
+	s.BackgroundTransparency = 0.25
+	s.TextColor3 = C.Gold
+	s.Font = Enum.Font.GothamBold
+	s.TextSize = 16
+	s.Parent = gui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = s
+	stats = s
+
+	-- Player meters (bottom center, above the default toolbar area).
+	health = meter(gui, UDim2.new(0.5, -160, 1, -92), UDim2.fromOffset(320, 22), Color3.fromRGB(190, 55, 50), "Health")
+	posture = meter(gui, UDim2.new(0.5, -160, 1, -66), UDim2.fromOffset(320, 14), Color3.fromRGB(235, 185, 70), "Posture")
+	ultimate = meter(gui, UDim2.new(0.5, -160, 1, -48), UDim2.fromOffset(320, 10), Color3.fromRGB(120, 170, 255), "")
+
+	-- Boss bar (top center).
+	local bf = Instance.new("Frame")
+	bf.AnchorPoint = Vector2.new(0.5, 0)
+	bf.Position = UDim2.new(0.5, 0, 0, 52)
+	bf.Size = UDim2.fromOffset(520, 64)
+	bf.BackgroundTransparency = 1
+	bf.Visible = false
+	bf.Parent = gui
+	local name = Instance.new("TextLabel")
+	name.Size = UDim2.new(1, 0, 0, 24)
+	name.BackgroundTransparency = 1
+	name.Font = Enum.Font.GothamBlack
+	name.TextSize = 20
+	name.TextColor3 = C.Gold
+	name.TextStrokeTransparency = 0.3
+	name.Parent = bf
+	bossName = name
+	bossHp = meter(bf, UDim2.fromOffset(0, 28), UDim2.new(1, 0, 0, 18), Color3.fromRGB(180, 40, 40), "")
+	bossPosture = meter(bf, UDim2.fromOffset(60, 50), UDim2.new(1, -120, 0, 10), Color3.fromRGB(240, 190, 70), "")
+	bossFrame = bf
 end
 
 function HUDController.Start()
-	DataController.Changed:Connect(refresh)
-	Players.LocalPlayer:GetAttributeChangedSignal("Power"):Connect(refresh)
-	Net.Client.On("BossState", function(s)
-		local bar = bossBar
-		if bar == nil then
+	DataController.Changed:Connect(refreshStats)
+	localPlayer:GetAttributeChangedSignal("Power"):Connect(refreshStats)
+	refreshStats()
+
+	localPlayer.CharacterAdded:Connect(bindCharacter)
+	if localPlayer.Character then
+		task.spawn(bindCharacter, localPlayer.Character)
+	end
+
+	Net.Client.On("BossState", function(st)
+		local frame = bossFrame
+		if frame == nil or bossName == nil or bossHp == nil or bossPosture == nil then
 			return
 		end
-		bar.Visible = s.state ~= "Dead"
-		bar.Text = string.format("%s  HP %d%%  Posture %d%%  (phase %d)", s.bossId, math.floor(s.hpFrac * 100), math.floor(s.postureFrac * 100), s.phase)
+		frame.Visible = st.state ~= "Dead" and st.hpFrac > 0
+		local def = BossConfig.Bosses[st.bossId]
+		local phaseText = if st.phase > 1 then "  ·  Phase " .. st.phase else ""
+		bossName.Text = (if def then def.name .. " - " .. def.title else st.bossId) .. phaseText
+		setMeter(bossHp, st.hpFrac, string.format("%d%%", math.ceil(st.hpFrac * 100)))
+		setMeter(bossPosture, st.postureFrac, if st.state == "Broken" then "BROKEN - strike now!" else "")
 	end)
-	refresh()
 end
 
 return HUDController

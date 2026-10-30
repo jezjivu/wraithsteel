@@ -14,6 +14,7 @@
 --   CombatService.PostureBroken: Signal(target)
 --   CombatService.Died: Signal(target, contributions: { [Player]: number })
 
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -61,6 +62,7 @@ export type Hit = {
 }
 
 local MAX_TARGETS_PER_SWING = 4
+local COMBATANT_TAG = "Combatant"
 local VALID_ACTIONS = {
 	LightAttack = true,
 	HeavyAttack = true,
@@ -90,6 +92,9 @@ function CombatService.Register(c: Combatant)
 		byPlayer[c.player] = c
 	end
 	c.model:SetAttribute("CombatantId", c.id)
+	c.model:SetAttribute("CombatantKind", c.kind)
+	-- Clients find combatants by tag (health/posture bars, damage numbers, animations).
+	CollectionService:AddTag(c.model, COMBATANT_TAG)
 end
 
 function CombatService.Unregister(id: string)
@@ -116,6 +121,13 @@ function CombatService.All(): { Combatant }
 		table.insert(out, c)
 	end
 	return out
+end
+
+-- Mirrors ultimate charge (0..1) to the character for the HUD.
+local function syncUltimate(c: Combatant)
+	if c.rules then
+		c.model:SetAttribute("Ultimate", c.rules.ultimateCharge / WeaponConfig.UltimateChargeMax)
+	end
 end
 
 local function broadcast(payload: { [string]: any })
@@ -163,7 +175,8 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	if damage > 0 then
 		target.humanoid.Health = math.max(0, target.humanoid.Health - damage)
 	end
-	if Posture.Add(target.posture, postureDamage, now, target.brokenSeconds) then
+	local broke = Posture.Add(target.posture, postureDamage, now, target.brokenSeconds)
+	if broke then
 		if target.rules then
 			target.rules.stunnedUntil = now + target.brokenSeconds
 		end
@@ -176,8 +189,12 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	-- Parry reflects posture damage back to the attacker.
 	if res.outcome == "Parried" and attacker then
 		if Posture.Add(attacker.posture, res.reflectPosture, now, attacker.brokenSeconds) then
+			if attacker.rules then
+				attacker.rules.stunnedUntil = now + attacker.brokenSeconds
+			end
 			CombatService.PostureBroken:Fire(attacker)
 		end
+		attacker.model:SetAttribute("Posture", Posture.Fraction(attacker.posture))
 		if target.player then
 			QuestService.Increment(target.player, "PerfectParries", 1)
 			AnalyticsService.Onboarding(target.player, "FirstParry")
@@ -198,7 +215,13 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		outcome = res.outcome,
 		moveId = hit.moveId,
 		postureFrac = Posture.Fraction(target.posture),
+		broken = broke,
 	})
+	target.model:SetAttribute("Posture", Posture.Fraction(target.posture))
+	syncUltimate(target)
+	if attacker then
+		syncUltimate(attacker)
+	end
 	CombatService.Damaged:Fire(target, attacker, res)
 
 	if target.humanoid.Health <= 0 and not target.dead then
@@ -248,6 +271,7 @@ local function onCombatAction(player: Player, req: { [string]: any })
 	end
 	local dodgeMult = 1 + SpiritLogic.PassiveTotal(data :: any, "DodgeCooldown")
 	CombatRules.Commit(c.rules :: CombatRules.State, decision, now, dodgeMult)
+	syncUltimate(c)
 	broadcast({ kind = "Action", sourceId = c.id, action = action, moveId = decision.moveId, seq = seq })
 
 	local moveId = decision.moveId
