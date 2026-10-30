@@ -13,6 +13,7 @@ local ExpeditionConfig = require(Config.ExpeditionConfig)
 local ExpeditionLogic = require(Logic.ExpeditionLogic)
 local SpiritLogic = require(Logic.SpiritLogic)
 local ProfileTemplate = require(Logic.ProfileTemplate)
+local WeaponLogic = require(Logic.WeaponLogic)
 
 local cases = {}
 
@@ -137,6 +138,38 @@ cases["Spirit XP levels up and caps"] = function()
 	expectEq(s.level, SpiritConfig.LevelCap)
 	expectEq(s.xp, 0)
 	expectTrue(SpiritConfig.PowerOf("lantern_moth", "Common", "None", 10) > SpiritConfig.PowerOf("lantern_moth", "Common", "None", 1))
+end
+
+cases["Weapons: every weapon is in the shop list with a valid class moveset"] = function()
+	local listed = {}
+	for _, id in WeaponConfig.ShopOrder do
+		expectTrue(WeaponConfig.Weapons[id] ~= nil, "shop lists unknown " .. id)
+		expectTrue(not listed[id], "listed twice " .. id)
+		listed[id] = true
+	end
+	local count = 0
+	for id, w in WeaponConfig.Weapons do
+		count += 1
+		expectTrue(listed[id], id .. " missing from ShopOrder")
+		expectTrue(WeaponConfig.ClassMoves[w.class] ~= nil, id .. " class")
+		expectTrue(SpiritConfig.Rarities[w.rarity] ~= nil, id .. " rarity")
+		expectTrue(w.price >= 0 and w.power > 0, id)
+		expectTrue(#w.visual.blade == 3 and #w.visual.accent == 3 and #w.visual.grip == 3, id .. " colors")
+	end
+	expectTrue(count >= 15, "at least 15 weapons")
+	for class in WeaponConfig.ClassMoves do
+		expectTrue(WeaponConfig.ClassBlurb[class] ~= nil, class)
+	end
+end
+
+cases["Weapons: purchase rules"] = function()
+	local d = { weapons = { jian_wanderer = true }, chapter = 0, ember = 700, jade = 0 }
+	expectEq(select(2, WeaponLogic.CanBuy(d, "jian_wanderer")), "You already own this weapon")
+	expectTrue(WeaponLogic.CanBuy(d, "dao_rustcutter"))
+	expectEq(select(2, WeaponLogic.CanBuy(d, "spear_reedline")), "Not enough Ember")
+	expectEq(select(2, WeaponLogic.CanBuy(d, "jian_ninth_bell")), "Not enough Jade")
+	expectTrue(string.find(select(2, WeaponLogic.CanBuy(d, "dao_ember_tide")) or "", "Unlocks in") ~= nil)
+	expectEq(select(2, WeaponLogic.CanBuy(d, "nope")), "Unknown weapon")
 end
 
 return cases

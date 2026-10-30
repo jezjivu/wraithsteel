@@ -32,6 +32,7 @@ local NetSchema: { [string]: RemoteDef } = {
 	CombatAction = { kind = "Event", direction = "ToServer", args = { "table" }, rate = { burst = 12, perSecond = 8 } },
 	CombatEvent = { kind = "Event", direction = "ToClient" }, -- (DamageEvent | state table)
 	EquipWeapon = { kind = "Event", direction = "ToServer", args = { "string" }, rate = { burst = 3, perSecond = 1 } },
+	BuyWeapon = { kind = "Function", direction = "ToServer", args = { "string" }, rate = { burst = 3, perSecond = 1 } },
 
 	-- Enemies / bosses ---------------------------------------------------------------------
 	EnemyState = { kind = "Event", direction = "ToClient" }, -- (batched states table)

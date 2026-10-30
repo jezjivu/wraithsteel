@@ -316,15 +316,6 @@ function CombatService.Init() end
 
 function CombatService.Start()
 	Net.Server.On("CombatAction", onCombatAction)
-	Net.Server.On("EquipWeapon", function(player, weaponId)
-		local data = DataService.GetData(player)
-		if data and data.weapons[weaponId] and WeaponConfig.Weapons[weaponId] then
-			data.equippedWeapon = weaponId
-			DataService.Changed(player, "equippedWeapon")
-			ProgressionService.RefreshPower(player)
-		end
-	end)
-
 	local function hook(player: Player)
 		player.CharacterAdded:Connect(function(character)
 			onCharacterAdded(player, character)
