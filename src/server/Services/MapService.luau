@@ -146,6 +146,12 @@ end
 
 local function sculpt()
 	local T = workspace.Terrain
+	-- Japanese palette for terrain: deep moss, warm earth, white temple gravel.
+	for name, c in MapConfig.MaterialColors do
+		pcall(function()
+			T:SetMaterialColor((Enum.Material :: any)[name], rgb(c))
+		end)
+	end
 	local g = MapConfig.GroundSize
 	local gc = MapConfig.GroundCenter
 	-- Grass valley floor (top at y = 0), in four tiles.
@@ -155,7 +161,7 @@ local function sculpt()
 		end
 	end
 	-- Paths.
-	pathTerrain(xz(MapConfig.Path.from), xz(MapConfig.Path.to), MapConfig.Path.width, Enum.Material.Cobblestone)
+	pathTerrain(xz(MapConfig.Path.from), xz(MapConfig.Path.to), MapConfig.Path.width, Enum.Material.Ground)
 	for _, sp in MapConfig.SidePaths do
 		pathTerrain(xz(sp[1]), xz(sp[2]), MapConfig.SidePathWidth, Enum.Material.Ground)
 	end
@@ -197,8 +203,10 @@ local function sculpt()
 			T:FillCylinder(CFrame.new(c + Vector3.new(0, -3, 0)), 4, a.radius * 0.75, Enum.Material.Water)
 		elseif a.theme == "Shrine" or a.theme == "Temple" or a.theme == "Hollow" then
 			T:FillCylinder(CFrame.new(c + Vector3.new(0, -1, 0)), 2, a.radius * 0.85, Enum.Material.Pavement)
-		elseif a.theme == "Graves" then
+		elseif a.theme == "Graves" or a.theme == "Village" then
 			T:FillCylinder(CFrame.new(c + Vector3.new(0, -1, 0)), 2, a.radius * 0.9, Enum.Material.Ground)
+		elseif a.theme == "Springs" then
+			T:FillCylinder(CFrame.new(c + Vector3.new(0, -1, 0)), 2, a.radius * 0.85, Enum.Material.Limestone)
 		elseif a.theme == "Maples" then
 			T:FillCylinder(CFrame.new(c + Vector3.new(0, -1, 0)), 2, a.radius, Enum.Material.LeafyGrass)
 		end
@@ -480,6 +488,236 @@ local function hollow(parent: Instance, center: Vector3, radius: number)
 	end
 end
 
+local function steam(parent: Instance, pos: Vector3, size: number)
+	local holder = part(parent, "Steam", Vector3.new(size, 1, size), CFrame.new(pos), C.Steam)
+	holder.Transparency = 1
+	holder.CanCollide = false
+	holder.CanQuery = false
+	local e = Instance.new("ParticleEmitter")
+	e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	e.Color = ColorSequence.new(rgb(C.Steam))
+	e.LightEmission = 0.1
+	e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, size * 0.3), NumberSequenceKeypoint.new(1, size * 0.9) })
+	e.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.7), NumberSequenceKeypoint.new(1, 1) })
+	e.Lifetime = NumberRange.new(3, 5)
+	e.Rate = 3
+	e.Speed = NumberRange.new(1.5, 3)
+	e.Acceleration = Vector3.new(0.6, 0.8, 0)
+	e.Shape = Enum.ParticleEmitterShape.Box
+	e.Parent = holder
+end
+
+local function embers(parent: Instance, pos: Vector3)
+	local holder = part(parent, "Embers", Vector3.new(4, 1, 4), CFrame.new(pos), C.Charred)
+	holder.Transparency = 1
+	holder.CanCollide = false
+	holder.CanQuery = false
+	local fire = Instance.new("ParticleEmitter")
+	fire.Texture = "rbxasset://textures/particles/fire_main.dds"
+	fire.Color = ColorSequence.new(Color3.fromRGB(255, 140, 50), Color3.fromRGB(200, 60, 30))
+	fire.LightEmission = 1
+	fire.Size = NumberSequence.new(0.6, 0.1)
+	fire.Lifetime = NumberRange.new(1, 2)
+	fire.Rate = 4
+	fire.Speed = NumberRange.new(1, 3)
+	fire.Acceleration = Vector3.new(0, 3, 0)
+	fire.Shape = Enum.ParticleEmitterShape.Box
+	fire.Parent = holder
+	local smoke = Instance.new("ParticleEmitter")
+	smoke.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	smoke.Color = ColorSequence.new(Color3.fromRGB(50, 45, 45))
+	smoke.Size = NumberSequence.new(2, 6)
+	smoke.Transparency = NumberSequence.new(0.6, 1)
+	smoke.Lifetime = NumberRange.new(4, 6)
+	smoke.Rate = 1.5
+	smoke.Speed = NumberRange.new(2, 4)
+	smoke.Parent = holder
+	light(holder, { 255, 120, 50 }, 10, 1)
+end
+
+-- Hot springs: rock-ringed pools with steam, a bath pavilion and a bamboo fence.
+local function springs(parent: Instance, center: Vector3, radius: number, useTerrain: boolean)
+	local m = model("Springs", parent)
+	local pools = { { 0, 0, 8 }, { -12, 9, 6 }, { 11, 8, 5.5 } }
+	for _, pl in pools do
+		local c = center + Vector3.new(pl[1], 0, pl[2])
+		local r = pl[3]
+		if useTerrain then
+			workspace.Terrain:FillCylinder(CFrame.new(c + Vector3.new(0, -2, 0)), 4, r, Enum.Material.Air)
+			workspace.Terrain:FillCylinder(CFrame.new(c + Vector3.new(0, -3.5, 0)), 1, r, Enum.Material.Basalt)
+			workspace.Terrain:FillCylinder(CFrame.new(c + Vector3.new(0, -2.2, 0)), 2.4, r, Enum.Material.Water)
+		end
+		for i = 0, 11 do
+			local a = i / 12 * math.pi * 2
+			local s = rng:NextNumber(1.6, 2.8)
+			part(m, "PoolRock", Vector3.new(s, s * 0.7, s), CFrame.new(c + Vector3.new(math.cos(a) * r, s * 0.15, math.sin(a) * r)), { 95, 90, 88 }, Enum.Material.Rock, Enum.PartType.Ball)
+		end
+		steam(m, c + Vector3.new(0, 0.5, 0), r * 1.4)
+	end
+	-- Bath pavilion at the back.
+	local back = center + Vector3.new(0, 0, -radius * 0.8)
+	for _, x in { -6, 6 } do
+		for _, z in { -3, 3 } do
+			column(m, "PavilionPost", 8, 0.8, back + Vector3.new(x, 0, z), C.Wood, Enum.Material.Wood)
+		end
+	end
+	part(m, "PavilionRoof", Vector3.new(16, 0.8, 10), CFrame.new(back + Vector3.new(0, 8.4, 0)), C.Roof, Enum.Material.Slate)
+	part(m, "Noren", Vector3.new(10, 3, 0.1), CFrame.new(back + Vector3.new(0, 6.5, -3.1)), { 60, 90, 140 }, Enum.Material.Fabric)
+	for i = 0, 15 do
+		local a = math.pi * 0.15 + i / 15 * math.pi * 0.7
+		column(m, "BambooFence", 4.5, 0.5, center + Vector3.new(math.cos(a) * radius, 0, -math.sin(a) * radius), C.Bamboo, Enum.Material.SmoothPlastic)
+	end
+	stoneLantern(m, center + Vector3.new(-radius * 0.6, 0, radius * 0.5), 1)
+end
+
+-- Burned village: charred house frames, collapsed roofs, smoldering embers, a well.
+local function village(parent: Instance, center: Vector3, radius: number)
+	local m = model("AshenVillage", parent)
+	for i = 0, 5 do
+		local a = i / 6 * math.pi * 2 + 0.3
+		local c = center + Vector3.new(math.cos(a), 0, math.sin(a)) * (radius * 0.65)
+		local face = CFrame.lookAt(c, Vector3.new(center.X, 0, center.Z))
+		local h = model("BurnedHouse", m)
+		part(h, "Floor", Vector3.new(12, 0.5, 10), face * CFrame.new(0, 0.25, 0), { 80, 62, 48 }, Enum.Material.WoodPlanks)
+		for _, x in { -5.5, 5.5 } do
+			for _, z in { -4.5, 4.5 } do
+				local ht = rng:NextNumber(4, 8)
+				part(h, "CharredPost", Vector3.new(0.8, ht, 0.8), face * CFrame.new(x, ht / 2, z) * CFrame.Angles(math.rad(rng:NextNumber(-8, 8)), 0, math.rad(rng:NextNumber(-8, 8))), C.Charred, Enum.Material.Wood)
+			end
+		end
+		part(h, "BrokenWall", Vector3.new(11, rng:NextNumber(2.5, 5), 0.5), face * CFrame.new(0, 2, 4.5), C.Charred, Enum.Material.WoodPlanks)
+		part(h, "FallenRoof", Vector3.new(13, 0.7, 7), face * CFrame.new(rng:NextNumber(-2, 2), 2.2, -1) * CFrame.Angles(math.rad(rng:NextNumber(14, 24)), 0, math.rad(rng:NextNumber(-10, 10))), { 45, 45, 50 }, Enum.Material.Slate)
+		if i % 2 == 0 then
+			embers(h, (face * CFrame.new(0, 0.8, 0)).Position)
+		end
+	end
+	-- Village well.
+	column(m, "Well", 2.4, 4, center, C.Stone, Enum.Material.Cobblestone)
+	for _, x in { -2, 2 } do
+		column(m, "WellPost", 5, 0.4, center + Vector3.new(x, 0, 0), C.Charred, Enum.Material.Wood)
+	end
+	part(m, "WellRoof", Vector3.new(5.5, 0.4, 3.5), CFrame.new(center + Vector3.new(0, 5.2, 0)), { 45, 45, 50 }, Enum.Material.Slate)
+end
+
+-- Gorge: rock cliff with a waterfall feeding a river, a plank bridge, mist.
+local function gorge(parent: Instance, center: Vector3, radius: number, useTerrain: boolean)
+	local m = model("Gorge", parent)
+	local cliff = center + Vector3.new(0, 0, -radius)
+	if useTerrain then
+		workspace.Terrain:FillBlock(CFrame.new(cliff + Vector3.new(0, 18, -6)), Vector3.new(radius * 2.2, 40, 22), Enum.Material.Rock)
+		workspace.Terrain:FillBlock(CFrame.new(cliff + Vector3.new(0, 38.5, -6)), Vector3.new(radius * 2.2, 2, 22), Enum.Material.Grass)
+		-- River from the waterfall pool running south.
+		workspace.Terrain:FillBlock(CFrame.new(center + Vector3.new(0, -2, 4)), Vector3.new(10, 4, radius * 2), Enum.Material.Air)
+		workspace.Terrain:FillBlock(CFrame.new(center + Vector3.new(0, -3.5, 4)), Vector3.new(10, 1, radius * 2), Enum.Material.Mud)
+		workspace.Terrain:FillBlock(CFrame.new(center + Vector3.new(0, -2.2, 4)), Vector3.new(10, 2.4, radius * 2), Enum.Material.Water)
+	end
+	local fall = part(m, "Waterfall", Vector3.new(9, 38, 0.6), CFrame.new(cliff + Vector3.new(0, 18, 5.4)), C.WaterFall, Enum.Material.Glass)
+	fall.Transparency = 0.35
+	fall.CanCollide = false
+	local foam = part(m, "Foam", Vector3.new(11, 1, 4), CFrame.new(cliff + Vector3.new(0, 0, 7)), C.Steam)
+	foam.Transparency = 1
+	foam.CanCollide = false
+	local e = Instance.new("ParticleEmitter")
+	e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	e.Color = ColorSequence.new(Color3.new(1, 1, 1))
+	e.Size = NumberSequence.new(3, 7)
+	e.Transparency = NumberSequence.new(0.5, 1)
+	e.Lifetime = NumberRange.new(1.5, 2.5)
+	e.Rate = 12
+	e.Speed = NumberRange.new(2, 5)
+	e.SpreadAngle = Vector2.new(60, 60)
+	e.Shape = Enum.ParticleEmitterShape.Box
+	e.Parent = foam
+	-- Plank bridge across the river.
+	local bridge = center + Vector3.new(0, 0.6, 10)
+	part(m, "Bridge", Vector3.new(14, 0.5, 5), CFrame.new(bridge), C.Wood, Enum.Material.WoodPlanks)
+	for _, z in { -2.3, 2.3 } do
+		part(m, "BridgeRail", Vector3.new(14, 0.3, 0.3), CFrame.new(bridge + Vector3.new(0, 1.8, z)), C.ToriiRed, Enum.Material.Wood)
+	end
+	for i = 1, 8 do
+		local p = center + Vector3.new(rng:NextNumber(-radius, radius) * 0.9, 0, rng:NextNumber(-radius * 0.6, radius))
+		if math.abs(p.X - center.X) > 7 then
+			local s2 = rng:NextNumber(2.5, 5)
+			part(m, "Boulder", Vector3.new(s2, s2 * 0.8, s2), CFrame.new(p + Vector3.new(0, s2 * 0.25, 0)), { 100, 98, 95 }, Enum.Material.Rock, Enum.PartType.Ball)
+		end
+	end
+	tree(m, center + Vector3.new(-radius * 0.7, 0, -radius * 0.3), C.Sakura, C.SakuraDeep, 1.3)
+	tree(m, center + Vector3.new(radius * 0.7, 0, -radius * 0.2), C.Sakura, C.SakuraDeep, 1.2)
+end
+
+-- Hill with a stone stair climbing to a lookout shrine; torii every few steps.
+local function stairs(parent: Instance, center: Vector3, radius: number, useTerrain: boolean)
+	local m = model("ThousandStepStair", parent)
+	local R = radius * 1.4
+	local sink = 12
+	if useTerrain then
+		workspace.Terrain:FillBall(center + Vector3.new(0, -sink, 0), R, Enum.Material.Grass)
+	end
+	local function surface(d: number): number
+		return math.sqrt(math.max(0, R * R - d * d)) - sink
+	end
+	-- Steps climb from the east foot of the hill toward the top.
+	local top = 8
+	local d = R - 2
+	local i = 0
+	while d > top do
+		i += 1
+		local y = surface(d)
+		part(m, "Step", Vector3.new(1.8, 1, 8), CFrame.new(center + Vector3.new(d, y + 0.1, 0)), C.Flagstone, Enum.Material.Slate)
+		if i % 7 == 0 then
+			torii(m, center + Vector3.new(d, y, 0), math.rad(90), 8, 10)
+		end
+		d -= 1.4
+	end
+	-- Lookout shrine on top.
+	local peak = center + Vector3.new(0, surface(0), 0)
+	part(m, "Deck", Vector3.new(16, 0.6, 16), CFrame.new(peak + Vector3.new(0, 0.3, 0)), C.Wood, Enum.Material.WoodPlanks)
+	for _, x in { -6, 6 } do
+		for _, z in { -6, 6 } do
+			column(m, "ShrinePost", 9, 0.9, peak + Vector3.new(x, 0.6, z), C.ToriiRed, Enum.Material.Wood)
+		end
+	end
+	part(m, "ShrineRoof", Vector3.new(18, 1, 18), CFrame.new(peak + Vector3.new(0, 10, 0)), C.Roof, Enum.Material.Slate)
+	part(m, "ShrineRoofTop", Vector3.new(10, 1, 10), CFrame.new(peak + Vector3.new(0, 11, 0)), C.Roof, Enum.Material.Slate)
+	local bell = column(m, "LookoutBell", 3, 2.6, peak + Vector3.new(0, 5.5, 0), { 160, 120, 60 }, Enum.Material.Metal)
+	light(bell, C.LanternGlow, 18, 1.5)
+	for _, x in { -6, 6 } do
+		stoneLantern(m, peak + Vector3.new(x, 0.6, -9), 0.9)
+	end
+end
+
+-- Flagstones along the main path (two staggered rows) and stepping stones on side paths.
+local function flagstones()
+	local m = model("Flagstones")
+	local path = MapConfig.Path
+	local from, to = xz(path.from), xz(path.to)
+	local dir = (to - from).Unit
+	local side = Vector3.new(-dir.Z, 0, dir.X)
+	local len = (to - from).Magnitude
+	local step = MapConfig.Perf.FlagstoneSpacing
+	local i = 0
+	for d = 2, len, step do
+		i += 1
+		for _, lane in { -1, 1 } do
+			local offset = lane * path.width * 0.22 + (if i % 2 == 0 then 0.8 else -0.8)
+			local p = from + dir * d + side * offset
+			local w, l = rng:NextNumber(3.2, 4.4), rng:NextNumber(2.4, 3.2)
+			local stone = part(m, "Flagstone", Vector3.new(w, 0.3, l), CFrame.new(p + Vector3.new(0, 0.1, 0)) * CFrame.Angles(0, rng:NextNumber(-0.25, 0.25), 0), C.Flagstone, Enum.Material.Slate)
+			stone.CastShadow = false
+		end
+	end
+	for _, sp in MapConfig.SidePaths do
+		local a, b = xz(sp[1]), xz(sp[2])
+		local sdir = (b - a).Unit
+		for d = 4, (b - a).Magnitude, step + 0.6 do
+			local p = a + sdir * d + Vector3.new(rng:NextNumber(-0.6, 0.6), 0, rng:NextNumber(-0.6, 0.6))
+			-- Round stepping stone: a flat cylinder (Roblox cylinders run along X, so stand it up).
+			local stone = part(m, "SteppingStone", Vector3.new(0.3, 2.6, 2.6), CFrame.new(p + Vector3.new(0, 0.1, 0)) * CFrame.Angles(0, 0, math.rad(90)), C.Flagstone, Enum.Material.Slate, Enum.PartType.Cylinder)
+			stone.CastShadow = false
+		end
+	end
+end
+
 -- Spawns + arenas -------------------------------------------------------------------------------
 local function spawnFolders()
 	if workspace:FindFirstChild("EnemySpawns") == nil then
@@ -517,9 +755,12 @@ local function build()
 	world.Name = "World"
 	world.Parent = workspace
 
-	if not hasTerrain() then
+	local useTerrain = not hasTerrain()
+	if useTerrain then
 		sculpt()
 	end
+
+	flagstones()
 
 	-- Main path: lanterns on both sides, torii gates, and the torii tunnel.
 	local path = MapConfig.Path
@@ -575,6 +816,14 @@ local function build()
 			pagoda(m, c)
 		elseif a.theme == "Hollow" then
 			hollow(m, c, a.radius)
+		elseif a.theme == "Springs" then
+			springs(m, c, a.radius, useTerrain)
+		elseif a.theme == "Village" then
+			village(m, c, a.radius)
+		elseif a.theme == "Gorge" then
+			gorge(m, c, a.radius, useTerrain)
+		elseif a.theme == "Stairs" then
+			stairs(m, c, a.radius, useTerrain)
 		end
 	end
 

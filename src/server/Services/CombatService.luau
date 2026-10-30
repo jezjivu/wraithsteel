@@ -27,6 +27,7 @@ local CombatConfig = require(Config:WaitForChild("CombatConfig"))
 local WeaponConfig = require(Config:WaitForChild("WeaponConfig"))
 local EnemyConfig = require(Config:WaitForChild("EnemyConfig"))
 local StyleConfig = require(Config:WaitForChild("StyleConfig"))
+local MapConfig = require(Config:WaitForChild("MapConfig"))
 
 local Logic = script.Parent.Parent:WaitForChild("Logic")
 local CombatRules = require(Logic:WaitForChild("CombatRules"))
@@ -90,6 +91,15 @@ local CombatService = {
 }
 
 local combatants: { [string]: Combatant } = {}
+
+-- Healing areas from MapConfig (center, radius, fraction per second).
+local healAreas: { { center: Vector3, radius: number, rate: number } } = {}
+for _, a in MapConfig.Areas do
+	local rate = (MapConfig.HealAreas :: any)[a.id]
+	if rate then
+		table.insert(healAreas, { center = Vector3.new(a.center[1], 0, a.center[2]), radius = a.radius, rate = rate })
+	end
+end
 local lastHurtAt: { [Combatant]: number } = {} -- players only: for out-of-combat regen
 local byPlayer: { [Player]: Combatant } = {}
 local rng = Random.new()
@@ -482,8 +492,18 @@ function CombatService.Start()
 			-- Players heal quickly once they have been out of combat for a moment.
 			if c.player and not c.dead then
 				local hum = c.humanoid
-				if hum.Health > 0 and hum.Health < hum.MaxHealth and now - (lastHurtAt[c] or 0) >= CombatConfig.OutOfCombatRegenDelay then
-					hum.Health = math.min(hum.MaxHealth, hum.Health + hum.MaxHealth * CombatConfig.OutOfCombatRegenPerSecond * step)
+				if hum.Health > 0 and hum.Health < hum.MaxHealth then
+					local rate = if now - (lastHurtAt[c] or 0) >= CombatConfig.OutOfCombatRegenDelay then CombatConfig.OutOfCombatRegenPerSecond else 0
+					-- Healing areas (hot springs) work even mid-fight.
+					local pos = c.root.Position
+					for _, h in healAreas do
+						if (Vector3.new(pos.X, 0, pos.Z) - h.center).Magnitude <= h.radius then
+							rate = math.max(rate, h.rate)
+						end
+					end
+					if rate > 0 then
+						hum.Health = math.min(hum.MaxHealth, hum.Health + hum.MaxHealth * rate * step)
+					end
 				end
 			end
 			local before = c.posture.value
