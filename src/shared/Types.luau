@@ -66,6 +66,7 @@ export type ProfileData = {
 	-- Combat loadout
 	weapons: { [string]: boolean }, -- weaponId -> owned
 	equippedWeapon: string,
+	fightingStyle: string, -- StyleConfig id
 
 	-- Spirits
 	spirits: { [string]: SpiritInstance }, -- uid -> instance

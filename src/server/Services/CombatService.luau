@@ -26,6 +26,7 @@ local Signal = require(Shared:WaitForChild("Signal"))
 local CombatConfig = require(Config:WaitForChild("CombatConfig"))
 local WeaponConfig = require(Config:WaitForChild("WeaponConfig"))
 local EnemyConfig = require(Config:WaitForChild("EnemyConfig"))
+local StyleConfig = require(Config:WaitForChild("StyleConfig"))
 
 local Logic = script.Parent.Parent:WaitForChild("Logic")
 local CombatRules = require(Logic:WaitForChild("CombatRules"))
@@ -61,6 +62,9 @@ export type Hit = {
 	postureDamage: number,
 	perilous: boolean?,
 	moveId: string,
+	knockback: number?, -- studs/s away from the attacker
+	launch: number?, -- studs/s upward
+	riposte: boolean?, -- empowered counter after a perfect parry (for effects)
 }
 
 local MAX_TARGETS_PER_SWING = 4
@@ -82,6 +86,7 @@ local CombatService = {
 	Damaged = Signal.new(),
 	PostureBroken = Signal.new(),
 	Died = Signal.new(),
+	Staggered = Signal.new(), -- (combatant, seconds): its attack was parried
 }
 
 local combatants: { [string]: Combatant } = {}
@@ -201,8 +206,18 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		end
 	end
 
-	-- Parry reflects posture damage back to the attacker.
+	-- Knockback / launch away from the attacker (halved through a block, none on parry/dodge).
+	if attacker and (hit.knockback or hit.launch) and (res.outcome == "Hit" or res.outcome == "Blocked") then
+		local away = target.root.Position - attacker.root.Position
+		local flat = Vector3.new(away.X, 0, away.Z)
+		local dir = if flat.Magnitude > 0.1 then flat.Unit else attacker.root.CFrame.LookVector
+		local scale = if res.outcome == "Blocked" then 0.5 else 1
+		CombatService.Knockback(target, (dir * (hit.knockback or 0) + Vector3.new(0, hit.launch or 0, 0)) * scale)
+	end
+
+	-- Parry reflects posture damage back to the attacker, and staggers it.
 	if res.outcome == "Parried" and attacker then
+		CombatService.Staggered:Fire(attacker, CombatConfig.ParriedStaggerSeconds)
 		if Posture.Add(attacker.posture, res.reflectPosture, now, attacker.brokenSeconds) then
 			if attacker.rules then
 				attacker.rules.stunnedUntil = now + attacker.brokenSeconds
@@ -231,6 +246,7 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		moveId = hit.moveId,
 		postureFrac = Posture.Fraction(target.posture),
 		broken = broke,
+		riposte = hit.riposte,
 	})
 	target.model:SetAttribute("Posture", Posture.Fraction(target.posture))
 	syncUltimate(target)
@@ -283,6 +299,43 @@ local function sanitizeAim(v: any): Vector3?
 	return flat / m
 end
 
+local function defaultKnockback(action: string): number
+	local d = CombatConfig.DefaultKnockback
+	if action == "HeavyAttack" then
+		return d.heavy
+	elseif action == "Ultimate" then
+		return d.ultimate
+	elseif action == "Skill1" or action == "Skill2" then
+		return d.skill
+	end
+	return d.light
+end
+
+-- Pushes a combatant. NPCs are server-owned, so the server applies a short LinearVelocity;
+-- player characters are owned by their client, which applies the same push locally.
+function CombatService.Knockback(target: Combatant, velocity: Vector3)
+	if velocity.Magnitude < 1 then
+		return
+	end
+	if target.player then
+		Net.Server.Fire("CombatEvent", target.player, { kind = "Knockback", velocity = velocity, seconds = CombatConfig.KnockbackSeconds })
+		return
+	end
+	local root = target.root
+	local att = Instance.new("Attachment")
+	att.Parent = root
+	local lv = Instance.new("LinearVelocity")
+	lv.Attachment0 = att
+	lv.MaxForce = math.huge
+	lv.VectorVelocity = velocity
+	lv.RelativeTo = Enum.ActuatorRelativeTo.World
+	lv.Parent = root
+	task.delay(CombatConfig.KnockbackSeconds, function()
+		lv:Destroy()
+		att:Destroy()
+	end)
+end
+
 local function onCombatAction(player: Player, req: { [string]: any })
 	local c = byPlayer[player]
 	local data = DataService.GetData(player)
@@ -294,15 +347,20 @@ local function onCombatAction(player: Player, req: { [string]: any })
 		return
 	end
 	local now = os.clock()
-	local decision = CombatRules.Validate(c.rules :: CombatRules.State, data.equippedWeapon, action, seq, now)
+	local style = StyleConfig.Get(data.fightingStyle)
+	local hum = c.humanoid
+	local airborne = hum.FloorMaterial == Enum.Material.Air
+		or hum:GetState() == Enum.HumanoidStateType.Freefall
+		or hum:GetState() == Enum.HumanoidStateType.Jumping
+	local decision = CombatRules.Validate(c.rules :: CombatRules.State, data.equippedWeapon, action, seq, now, { airborne = airborne })
 	if not decision.ok then
 		Net.Server.Fire("CombatEvent", player, { kind = "Rejected", seq = seq, reason = decision.reason })
 		return
 	end
-	local dodgeMult = 1 + SpiritLogic.PassiveTotal(data :: any, "DodgeCooldown")
-	CombatRules.Commit(c.rules :: CombatRules.State, decision, now, dodgeMult)
+	local dodgeMult = (1 + SpiritLogic.PassiveTotal(data :: any, "DodgeCooldown")) * style.dashCooldown
+	CombatRules.Commit(c.rules :: CombatRules.State, decision, now, dodgeMult, { speed = style.speed, parryWindowBonus = style.parryWindowBonus })
 	syncUltimate(c)
-	broadcast({ kind = "Action", sourceId = c.id, action = action, moveId = decision.moveId, seq = seq })
+	broadcast({ kind = "Action", sourceId = c.id, action = action, moveId = decision.moveId, seq = seq, route = decision.kind, speed = style.speed })
 
 	local moveId = decision.moveId
 	local move = moveId and WeaponConfig.Moves[moveId]
@@ -311,19 +369,31 @@ local function onCombatAction(player: Player, req: { [string]: any })
 	end
 	local power = ProgressionService.GetPower(player)
 	local aim = sanitizeAim(req.aim)
-	task.delay(move.windup, function()
+	local kb = move.knockback or defaultKnockback(action)
+	task.delay(move.windup / style.speed, function()
 		-- Interrupted by posture break or death during windup: no hit.
 		local rules = c.rules :: CombatRules.State
 		if c.dead or os.clock() < rules.stunnedUntil or byPlayer[player] ~= c then
 			return
 		end
-		for _, target in CombatService.TargetsInArc(c, move.range, move.arcDegrees, aim) do
+		-- A riposte (first hit right after a perfect parry) hits much harder.
+		local riposte = os.clock() < rules.riposteUntil
+		local mult = if riposte then CombatConfig.RiposteMultiplier + style.riposteBonus else 1
+		local hitAny = false
+		for _, target in CombatService.TargetsInArc(c, move.range + (move.step or 0) * 0.5, move.arcDegrees, aim) do
+			hitAny = true
 			CombatService.ApplyHit(c, target, {
-				damage = CombatRules.ScaleDamage(move.damage, power, rng:NextNumber()),
-				postureDamage = move.postureDamage,
+				damage = CombatRules.ScaleDamage(move.damage, power, rng:NextNumber()) * style.damage * mult,
+				postureDamage = move.postureDamage * style.posture * mult,
 				perilous = false,
 				moveId = moveId :: string,
+				knockback = kb * style.knockback,
+				launch = move.launch,
+				riposte = riposte,
 			})
+		end
+		if riposte and hitAny then
+			rules.riposteUntil = 0
 		end
 	end)
 end

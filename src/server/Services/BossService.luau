@@ -171,6 +171,8 @@ local function doHits(e: Encounter, moveId: string)
 						postureDamage = m.postureDamage,
 						perilous = m.perilous,
 						moveId = moveId,
+						knockback = if m.perilous then BossConfig.Knockback.perilous elseif m.arcDegrees >= 300 then BossConfig.Knockback.wide else BossConfig.Knockback.normal,
+						launch = if m.perilous then BossConfig.Knockback.perilousLaunch else nil,
 					})
 				end
 			end

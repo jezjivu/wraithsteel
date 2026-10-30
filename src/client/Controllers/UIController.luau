@@ -34,12 +34,14 @@ local STATION_PANELS = {
 	QuestBoard = "Quests",
 	Store = "Store",
 	CodeStone = "Codes",
+	Dojo = "Styles",
 }
 
 -- Menu bar (available anywhere). Buying weapons / opening lanterns still needs the hub station.
 local MENU = {
 	{ panel = "Spirits", label = "Spirits" },
 	{ panel = "Weapons", label = "Weapons" },
+	{ panel = "Styles", label = "Styles" },
 	{ panel = "Quests", label = "Quests" },
 	{ panel = "Expeditions", label = "Expeditions" },
 	{ panel = "Store", label = "Store" },

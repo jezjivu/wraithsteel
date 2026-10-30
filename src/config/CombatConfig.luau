@@ -46,6 +46,14 @@ CombatConfig.AimAssist = {
 	faceOnAttack = true, -- turn the character toward the aim direction when attacking
 }
 
+-- Combo routes & counters -------------------------------------------------------------------
+CombatConfig.DashAttackWindow = 0.45 -- light attack this soon after a dash = dash strike
+CombatConfig.RiposteWindow = 0.8 -- after a perfect parry, the next hit is a riposte
+CombatConfig.RiposteMultiplier = 1.5 -- damage + posture multiplier on a riposte (plus style bonus)
+CombatConfig.ParriedStaggerSeconds = 0.7 -- enemies whose attack is parried stagger this long
+CombatConfig.DefaultKnockback = { light = 6, heavy = 22, skill = 18, ultimate = 40 } -- studs/s
+CombatConfig.KnockbackSeconds = 0.18 -- how long a knockback push lasts
+
 -- Lock-on camera (CameraController): Tab / middle mouse / R3.
 CombatConfig.LockOn = {
 	range = 45, -- studs to acquire a target

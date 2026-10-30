@@ -222,6 +222,7 @@ local function strike(b: Brain, attackId: string, token: number)
 						postureDamage = a.postureDamage,
 						perilous = a.perilous,
 						moveId = attackId,
+						knockback = if a.perilous then EnemyConfig.PerilousKnockback else EnemyConfig.HitKnockback,
 					})
 				end
 			end
@@ -442,6 +443,17 @@ function EnemyService.Start()
 		local b = brains[c.id]
 		if b and attacker and attacker.player then
 			onHurt(b)
+		end
+	end)
+	-- A parried enemy reels back: queued strikes cancel and it can't act for a moment.
+	CombatService.Staggered:Connect(function(c, seconds)
+		local b = brains[c.id]
+		if b then
+			b.token += 1
+			b.stunnedUntil = math.max(b.stunnedUntil, os.clock() + seconds)
+			b.busyUntil = 0
+			director:Release(c.id, os.clock())
+			Net.Server.FireAll("CombatEvent", { kind = "Stagger", sourceId = c.id, seconds = seconds })
 		end
 	end)
 	CombatService.PostureBroken:Connect(function(c)

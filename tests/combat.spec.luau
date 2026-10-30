@@ -208,4 +208,51 @@ cases["Rust Tiger: gap closer only at range, break interrupts"] = function()
 	expectEq(BossStateMachine.ScaledHealth("rust_tiger", 4), math.floor(def.maxHealth * (1 + 3 * def.healthPerExtraPlayer) + 0.5))
 end
 
+cases["Combat routes: air attack once per jump, dash strike, combo finisher"] = function()
+	local s = CombatRules.NewState()
+	local w = WeaponConfig.Weapons[W]
+	local d = CombatRules.Validate(s, W, "LightAttack", 1, 0, { airborne = true })
+	expectEq(d.moveId, w.air)
+	expectEq(d.kind, "Air")
+	local t = CombatRules.Commit(s, d, 0)
+	d = CombatRules.Validate(s, W, "LightAttack", 2, t + 0.01, { airborne = true })
+	expectEq(d.moveId, w.lightCombo[1]) -- second air press: normal combo
+	-- dash strike
+	local s2 = CombatRules.NewState()
+	CombatRules.Commit(s2, CombatRules.Validate(s2, W, "Dodge", 1, 0), 0)
+	d = CombatRules.Validate(s2, W, "LightAttack", 2, 0.4)
+	expectEq(d.kind, "Dash")
+	CombatRules.Commit(s2, d, 0.4)
+	-- finisher after two lights
+	local s3 = CombatRules.NewState()
+	local now = 0
+	for i = 1, 2 do
+		local x = CombatRules.Validate(s3, W, "LightAttack", i, now)
+		now += CombatRules.Commit(s3, x, now) + 0.01
+	end
+	d = CombatRules.Validate(s3, W, "HeavyAttack", 3, now)
+	expectEq(d.moveId, w.finisher)
+	CombatRules.Commit(s3, d, now)
+	expectEq(s3.comboIndex, 0)
+end
+
+cases["Combat: perfect parry opens riposte window; style speed shortens moves"] = function()
+	local s = CombatRules.NewState()
+	CombatRules.Commit(s, CombatRules.Validate(s, W, "Parry", 1, 0), 0, nil, { parryWindowBonus = 0.1 })
+	expectEq(CombatRules.ResolveIncoming(s, { damage = 5, postureDamage = 5 }, 0.25).outcome, "Parried") -- 0.2 + 0.1 bonus
+	expectTrue(s.riposteUntil > 0.25)
+	local a, b = CombatRules.NewState(), CombatRules.NewState()
+	local slow = CombatRules.Commit(a, CombatRules.Validate(a, W, "HeavyAttack", 1, 0), 0, nil, { speed = 1 })
+	local fast = CombatRules.Commit(b, CombatRules.Validate(b, W, "HeavyAttack", 1, 0), 0, nil, { speed = 1.25 })
+	expectTrue(fast < slow)
+end
+
+cases["Every class has finisher, air and dash moves"] = function()
+	for id, w in WeaponConfig.Weapons do
+		for _, m in { w.finisher, w.air, w.dash } do
+			expectTrue(WeaponConfig.Moves[m] ~= nil, id .. " " .. tostring(m))
+		end
+	end
+end
+
 return cases

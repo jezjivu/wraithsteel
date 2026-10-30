@@ -289,6 +289,29 @@ local function trainingYard(parent: Instance)
 	local signPost = block(parent, "YardSign", Vector3.new(4, 0.4, 0.4), CFrame.new(yard + Vector3.new(0, 6, -8)), fence, Enum.Material.Wood)
 	sign(signPost, "Training Yard", "Try your weapons on the dummies", Color3.fromRGB(240, 220, 170), 2, 260)
 
+	-- Dojo pavilion at the back of the yard: pick a fighting style.
+	local dojo = Instance.new("Model")
+	dojo.Name = "Dojo"
+	dojo.Parent = parent
+	local back = yard + Vector3.new(0, 0, 13)
+	block(dojo, "DojoFloor", Vector3.new(18, 0.4, 8), CFrame.new(back + Vector3.new(0, -0.05, 0)), Color3.fromRGB(140, 105, 70), Enum.Material.WoodPlanks)
+	for _, x in { -8.5, 8.5 } do
+		for _, z in { -3.5, 3.5 } do
+			block(dojo, "DojoPillar", Vector3.new(0.8, 9, 0.8), CFrame.new(back + Vector3.new(x, 4.5, z)), Color3.fromRGB(140, 40, 35), Enum.Material.Wood)
+		end
+	end
+	block(dojo, "DojoRoof", Vector3.new(21, 0.8, 11), CFrame.new(back + Vector3.new(0, 9.4, 0)), Color3.fromRGB(45, 45, 55), Enum.Material.Slate)
+	block(dojo, "DojoBack", Vector3.new(17, 8, 0.4), CFrame.new(back + Vector3.new(0, 4.2, 3.8)), Color3.fromRGB(235, 228, 210), Enum.Material.SmoothPlastic)
+	local scroll = block(dojo, "StyleScroll", Vector3.new(3, 5, 0.2), CFrame.new(back + Vector3.new(0, 4.5, 3.5)), Color3.fromRGB(245, 240, 225), Enum.Material.Fabric)
+	local point = block(dojo, "StationPoint", Vector3.new(4, 4, 1), CFrame.new(back + Vector3.new(0, 3, -5)), Color3.new(1, 1, 1))
+	point.Transparency = 1
+	point.CanCollide = false
+	point.CanQuery = false
+	point:SetAttribute("Station", "Dojo")
+	addPrompt(point, "Learn styles", "Dojo of Nine Forms")
+	stationPositions.Dojo = point.Position
+	sign(scroll, "Dojo of Nine Forms", "Fighting styles", Color3.fromRGB(255, 200, 150), 5, 240)
+
 	local spawns = workspace:FindFirstChild(EnemyConfig.SpawnFolderName)
 	if spawns == nil then
 		spawns = Instance.new("Folder")

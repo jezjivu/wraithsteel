@@ -17,6 +17,12 @@ Migrations.Steps = {
 			data.equippedSpirits = {}
 		end
 	end,
+	-- v1 -> v2: fighting styles.
+	[2] = function(data: { [string]: any })
+		if type(data.fightingStyle) ~= "string" then
+			data.fightingStyle = "river"
+		end
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server

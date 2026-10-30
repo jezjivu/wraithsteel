@@ -19,6 +19,9 @@ export type MoveDef = {
 	dodgeCancelable: boolean?,
 	perilous: boolean?,
 	animationId: string,
+	knockback: number?, -- studs/s pushed away from the attacker on hit
+	launch: number?, -- studs/s thrown upward on hit
+	step: number?, -- studs the attacker surges forward during the active frames (root motion)
 }
 
 export type WeaponClass = "Jian" | "Dao" | "Spear" | "Fan" | "Staff" | "Greatblade"
@@ -46,6 +49,9 @@ export type WeaponDef = {
 	lightCombo: { string }, -- ordered move ids
 	heavy: string,
 	skills: { [string]: string }, -- Skill1/Skill2/Ultimate -> move id
+	finisher: string, -- heavy pressed after 2+ lights
+	air: string, -- light pressed while airborne
+	dash: string, -- light pressed right after a dash
 	visual: WeaponVisual,
 	modelId: number, -- optional Studio model; 0 = use the built model
 }
@@ -54,7 +60,7 @@ local WeaponConfig = {}
 
 local PLACEHOLDER_ANIM = "rbxassetid://0"
 
-type MoveExtra = { cooldown: number?, cancel: boolean?, perilous: boolean? }
+type MoveExtra = { cooldown: number?, cancel: boolean?, perilous: boolean?, kb: number?, launch: number?, step: number? }
 
 local function move(
 	name: string,
@@ -81,6 +87,9 @@ local function move(
 		dodgeCancelable = e.cancel,
 		perilous = e.perilous,
 		animationId = PLACEHOLDER_ANIM,
+		knockback = e.kb,
+		launch = e.launch,
+		step = e.step,
 	}
 end
 
@@ -145,16 +154,37 @@ WeaponConfig.Moves = {
 	gb_skill_charge = move("Colossus Charge", 30, 34, 0.35, 0.4, 0.5, 14, 50, { cooldown = 9 }),
 	gb_skill_bulwark = move("Ashen Bulwark", 0, 0, 0.05, 0.8, 0.3, 0, 360, { cooldown = 14 }),
 	gb_ultimate = move("Ninth Gate Sundering", 95, 110, 0.9, 0.5, 1.0, 15, 200, { cooldown = 45 }),
+
+	-- Combo finishers (heavy after 2+ lights), air slams (attack while airborne) and dash
+	-- strikes (attack right after a dash) for every class.
+	jian_finisher = move("Heaven-Splitting Rise", 18, 24, 0.2, 0.15, 0.45, 8, 100, { launch = 45, kb = 10, step = 3 }),
+	jian_air = move("Falling Star", 20, 22, 0.12, 0.14, 0.4, 9, 360, { kb = 30 }),
+	jian_dash = move("Swallow's Pass", 16, 14, 0.06, 0.14, 0.3, 11, 70, { kb = 15, step = 8 }),
+	dao_finisher = move("Furnace Break", 28, 32, 0.3, 0.15, 0.55, 8.5, 140, { kb = 55, step = 3 }),
+	dao_air = move("Meteor Cleave", 30, 28, 0.15, 0.15, 0.5, 10, 360, { kb = 40 }),
+	dao_dash = move("Wildfire Rush", 22, 18, 0.08, 0.16, 0.35, 11, 100, { kb = 25, step = 9 }),
+	spear_finisher = move("Dragon Ascends", 20, 22, 0.22, 0.16, 0.45, 12, 50, { launch = 50, kb = 8, step = 4 }),
+	spear_air = move("Pillar Drop", 22, 22, 0.12, 0.14, 0.45, 10, 360, { kb = 30 }),
+	spear_dash = move("Piercing Comet", 20, 16, 0.06, 0.16, 0.35, 15, 35, { kb = 30, step = 11 }),
+	fan_finisher = move("Cyclone Fold", 16, 30, 0.2, 0.3, 0.45, 9, 360, { kb = 60 }),
+	fan_air = move("Crane Dive", 16, 20, 0.1, 0.14, 0.35, 9, 360, { kb = 35 }),
+	fan_dash = move("Gale Cut", 14, 16, 0.05, 0.14, 0.28, 11, 90, { kb = 20, step = 9 }),
+	staff_finisher = move("Temple Sweep", 18, 34, 0.25, 0.2, 0.5, 10, 200, { launch = 35, kb = 20 }),
+	staff_air = move("Bell Pole Slam", 22, 34, 0.14, 0.16, 0.45, 11, 360, { kb = 40 }),
+	staff_dash = move("Pilgrim's Charge", 18, 24, 0.08, 0.16, 0.35, 11, 80, { kb = 30, step = 9 }),
+	gb_finisher = move("Gate Collapse", 40, 44, 0.4, 0.18, 0.7, 10, 160, { kb = 80, step = 3 }),
+	gb_air = move("Mountain Fall", 38, 40, 0.18, 0.16, 0.6, 12, 360, { kb = 50 }),
+	gb_dash = move("Avalanche Step", 30, 30, 0.1, 0.18, 0.45, 12, 110, { kb = 40, step = 10 }),
 } :: { [string]: MoveDef }
 
 -- Movesets shared by every weapon of a class.
 WeaponConfig.ClassMoves = {
-	Jian = { lightCombo = { "jian_light_1", "jian_light_2", "jian_light_3", "jian_light_4" }, heavy = "jian_heavy", skills = { Skill1 = "jian_skill_petal", Skill2 = "jian_skill_mirror", Ultimate = "jian_ultimate" } },
-	Dao = { lightCombo = { "dao_light_1", "dao_light_2", "dao_light_3" }, heavy = "dao_heavy", skills = { Skill1 = "dao_skill_roll", Skill2 = "dao_skill_wall", Ultimate = "dao_ultimate" } },
-	Spear = { lightCombo = { "spear_light_1", "spear_light_2", "spear_light_3", "spear_light_4" }, heavy = "spear_heavy", skills = { Skill1 = "spear_skill_vault", Skill2 = "spear_skill_whirl", Ultimate = "spear_ultimate" } },
-	Fan = { lightCombo = { "fan_light_1", "fan_light_2", "fan_light_3", "fan_light_4", "fan_light_5" }, heavy = "fan_heavy", skills = { Skill1 = "fan_skill_volley", Skill2 = "fan_skill_fold", Ultimate = "fan_ultimate" } },
-	Staff = { lightCombo = { "staff_light_1", "staff_light_2", "staff_light_3", "staff_light_4" }, heavy = "staff_heavy", skills = { Skill1 = "staff_skill_vault", Skill2 = "staff_skill_spin", Ultimate = "staff_ultimate" } },
-	Greatblade = { lightCombo = { "gb_light_1", "gb_light_2", "gb_light_3" }, heavy = "gb_heavy", skills = { Skill1 = "gb_skill_charge", Skill2 = "gb_skill_bulwark", Ultimate = "gb_ultimate" } },
+	Jian = { lightCombo = { "jian_light_1", "jian_light_2", "jian_light_3", "jian_light_4" }, heavy = "jian_heavy", skills = { Skill1 = "jian_skill_petal", Skill2 = "jian_skill_mirror", Ultimate = "jian_ultimate" }, finisher = "jian_finisher", air = "jian_air", dash = "jian_dash" },
+	Dao = { lightCombo = { "dao_light_1", "dao_light_2", "dao_light_3" }, heavy = "dao_heavy", skills = { Skill1 = "dao_skill_roll", Skill2 = "dao_skill_wall", Ultimate = "dao_ultimate" }, finisher = "dao_finisher", air = "dao_air", dash = "dao_dash" },
+	Spear = { lightCombo = { "spear_light_1", "spear_light_2", "spear_light_3", "spear_light_4" }, heavy = "spear_heavy", skills = { Skill1 = "spear_skill_vault", Skill2 = "spear_skill_whirl", Ultimate = "spear_ultimate" }, finisher = "spear_finisher", air = "spear_air", dash = "spear_dash" },
+	Fan = { lightCombo = { "fan_light_1", "fan_light_2", "fan_light_3", "fan_light_4", "fan_light_5" }, heavy = "fan_heavy", skills = { Skill1 = "fan_skill_volley", Skill2 = "fan_skill_fold", Ultimate = "fan_ultimate" }, finisher = "fan_finisher", air = "fan_air", dash = "fan_dash" },
+	Staff = { lightCombo = { "staff_light_1", "staff_light_2", "staff_light_3", "staff_light_4" }, heavy = "staff_heavy", skills = { Skill1 = "staff_skill_vault", Skill2 = "staff_skill_spin", Ultimate = "staff_ultimate" }, finisher = "staff_finisher", air = "staff_air", dash = "staff_dash" },
+	Greatblade = { lightCombo = { "gb_light_1", "gb_light_2", "gb_light_3" }, heavy = "gb_heavy", skills = { Skill1 = "gb_skill_charge", Skill2 = "gb_skill_bulwark", Ultimate = "gb_ultimate" }, finisher = "gb_finisher", air = "gb_air", dash = "gb_dash" },
 }
 
 WeaponConfig.ClassBlurb = {
@@ -192,6 +222,9 @@ local function weapon(spec: WeaponSpec): WeaponDef
 		lightCombo = moves.lightCombo,
 		heavy = moves.heavy,
 		skills = moves.skills,
+		finisher = moves.finisher,
+		air = moves.air,
+		dash = moves.dash,
 		visual = spec.visual,
 		modelId = 0,
 	}

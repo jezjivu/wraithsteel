@@ -52,6 +52,9 @@ export type BossDef = {
 
 local BossConfig = {}
 
+-- Pushback (studs/s) when boss hits land on players.
+BossConfig.Knockback = { normal = 16, wide = 30, perilous = 45, perilousLaunch = 18 }
+
 local PLACEHOLDER_ANIM = "rbxassetid://0"
 
 BossConfig.Bosses = {

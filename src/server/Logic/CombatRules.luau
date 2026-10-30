@@ -30,6 +30,9 @@ export type State = {
 	counterUntil: number, -- counter stance (treated as perfect parry)
 	ultimateCharge: number,
 	recentActions: { number }, -- timestamps in the last second
+	lastDodgeAt: number, -- for dash attacks
+	airUsed: boolean, -- one air attack per jump
+	riposteUntil: number, -- empowered counter-attack window after a perfect parry
 }
 
 function CombatRules.NewState(): State
@@ -50,6 +53,9 @@ function CombatRules.NewState(): State
 		counterUntil = 0,
 		ultimateCharge = 0,
 		recentActions = {},
+		lastDodgeAt = -math.huge,
+		airUsed = false,
+		riposteUntil = 0,
 	}
 end
 
@@ -69,10 +75,16 @@ export type Decision = {
 	reason: string?,
 	action: string,
 	moveId: string?,
+	kind: ("Finisher" | "Air" | "Dash")?, -- special routes (for effects / analytics)
 }
 
+export type Opts = { airborne: boolean? }
+
+-- Fighting-style modifiers used by Commit (StyleConfig).
+export type Mods = { speed: number?, parryWindowBonus: number? }
+
 -- Validates a request. Does not change state except seq/rate bookkeeping; call Commit after.
-function CombatRules.Validate(state: State, weaponId: string, action: string, seq: number, now: number): Decision
+function CombatRules.Validate(state: State, weaponId: string, action: string, seq: number, now: number, opts: Opts?): Decision
 	local weapon = WeaponConfig.Weapons[weaponId]
 	if weapon == nil then
 		return { ok = false, reason = "NoWeapon", action = action }
@@ -109,12 +121,26 @@ function CombatRules.Validate(state: State, weaponId: string, action: string, se
 		end
 		return { ok = true, action = action }
 	elseif action == "LightAttack" then
+		local airborne = opts ~= nil and opts.airborne == true
+		if not airborne then
+			state.airUsed = false
+		end
+		if airborne and not state.airUsed then
+			return { ok = true, action = action, moveId = weapon.air, kind = "Air" }
+		end
+		if now - state.lastDodgeAt <= CombatConfig.DashAttackWindow then
+			return { ok = true, action = action, moveId = weapon.dash, kind = "Dash" }
+		end
 		local idx = 1
 		if now - state.lastLightAt <= CombatConfig.Validation.ComboResetSeconds and state.comboIndex < #weapon.lightCombo then
 			idx = state.comboIndex + 1
 		end
 		return { ok = true, action = action, moveId = weapon.lightCombo[idx] }
 	elseif action == "HeavyAttack" then
+		-- Heavy right after 2+ light hits becomes the class finisher.
+		if now - state.lastLightAt <= CombatConfig.Validation.ComboResetSeconds and state.comboIndex >= 2 then
+			return { ok = true, action = action, moveId = weapon.finisher, kind = "Finisher" }
+		end
 		return { ok = true, action = action, moveId = weapon.heavy }
 	elseif action == "Skill1" or action == "Skill2" or action == "Ultimate" then
 		local moveId = weapon.skills[action]
@@ -134,17 +160,20 @@ function CombatRules.Validate(state: State, weaponId: string, action: string, se
 end
 
 -- Applies a validated decision to the state. Returns the move's total duration (0 for non-moves).
-function CombatRules.Commit(state: State, d: Decision, now: number, dodgeCooldownMult: number?): number
+function CombatRules.Commit(state: State, d: Decision, now: number, dodgeCooldownMult: number?, mods: Mods?): number
 	table.insert(state.recentActions, now)
+	local speed = (mods and mods.speed) or 1
 	if d.action == "Dodge" then
 		state.busyUntil = now + CombatConfig.DodgeDuration
 		state.cancelable = false
 		state.iframeUntil = now + CombatConfig.DodgeIFrames
 		state.dodgeReadyAt = now + CombatConfig.DodgeCooldown * (dodgeCooldownMult or 1)
+		state.lastDodgeAt = now
 		return CombatConfig.DodgeDuration
 	elseif d.action == "Parry" then
-		state.parryUntil = now + CombatConfig.ParryWindow
-		state.blockUntil = now + CombatConfig.ParryWindow + BLOCK_HOLD_SECONDS
+		local window = CombatConfig.ParryWindow + ((mods and mods.parryWindowBonus) or 0)
+		state.parryUntil = now + window
+		state.blockUntil = now + window + BLOCK_HOLD_SECONDS
 		-- Assume a whiff; ResolveIncoming resets the streak on a successful parry.
 		state.parryReadyAt = now + CombatConfig.ParryCooldown + state.whiffStreak * CombatConfig.ParrySpamPenalty
 		state.whiffStreak += 1
@@ -154,10 +183,18 @@ function CombatRules.Commit(state: State, d: Decision, now: number, dodgeCooldow
 	if not move then
 		return 0
 	end
-	local total = move.windup + move.active + move.recovery
+	local total = move.windup / speed + move.active + move.recovery / speed
 	state.busyUntil = now + total
 	state.cancelable = move.dodgeCancelable == true
-	if d.action == "LightAttack" then
+	if d.kind == "Air" then
+		state.airUsed = true
+		state.comboIndex = 0
+	elseif d.kind == "Dash" then
+		state.lastDodgeAt = -math.huge -- one dash strike per dash
+		state.comboIndex = 0
+	elseif d.kind == "Finisher" then
+		state.comboIndex = 0
+	elseif d.action == "LightAttack" then
 		local weapon = nil
 		for _, w in WeaponConfig.Weapons do
 			if table.find(w.lightCombo, d.moveId :: string) then
@@ -215,6 +252,7 @@ function CombatRules.ResolveIncoming(state: State, hit: Incoming, now: number): 
 	if not hit.perilous then
 		if now < state.parryUntil or now < state.counterUntil then
 			state.whiffStreak = 0
+			state.riposteUntil = now + CombatConfig.RiposteWindow
 			state.parryReadyAt = now -- successful parry refunds the cooldown
 			state.ultimateCharge = math.min(WeaponConfig.UltimateChargeMax, state.ultimateCharge + WeaponConfig.UltimateChargePerParry)
 			return {

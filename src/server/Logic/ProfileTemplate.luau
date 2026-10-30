@@ -26,6 +26,7 @@ function ProfileTemplate.New(): Types.ProfileData
 
 		weapons = { [EconomyConfig.StartingWeapon] = true },
 		equippedWeapon = EconomyConfig.StartingWeapon,
+		fightingStyle = "river",
 
 		spirits = {},
 		equippedSpirits = {},
