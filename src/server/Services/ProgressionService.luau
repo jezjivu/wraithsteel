@@ -56,9 +56,9 @@ function ProgressionService.GetMultiplier(player: Player, category: string): num
 	local data = DataService.GetData(player)
 	if data then
 		if category == "Ember" then
-			extra += SpiritLogic.PassiveTotal(data :: any, "EmberMultiplier")
+			extra += SpiritLogic.Stat(data :: any, "EmberFind")
 		elseif category == "Luck" then
-			extra += SpiritLogic.PassiveTotal(data :: any, "Luck")
+			extra += SpiritLogic.Stat(data :: any, "Luck")
 		end
 	end
 	return ProgressionMath.CategoryMultiplier(category, active, extra)

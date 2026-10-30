@@ -6,6 +6,8 @@ local CombatConfig = {}
 -- Player defaults ---------------------------------------------------------------------------
 CombatConfig.PlayerMaxHealth = 100
 CombatConfig.PlayerHealthPerLevel = 6
+-- Critical hits (spirit CritChance / CritDamage stats add to these).
+CombatConfig.Crit = { baseChance = 0.05, baseDamage = 0.5 }
 CombatConfig.OutOfCombatRegenDelay = 5 -- seconds without taking damage before fast regen
 CombatConfig.OutOfCombatRegenPerSecond = 0.08 -- fraction of max health per second
 CombatConfig.PlayerMaxPosture = 100

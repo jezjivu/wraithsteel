@@ -13,6 +13,10 @@
 --   CombatService.Damaged: Signal(target, attacker?, resolution)
 --   CombatService.PostureBroken: Signal(target)
 --   CombatService.Died: Signal(target, contributions: { [Player]: number })
+--   CombatService.PlayerStats(player) -> spirit stat totals (Shared/SpiritStats, cached)
+--   CombatService.RollCrit(player) -> (multiplier, crit: boolean)
+--   CombatService.Heal(c, amount) / AddShield(c, amount, seconds)
+--   CombatService.OnSpiritCall: ((player) -> ())?  -- set by SpiritAbilityService (T key)
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -38,6 +42,7 @@ local DataService = require(script.Parent.DataService)
 local ProgressionService = require(script.Parent.ProgressionService)
 local QuestService = require(script.Parent.QuestService)
 local AnalyticsService = require(script.Parent.AnalyticsService)
+local SpiritService = require(script.Parent.SpiritService)
 
 export type Combatant = {
 	id: string,
@@ -56,6 +61,8 @@ export type Combatant = {
 	dead: boolean,
 	contributions: { [Player]: number },
 	guardUntil: number?, -- enemies: guard raised until this time (blocks until posture breaks)
+	shield: number?, -- absorbs health damage until shieldUntil (spirit wards, Jade Barrier)
+	shieldUntil: number?,
 }
 
 export type Hit = {
@@ -66,6 +73,9 @@ export type Hit = {
 	knockback: number?, -- studs/s away from the attacker
 	launch: number?, -- studs/s upward
 	riposte: boolean?, -- empowered counter after a perfect parry (for effects)
+	crit: boolean?, -- critical hit (for effects)
+	source: string?, -- "spirit" | "spell" (for effects; also no lifesteal from spirits)
+	color: { number }?, -- damage number tint
 }
 
 local MAX_TARGETS_PER_SWING = 4
@@ -88,6 +98,7 @@ local CombatService = {
 	PostureBroken = Signal.new(),
 	Died = Signal.new(),
 	Staggered = Signal.new(), -- (combatant, seconds): its attack was parried
+	OnSpiritCall = nil :: ((player: Player) -> ())?,
 }
 
 local combatants: { [string]: Combatant } = {}
@@ -101,6 +112,7 @@ for _, a in MapConfig.Areas do
 	end
 end
 local lastHurtAt: { [Combatant]: number } = {} -- players only: for out-of-combat regen
+local statCache: { [Player]: { [string]: number } } = {}
 local byPlayer: { [Player]: Combatant } = {}
 local rng = Random.new()
 
@@ -142,15 +154,79 @@ function CombatService.All(): { Combatant }
 	return out
 end
 
+local EMPTY_STATS: { [string]: number } = {}
+
+-- Spirit stat totals for a player (cached; cleared when their spirit party changes).
+function CombatService.PlayerStats(player: Player): { [string]: number }
+	local cached = statCache[player]
+	if cached then
+		return cached
+	end
+	local data = DataService.GetData(player)
+	if data == nil then
+		return EMPTY_STATS
+	end
+	local totals = SpiritLogic.StatTotals(data :: any)
+	statCache[player] = totals
+	return totals
+end
+
+function CombatService.ClearStatCache(player: Player)
+	statCache[player] = nil
+end
+
+function CombatService.RollCrit(player: Player): (number, boolean)
+	local stats = CombatService.PlayerStats(player)
+	local chance = CombatConfig.Crit.baseChance + (stats.CritChance or 0)
+	if rng:NextNumber() < chance then
+		return 1 + CombatConfig.Crit.baseDamage + (stats.CritDamage or 0), true
+	end
+	return 1, false
+end
+
+local function maxHealthFor(player: Player, level: number): number
+	local base = CombatConfig.PlayerMaxHealth + (level - 1) * CombatConfig.PlayerHealthPerLevel
+	return math.floor(base * (1 + (CombatService.PlayerStats(player).Health or 0)))
+end
+
+local function syncShield(c: Combatant)
+	local frac = if c.shield and c.shield > 0 then c.shield / math.max(1, c.humanoid.MaxHealth) else 0
+	c.model:SetAttribute("Shield", frac)
+end
+
+local function broadcast(payload: { [string]: any })
+	Net.Server.FireAll("CombatEvent", payload)
+end
+
+function CombatService.Heal(c: Combatant, amount: number)
+	if c.dead or amount <= 0 then
+		return
+	end
+	local hum = c.humanoid
+	local before = hum.Health
+	hum.Health = math.min(hum.MaxHealth, hum.Health + amount)
+	local healed = hum.Health - before
+	if healed >= 1 then
+		broadcast({ kind = "Heal", targetId = c.id, amount = healed })
+	end
+end
+
+function CombatService.AddShield(c: Combatant, amount: number, seconds: number)
+	if c.dead or amount <= 0 then
+		return
+	end
+	local now = os.clock()
+	local current = if c.shieldUntil and now < c.shieldUntil then c.shield or 0 else 0
+	c.shield = math.max(current, amount)
+	c.shieldUntil = now + seconds
+	syncShield(c)
+end
+
 -- Mirrors ultimate charge (0..1) to the character for the HUD.
 local function syncUltimate(c: Combatant)
 	if c.rules then
 		c.model:SetAttribute("Ultimate", c.rules.ultimateCharge / WeaponConfig.UltimateChargeMax)
 	end
-end
-
-local function broadcast(payload: { [string]: any })
-	Net.Server.FireAll("CombatEvent", payload)
 end
 
 -- Applies a hit to `target`. Players resolve parry/block/dodge; enemies/bosses take it directly.
@@ -180,15 +256,15 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	end
 	local postureDamage = res.postureDamage
 	if target.player then
-		local data = DataService.GetData(target.player)
-		if data then
-			postureDamage *= 1 + SpiritLogic.PassiveTotal(data :: any, "PostureDamageTaken")
-		end
+		postureDamage *= 1 - (CombatService.PlayerStats(target.player).Guard or 0)
 	end
 	if attacker and attacker.player then
-		local data = DataService.GetData(attacker.player)
-		if data then
-			postureDamage *= 1 + SpiritLogic.PassiveTotal(data :: any, "PostureDamageDealt")
+		local stats = CombatService.PlayerStats(attacker.player)
+		postureDamage *= 1 + (stats.Posture or 0)
+		local lifesteal = stats.Lifesteal or 0
+		if lifesteal > 0 and damage > 0 and hit.source ~= "spirit" and (res.outcome == "Hit" or res.outcome == "Blocked") then
+			local hum = attacker.humanoid
+			hum.Health = math.min(hum.MaxHealth, hum.Health + damage * lifesteal)
 		end
 		target.contributions[attacker.player] = (target.contributions[attacker.player] or 0) + damage
 		if attacker.rules then
@@ -199,6 +275,17 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		end
 	end
 
+	-- Shields soak health damage first.
+	if damage > 0 and target.shield and target.shield > 0 then
+		if target.shieldUntil and now < target.shieldUntil then
+			local absorbed = math.min(target.shield, damage)
+			target.shield -= absorbed
+			damage -= absorbed
+		else
+			target.shield = 0
+		end
+		syncShield(target)
+	end
 	if damage > 0 then
 		target.humanoid.Health = math.max(0, target.humanoid.Health - damage)
 		if target.player then
@@ -238,11 +325,6 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		if target.player then
 			QuestService.Increment(target.player, "PerfectParries", 1)
 			AnalyticsService.Onboarding(target.player, "FirstParry")
-			local data = DataService.GetData(target.player)
-			local bonus = if data then SpiritLogic.PassiveTotal(data :: any, "EmberOnParry") else 0
-			if bonus > 0 then
-				ProgressionService.AddEmber(target.player, bonus, "Parry")
-			end
 		end
 	end
 
@@ -257,6 +339,9 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		postureFrac = Posture.Fraction(target.posture),
 		broken = broke,
 		riposte = hit.riposte,
+		crit = hit.crit,
+		source = hit.source,
+		color = hit.color,
 	})
 	target.model:SetAttribute("Posture", Posture.Fraction(target.posture))
 	syncUltimate(target)
@@ -356,6 +441,12 @@ local function onCombatAction(player: Player, req: { [string]: any })
 	if type(action) ~= "string" or not VALID_ACTIONS[action] or type(seq) ~= "number" or seq ~= seq then
 		return
 	end
+	if action == "SpiritCall" then
+		if CombatService.OnSpiritCall then
+			CombatService.OnSpiritCall(player)
+		end
+		return
+	end
 	local now = os.clock()
 	local style = StyleConfig.Get(data.fightingStyle)
 	local hum = c.humanoid
@@ -367,7 +458,8 @@ local function onCombatAction(player: Player, req: { [string]: any })
 		Net.Server.Fire("CombatEvent", player, { kind = "Rejected", seq = seq, reason = decision.reason })
 		return
 	end
-	local dodgeMult = (1 + SpiritLogic.PassiveTotal(data :: any, "DodgeCooldown")) * style.dashCooldown
+	local stats = CombatService.PlayerStats(player)
+	local dodgeMult = (1 - (stats.Haste or 0)) * style.dashCooldown
 	CombatRules.Commit(c.rules :: CombatRules.State, decision, now, dodgeMult, { speed = style.speed, parryWindowBonus = style.parryWindowBonus })
 	syncUltimate(c)
 	broadcast({ kind = "Action", sourceId = c.id, action = action, moveId = decision.moveId, seq = seq, route = decision.kind, speed = style.speed })
@@ -390,10 +482,13 @@ local function onCombatAction(player: Player, req: { [string]: any })
 		local riposte = os.clock() < rules.riposteUntil
 		local mult = if riposte then CombatConfig.RiposteMultiplier + style.riposteBonus else 1
 		local hitAny = false
+		local attackMult = 1 + (CombatService.PlayerStats(player).Attack or 0)
 		for _, target in CombatService.TargetsInArc(c, move.range + (move.step or 0) * 0.5, move.arcDegrees, aim) do
 			hitAny = true
+			local critMult, crit = CombatService.RollCrit(player)
 			CombatService.ApplyHit(c, target, {
-				damage = CombatRules.ScaleDamage(move.damage, power, rng:NextNumber()) * style.damage * mult,
+				crit = crit,
+				damage = CombatRules.ScaleDamage(move.damage, power, rng:NextNumber()) * style.damage * mult * attackMult * critMult,
 				postureDamage = move.postureDamage * style.posture * mult,
 				perilous = false,
 				moveId = moveId :: string,
@@ -421,7 +516,8 @@ local function onCharacterAdded(player: Player, character: Model)
 	end
 	local data = DataService.WaitForData(player, 20)
 	local level = if data then data.level else 1
-	humanoid.MaxHealth = CombatConfig.PlayerMaxHealth + (level - 1) * CombatConfig.PlayerHealthPerLevel
+	statCache[player] = nil
+	humanoid.MaxHealth = maxHealthFor(player, level)
 	humanoid.Health = humanoid.MaxHealth
 	playerCounter += 1
 	local c: Combatant = {
@@ -455,8 +551,19 @@ function CombatService.Start()
 	ProgressionService.LevelUp:Connect(function(player: Player, level: number)
 		local c = byPlayer[player]
 		if c and not c.dead then
-			c.humanoid.MaxHealth = CombatConfig.PlayerMaxHealth + (level - 1) * CombatConfig.PlayerHealthPerLevel
+			c.humanoid.MaxHealth = maxHealthFor(player, level)
 			c.humanoid.Health = c.humanoid.MaxHealth
+		end
+	end)
+	-- Spirit party changes: new stats, new max health (keeps the same health fraction).
+	SpiritService.CollectionChanged:Connect(function(player: Player)
+		statCache[player] = nil
+		local c = byPlayer[player]
+		local data = DataService.GetData(player)
+		if c and data and not c.dead then
+			local frac = c.humanoid.Health / math.max(1, c.humanoid.MaxHealth)
+			c.humanoid.MaxHealth = maxHealthFor(player, data.level)
+			c.humanoid.Health = c.humanoid.MaxHealth * frac
 		end
 	end)
 	local function hook(player: Player)
@@ -472,6 +579,7 @@ function CombatService.Start()
 		hook(p)
 	end
 	Players.PlayerRemoving:Connect(function(player)
+		statCache[player] = nil
 		local c = byPlayer[player]
 		if c then
 			CombatService.Unregister(c.id)
@@ -505,6 +613,10 @@ function CombatService.Start()
 						hum.Health = math.min(hum.MaxHealth, hum.Health + hum.MaxHealth * rate * step)
 					end
 				end
+			end
+			if c.shield and c.shield > 0 and c.shieldUntil and now >= c.shieldUntil then
+				c.shield = 0
+				syncShield(c)
 			end
 			local before = c.posture.value
 			Posture.Update(c.posture, now, step)

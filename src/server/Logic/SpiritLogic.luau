@@ -10,6 +10,7 @@ local Config = ReplicatedStorage:WaitForChild("Config")
 local SpiritConfig = require(Config:WaitForChild("SpiritConfig"))
 local EconomyConfig = require(Config:WaitForChild("EconomyConfig"))
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
+local SpiritStats = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SpiritStats"))
 
 type SpiritInstance = Types.SpiritInstance
 
@@ -249,18 +250,21 @@ function SpiritLogic.EquippedPower(data: SpiritData): number
 	return total
 end
 
--- Sum of passive values of a stat from equipped spirits.
-function SpiritLogic.PassiveTotal(data: SpiritData, stat: string): number
-	local total = 0
+-- Capped stat totals of the equipped spirits (Shared/SpiritStats).
+function SpiritLogic.StatTotals(data: SpiritData): { [string]: number }
+	local list: { SpiritStats.SpiritRef } = {}
 	for _, uid in data.equippedSpirits do
 		local s = data.spirits[uid]
-		local def = s and SpiritConfig.Spirits[s.id]
-		local passive = def and def.passive and (SpiritConfig.Passives :: any)[def.passive]
-		if passive and passive.stat == stat then
-			total += passive.value
+		if s then
+			table.insert(list, { id = s.id, rarity = s.rarity :: string, mutation = s.mutation :: string, level = s.level })
 		end
 	end
-	return total
+	return SpiritStats.Totals(list)
+end
+
+-- One stat of the equipped spirits (0 when none give it).
+function SpiritLogic.Stat(data: SpiritData, stat: string): number
+	return SpiritLogic.StatTotals(data)[stat] or 0
 end
 
 return SpiritLogic
