@@ -67,6 +67,7 @@ export type ProfileData = {
 	weapons: { [string]: boolean }, -- weaponId -> owned
 	equippedWeapon: string,
 	fightingStyle: string, -- StyleConfig id
+	spellLoadout: { string }, -- SpellConfig ids per art slot ("" = empty); added in dataVersion 3
 
 	-- Spirits
 	spirits: { [string]: SpiritInstance }, -- uid -> instance

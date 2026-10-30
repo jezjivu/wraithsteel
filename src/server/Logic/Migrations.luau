@@ -5,6 +5,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local EconomyConfig = require(ReplicatedStorage:WaitForChild("Config"):WaitForChild("EconomyConfig"))
+local SpellConfig = require(ReplicatedStorage:WaitForChild("Config"):WaitForChild("SpellConfig"))
 
 local Migrations = {}
 
@@ -21,6 +22,12 @@ Migrations.Steps = {
 	[2] = function(data: { [string]: any })
 		if type(data.fightingStyle) ~= "string" then
 			data.fightingStyle = "river"
+		end
+	end,
+	-- v2 -> v3: Qi arts (spell slots).
+	[3] = function(data: { [string]: any })
+		if type(data.spellLoadout) ~= "table" then
+			data.spellLoadout = table.clone(SpellConfig.DefaultLoadout)
 		end
 	end,
 } :: { [number]: (data: { [string]: any }) -> () }

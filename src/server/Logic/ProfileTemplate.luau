@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = ReplicatedStorage:WaitForChild("Config")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local EconomyConfig = require(Config:WaitForChild("EconomyConfig"))
+local SpellConfig = require(Config:WaitForChild("SpellConfig"))
 local Types = require(Shared:WaitForChild("Types"))
 
 local ProfileTemplate = {}
@@ -27,6 +28,7 @@ function ProfileTemplate.New(): Types.ProfileData
 		weapons = { [EconomyConfig.StartingWeapon] = true },
 		equippedWeapon = EconomyConfig.StartingWeapon,
 		fightingStyle = "river",
+		spellLoadout = table.clone(SpellConfig.DefaultLoadout),
 
 		spirits = {},
 		equippedSpirits = {},
