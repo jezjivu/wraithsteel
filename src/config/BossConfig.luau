@@ -183,6 +183,34 @@ BossConfig.Bosses = {
 		rewards = { ember = 2600, xp = 3000, jadeFirstClear = 50 },
 		modelId = 0, -- TODO(Studio/Agent C)
 	},
+	-- World bosses (WorldBossService) ---------------------------------------------------------
+	hollow_carillon = {
+		name = "The Hollow Carillon",
+		title = "A Bell That Rings Itself",
+		chapter = 0,
+		kind = "World",
+		maxHealth = 9000,
+		healthPerExtraPlayer = 0.5,
+		maxPosture = 900,
+		postureRegen = 10,
+		postureBrokenSeconds = 5,
+		walkSpeed = 10,
+		moves = {
+			clapper_sweep = { name = "Clapper Sweep", damage = 26, postureDamage = 24, windup = 0.6, active = 0.25, recovery = 0.6, range = 14, arcDegrees = 150, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
+			chain_lash = { name = "Rusted Chain Lash", damage = 22, postureDamage = 18, windup = 0.5, active = 0.3, recovery = 0.6, range = 26, minRange = 8, arcDegrees = 50, weight = 2, cooldown = 6, animationId = PLACEHOLDER_ANIM },
+			resonance = { name = "Resonance", damage = 9, postureDamage = 14, windup = 0.6, active = 1.2, recovery = 0.8, range = 16, arcDegrees = 360, weight = 2, cooldown = 10, hits = 6, animationId = PLACEHOLDER_ANIM },
+			toll_wave = { name = "Toll Wave", damage = 18, postureDamage = 45, windup = 1.0, active = 0.4, recovery = 1.0, range = 32, arcDegrees = 360, weight = 1, cooldown = 14, animationId = PLACEHOLDER_ANIM },
+			bell_slam = { name = "Falling Bell", damage = 48, postureDamage = 20, windup = 1.4, active = 0.3, recovery = 1.4, range = 18, arcDegrees = 360, weight = 1, cooldown = 16, perilous = true, animationId = PLACEHOLDER_ANIM },
+		},
+		phases = {
+			{ hpThreshold = 1.0, moves = { "clapper_sweep", "chain_lash", "resonance" }, speedMultiplier = 1, transitionSeconds = 0 },
+			{ hpThreshold = 0.6, moves = { "clapper_sweep", "chain_lash", "resonance", "toll_wave" }, speedMultiplier = 1.1, transitionSeconds = 3 },
+			{ hpThreshold = 0.3, moves = { "clapper_sweep", "chain_lash", "resonance", "toll_wave", "bell_slam" }, speedMultiplier = 1.25, enrage = true, transitionSeconds = 3 },
+		},
+		idleBetweenMoves = 0.9,
+		rewards = { ember = 1500, xp = 1200, jadeFirstClear = 40 },
+		modelId = 0, -- TODO(Studio/Agent C): giant bell construct rig
+	},
 } :: { [string]: BossDef }
 
 return BossConfig

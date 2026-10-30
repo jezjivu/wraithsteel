@@ -8,6 +8,8 @@
 --   /equipall            equip as many Spirits as slots allow
 --   /daily               claim daily reward
 --   /stats               show level/power
+--   /worldboss           summon the world boss now
+--   /chapter 1           jump to a chapter (unlocks Chapter 1 weapons/lanterns)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -23,6 +25,7 @@ local ProgressionService = require(script.Parent.ProgressionService)
 local SpiritService = require(script.Parent.SpiritService)
 local LanternService = require(script.Parent.LanternService)
 local RewardService = require(script.Parent.RewardService)
+local WorldBossService = require(script.Parent.WorldBossService)
 
 local DebugService = { Name = "DebugService", Priority = 90 }
 
@@ -86,6 +89,18 @@ local commands: { [string]: (Player, string?) -> () } = {
 		local _, msg = RewardService.ClaimDaily(player)
 		say(player, msg)
 	end,
+	["/worldboss"] = function(player)
+		say(player, if WorldBossService.SpawnNow() then "World boss summoned in the Wilds (north)!" else "A world boss is already up")
+	end,
+	["/chapter"] = function(player, arg)
+		local data = DataService.GetData(player)
+		if data then
+			data.chapter = math.clamp(tonumber(arg) or (data.chapter + 1), 0, 5)
+			DataService.Changed(player, "chapter")
+			ProgressionService.RefreshPower(player)
+			say(player, "Chapter set to " .. data.chapter)
+		end
+	end,
 	["/stats"] = function(player)
 		local data = DataService.GetData(player)
 		if data then
@@ -114,7 +129,7 @@ function DebugService.Start()
 	for _, p in Players:GetPlayers() do
 		hook(p)
 	end
-	print("[DebugService] Studio chat commands: /ember /odds /open /spirits /equipall /daily /stats")
+	print("[DebugService] Studio chat commands: /ember /odds /open /spirits /equipall /daily /stats /worldboss /chapter")
 end
 
 return DebugService

@@ -172,4 +172,15 @@ cases["Weapons: purchase rules"] = function()
 	expectEq(select(2, WeaponLogic.CanBuy(d, "nope")), "Unknown weapon")
 end
 
+cases["World boss rotation references World-kind bosses"] = function()
+	local WorldBossConfig = require(Config.WorldBossConfig)
+	expectTrue(#WorldBossConfig.Rotation > 0)
+	for _, id in WorldBossConfig.Rotation do
+		local def = BossConfig.Bosses[id]
+		expectTrue(def ~= nil, id)
+		expectEq(def.kind, "World", id)
+	end
+	expectTrue(WorldBossConfig.MinContribution > 0 and WorldBossConfig.MinContribution < 1)
+end
+
 return cases

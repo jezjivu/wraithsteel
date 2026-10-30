@@ -9,7 +9,9 @@
 --   otherwise). Animations: BossConfig move animationId (all placeholders today).
 --
 -- API:
---   BossService.StartEncounter(bossId, cframe, participants) -> encounterId?
+--   BossService.StartEncounter(bossId, cframe, participants, arena?, opts?) -> encounterId?
+--     opts (EncounterOpts) makes it an open-world encounter (world bosses)
+--   BossService.IsActive(encounterId) -> boolean
 --   BossService.BossDefeated: Signal(bossId, participants: {Player}, firstClears: {Player})
 
 local Players = game:GetService("Players")
@@ -52,6 +54,15 @@ type Encounter = {
 	target: Combatant?,
 	lastBroadcast: number,
 	ended: boolean,
+	openWorld: EncounterOpts?, -- set for world bosses: players join by proximity
+	endsAt: number, -- os.clock() deadline (math.huge for story bosses)
+}
+
+-- Options for open-world (world boss) encounters.
+export type EncounterOpts = {
+	joinRadius: number,
+	minContribution: number, -- fraction of max health dealt to earn rewards
+	durationSeconds: number,
 }
 
 local BossService = {
@@ -158,6 +169,45 @@ local function doHits(e: Encounter, moveId: string)
 	end
 end
 
+-- Open-world encounters: any player who comes near joins (and gets the intro + boss bar).
+local function joinNearby(e: Encounter)
+	local opts = e.openWorld :: EncounterOpts
+	local pos = e.c.root.Position
+	for _, p in Players:GetPlayers() do
+		if table.find(e.participants, p) == nil then
+			local pc = CombatService.GetByPlayer(p)
+			if pc and not pc.dead and (pc.root.Position - pos).Magnitude <= opts.joinRadius then
+				table.insert(e.participants, p)
+				local def = BossConfig.Bosses[e.bossId]
+				Net.Server.Fire("StoryEvent", p, { kind = "BossIntro", bossId = e.bossId, name = def.name, title = def.title })
+			end
+		end
+	end
+end
+
+-- Who is rewarded on victory: story bosses = all participants; world bosses = everyone who
+-- dealt at least minContribution of max health, plus their party members nearby.
+local function rewardees(e: Encounter): { Player }
+	local opts = e.openWorld
+	if opts == nil then
+		return e.participants
+	end
+	local need = e.c.humanoid.MaxHealth * opts.minContribution
+	local set: { [Player]: boolean } = {}
+	for player, dealt in e.c.contributions do
+		if dealt >= need and player.Parent == Players then
+			for _, member in PartyService.MembersNear(player, opts.joinRadius) do
+				set[member] = true
+			end
+		end
+	end
+	local out = {}
+	for p in set do
+		table.insert(out, p)
+	end
+	return out
+end
+
 local function finish(e: Encounter, victory: boolean)
 	if e.ended then
 		return
@@ -171,7 +221,7 @@ local function finish(e: Encounter, victory: boolean)
 	if victory then
 		local def = BossConfig.Bosses[e.bossId]
 		local firstClears = {}
-		for _, p in e.participants do
+		for _, p in rewardees(e) do
 			local data = DataService.GetData(p)
 			if p.Parent == Players and data then
 				local first = (data.bossesDefeated[e.bossId] or 0) == 0
@@ -200,9 +250,9 @@ local function finish(e: Encounter, victory: boolean)
 	end
 end
 
-function BossService.StartEncounter(bossId: string, cframe: CFrame, participants: { Player }, arena: BasePart?): string?
+function BossService.StartEncounter(bossId: string, cframe: CFrame, participants: { Player }, arena: BasePart?, opts: EncounterOpts?): string?
 	local def = BossConfig.Bosses[bossId]
-	if def == nil or #participants == 0 then
+	if def == nil or (#participants == 0 and opts == nil) then
 		return nil
 	end
 	counter += 1
@@ -278,6 +328,8 @@ function BossService.StartEncounter(bossId: string, cframe: CFrame, participants
 		target = nil,
 		lastBroadcast = 0,
 		ended = false,
+		openWorld = opts,
+		endsAt = if opts then os.clock() + opts.durationSeconds else math.huge,
 	}
 	encounters[id] = e
 	if arena then
@@ -289,8 +341,16 @@ end
 
 local function tick(now: number)
 	for _, e in encounters do
+		if e.openWorld then
+			joinNearby(e)
+			if now >= e.endsAt then
+				Net.Server.FireAll("Notify", "WorldBoss", BossConfig.Bosses[e.bossId].name .. " has gone back to sleep...")
+				finish(e, false)
+				continue
+			end
+		end
 		local alive = aliveParticipants(e)
-		if #alive == 0 then
+		if #alive == 0 and not e.openWorld then
 			finish(e, false)
 			continue
 		end
@@ -358,6 +418,10 @@ local function setupArena(arena: BasePart)
 		end
 		BossService.StartEncounter(bossId, arena.CFrame + Vector3.new(0, 5, 0), participants, arena)
 	end)
+end
+
+function BossService.IsActive(encounterId: string): boolean
+	return encounters[encounterId] ~= nil
 end
 
 function BossService.Init() end
