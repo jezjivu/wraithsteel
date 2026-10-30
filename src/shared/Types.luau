@@ -75,6 +75,7 @@ export type ProfileData = {
 	nextUid: number,
 	lanternPity: { [string]: number }, -- lanternId -> rolls since last pity-qualifying rarity
 	hatchedTotal: number,
+	freeLanterns: { [string]: number }, -- lanternId -> free opens (from rewards/codes; Ember lanterns only)
 
 	-- Expeditions / offline
 	expeditions: { [string]: ExpeditionState }, -- slotId -> state
@@ -99,6 +100,7 @@ export type ProfileData = {
 	receiptOrder: { string }, -- FIFO used to cap `receipts`
 	giftedPasses: { [string]: boolean }, -- passKey -> true
 	giftMessagesSeen: { [string]: boolean },
+	giftTokens: { [string]: number }, -- passKey -> undelivered gifts the buyer can still send
 	boosts: { [string]: number }, -- boostId -> expiresAt (os.time)
 	robuxSpent: number,
 

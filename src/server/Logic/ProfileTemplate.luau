@@ -34,6 +34,7 @@ function ProfileTemplate.New(): Types.ProfileData
 		nextUid = 1,
 		lanternPity = {},
 		hatchedTotal = 0,
+		freeLanterns = {},
 
 		expeditions = {},
 		lastSeenAt = 0,
@@ -53,6 +54,7 @@ function ProfileTemplate.New(): Types.ProfileData
 		receiptOrder = {},
 		giftedPasses = {},
 		giftMessagesSeen = {},
+		giftTokens = {},
 		boosts = {},
 		robuxSpent = 0,
 
