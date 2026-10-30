@@ -52,6 +52,10 @@ type Brain = {
 	stunnedUntil: number,
 	nextAttackAt: number,
 	circleAngle: number,
+	token: number, -- bumped on flinch/break to cancel queued combo strikes
+	activeFrom: number, -- current strike's active window (flinch can't interrupt it)
+	activeTo: number,
+	flinchReadyAt: number,
 }
 
 local EnemyService = {
@@ -160,23 +164,51 @@ local function face(b: Brain, pos: Vector3)
 	end
 end
 
-local function startAttack(b: Brain, attackId: string, now: number)
+-- Surges the (server-owned) rig forward during a strike's active frames.
+local function lunge(b: Brain, studs: number, seconds: number)
+	local root = b.c.root
+	local dir = root.CFrame.LookVector
+	local speed = studs / math.max(seconds, 0.05)
+	local untilT = os.clock() + seconds
+	task.spawn(function()
+		while os.clock() < untilT and not b.c.dead and root.Parent do
+			local v = root.AssemblyLinearVelocity
+			root.AssemblyLinearVelocity = Vector3.new(dir.X * speed, v.Y, dir.Z * speed)
+			task.wait()
+		end
+	end)
+end
+
+-- One strike: telegraph now, hit at windup end. Returns nothing; checks `token` so a flinch
+-- or posture break cancels strikes that are still queued.
+local function strike(b: Brain, attackId: string, token: number)
 	local a = b.def.attacks[attackId]
-	local target = b.target :: Combatant
-	face(b, target.root.Position)
-	b.c.humanoid:MoveTo(b.c.root.Position)
-	b.busyUntil = now + a.windup + a.active + a.recovery
+	if a == nil or b.c.dead or b.token ~= token then
+		return
+	end
+	local target = b.target
+	if target then
+		face(b, target.root.Position)
+	end
+	local start = os.clock()
+	b.activeFrom = start + a.windup
+	b.activeTo = start + a.windup + a.active
 	Net.Server.FireAll("CombatEvent", {
 		kind = "Telegraph",
 		sourceId = b.c.id,
 		moveId = attackId,
 		perilous = a.perilous == true,
 		windup = a.windup,
+		active = a.active,
+		recovery = a.recovery,
 		animationId = a.animationId,
 	})
 	task.delay(a.windup, function()
-		if b.c.dead or os.clock() < b.stunnedUntil then
+		if b.c.dead or b.token ~= token or os.clock() < b.stunnedUntil then
 			return
+		end
+		if a.lunge then
+			lunge(b, a.lunge, a.active)
 		end
 		local pos = b.c.root.Position
 		local look = b.c.root.CFrame.LookVector
@@ -184,7 +216,7 @@ local function startAttack(b: Brain, attackId: string, now: number)
 			local pc = CombatService.GetByPlayer(player)
 			if pc and not pc.dead then
 				local tp = pc.root.Position
-				if CombatRules.InArc(pos.X, pos.Z, look.X, look.Z, tp.X, tp.Z, a.range, a.arcDegrees) then
+				if CombatRules.InArc(pos.X, pos.Z, look.X, look.Z, tp.X, tp.Z, a.range + (a.lunge or 0), a.arcDegrees) then
 					CombatService.ApplyHit(b.c, pc, {
 						damage = a.damage,
 						postureDamage = a.postureDamage,
@@ -195,10 +227,53 @@ local function startAttack(b: Brain, attackId: string, now: number)
 			end
 		end
 	end)
-	task.delay(a.windup + a.active + a.recovery, function()
+end
+
+-- Starts a single attack or (sometimes) a combo string beginning with it.
+local function startAttack(b: Brain, attackId: string, now: number)
+	local sequence = { attackId }
+	local combos = b.def.combos
+	if combos and #combos > 0 and rng:NextNumber() < (b.def.comboChance or 0) then
+		sequence = combos[rng:NextInteger(1, #combos)]
+	end
+	b.c.humanoid:MoveTo(b.c.root.Position)
+	local token = b.token
+	local t = 0
+	for i, id in sequence do
+		local a = b.def.attacks[id]
+		if a then
+			task.delay(t, strike, b, id, token)
+			t += a.windup + a.active + (if i < #sequence then EnemyConfig.ComboGap else a.recovery)
+		end
+	end
+	b.busyUntil = now + t
+	task.delay(t, function()
 		director:Release(b.c.id, os.clock())
 	end)
-	b.nextAttackAt = now + a.windup + a.active + a.recovery + b.def.attackCooldown
+	b.nextAttackAt = now + t + b.def.attackCooldown
+end
+
+-- Called when this enemy takes a hit: light enemies flinch (outside their active frames),
+-- some raise a guard that soaks health damage until their posture breaks.
+local function onHurt(b: Brain)
+	local now = os.clock()
+	if b.c.dead then
+		return
+	end
+	local inActive = now >= b.activeFrom and now <= b.activeTo
+	if b.def.flinch and not inActive and now >= b.flinchReadyAt then
+		b.token += 1
+		b.flinchReadyAt = now + EnemyConfig.FlinchCooldown
+		b.stunnedUntil = math.max(b.stunnedUntil, now + EnemyConfig.FlinchSeconds)
+		b.busyUntil = 0
+		director:Release(b.c.id, now)
+		Net.Server.FireAll("CombatEvent", { kind = "Flinch", sourceId = b.c.id })
+	end
+	local guard = b.def.guardChance
+	if guard and not inActive and (b.c.guardUntil or 0) < now and rng:NextNumber() < guard then
+		b.c.guardUntil = now + EnemyConfig.GuardSeconds
+		Net.Server.FireAll("CombatEvent", { kind = "Guard", sourceId = b.c.id, seconds = EnemyConfig.GuardSeconds })
+	end
 end
 
 local function think(b: Brain, _dt: number, now: number)
@@ -283,6 +358,10 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 		stunnedUntil = 0,
 		nextAttackAt = 0,
 		circleAngle = rng:NextNumber() * math.pi * 2,
+		token = 0,
+		activeFrom = 0,
+		activeTo = 0,
+		flinchReadyAt = 0,
 	}
 	brains[id] = brain
 	scheduler:Add(id, function(dt, now)
@@ -357,9 +436,17 @@ function EnemyService.Start()
 			rewardKill(c, contributions)
 		end
 	end)
+	CombatService.Damaged:Connect(function(c, attacker)
+		local b = brains[c.id]
+		if b and attacker and attacker.player then
+			onHurt(b)
+		end
+	end)
 	CombatService.PostureBroken:Connect(function(c)
 		local b = brains[c.id]
 		if b then
+			b.token += 1
+			c.guardUntil = nil
 			b.stunnedUntil = os.clock() + c.brokenSeconds
 			b.busyUntil = 0
 			director:Release(c.id, os.clock())

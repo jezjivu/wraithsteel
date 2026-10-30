@@ -134,6 +134,12 @@ function RigBuilder.Build(look: RigLook, name: string): Model?
 		pcall(function()
 			model:ScaleTo(look.scale)
 		end)
+		-- ScaleTo scaled the grip weld; refresh the base clients swing from.
+		for _, d in model:GetDescendants() do
+			if d:IsA("Weld") and d.Name == "GripWeld" then
+				d:SetAttribute("BaseC0", d.C0)
+			end
+		end
 	end
 	return model
 end

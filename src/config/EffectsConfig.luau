@@ -24,6 +24,12 @@ EffectsConfig.Outcome = {
 }
 
 EffectsConfig.HitFlash = { color = { 255, 255, 255 }, seconds = 0.12 }
+EffectsConfig.Sparks = { color = { 255, 200, 120 } } -- hit sparks
+EffectsConfig.Glint = { color = { 255, 250, 220 } } -- enemy blade "parry now" flash
+EffectsConfig.Guard = { color = { 120, 180, 255 } } -- blocks / enemy guard
+EffectsConfig.Ultimate = { color = { 255, 210, 110 } }
+EffectsConfig.LevelUp = { color = { 255, 225, 140 } }
+EffectsConfig.Death = { color = { 255, 140, 60 }, seconds = 1.2 }
 
 EffectsConfig.Bars = {
 	width = 120,
@@ -39,6 +45,7 @@ EffectsConfig.Shake = {
 	parry = 0.15,
 	broken = 0.4,
 	seconds = 0.18,
+	bigHitFov = 4, -- degrees of field-of-view punch on big hits
 }
 
 EffectsConfig.Sounds = {

@@ -317,6 +317,9 @@ function BossService.StartEncounter(bossId: string, cframe: CFrame, participants
 				moveId = args[1],
 				perilous = args[2],
 				windup = m.windup / def.phases[e.sm.phase].speedMultiplier,
+				active = m.active,
+				recovery = m.recovery / def.phases[e.sm.phase].speedMultiplier,
+				hits = m.hits,
 				animationId = m.animationId,
 			})
 		elseif event == "MoveActive" then

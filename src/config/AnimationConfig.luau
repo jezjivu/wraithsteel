@@ -18,6 +18,10 @@ export type Style = {
 	windup: Pose, -- reached at the end of windup
 	strike: Pose, -- reached at the end of the active window
 	spin: boolean?, -- rotate the whole body 360 degrees during active frames
+	-- Weapon swing around the grip, in the weapon's own space (+Y = blade direction):
+	-- {x, y, z} degrees plus optional 4th value = push along the blade (studs).
+	weaponWindup: { number }?,
+	weaponStrike: { number }?,
 }
 
 local AnimationConfig = {}
@@ -26,38 +30,62 @@ AnimationConfig.Styles = {
 	SlashRight = {
 		windup = { shoulder = { 100, 70, 0 }, elbow = { 20, 0, 0 }, waist = { 0, 35, 0 } },
 		strike = { shoulder = { 85, -70, 0 }, elbow = { 5, 0, 0 }, waist = { 0, -30, 0 } },
+		weaponWindup = { -35, 0, -75 },
+		weaponStrike = { 15, 0, 80 },
 	},
 	SlashLeft = {
 		windup = { shoulder = { 85, -60, 0 }, elbow = { 10, 0, 0 }, waist = { 0, -30, 0 } },
 		strike = { shoulder = { 100, 65, 0 }, elbow = { 15, 0, 0 }, waist = { 0, 35, 0 } },
+		weaponWindup = { -35, 0, 75 },
+		weaponStrike = { 15, 0, -80 },
 	},
 	Overhead = {
 		windup = { shoulder = { 170, 0, 0 }, elbow = { 30, 0, 0 }, waist = { -10, 0, 0 }, root = { 8, 0, 0 } },
 		strike = { shoulder = { 60, 0, 0 }, elbow = { 0, 0, 0 }, waist = { 15, 0, 0 }, root = { -8, 0, 0 } },
+		weaponWindup = { -120, 0, 0 },
+		weaponStrike = { 35, 0, 0 },
 	},
 	Thrust = {
 		windup = { shoulder = { 70, 0, 0 }, elbow = { 80, 0, 0 }, waist = { 0, 25, 0 } },
 		strike = { shoulder = { 90, 0, 0 }, elbow = { 0, 0, 0 }, waist = { 0, -15, 0 }, root = { -6, 0, 0 } },
+		weaponWindup = { 0, 0, 0, -1.2 },
+		weaponStrike = { 0, 0, 0, 1.4 },
 	},
 	Spin = {
 		windup = { shoulder = { 90, 60, 0 }, leftShoulder = { 0, 0, -40 }, waist = { 0, 40, 0 } },
 		strike = { shoulder = { 90, -40, 0 }, leftShoulder = { 0, 0, -40 }, waist = { 0, -20, 0 } },
 		spin = true,
+		weaponWindup = { -20, 0, -80 },
+		weaponStrike = { 0, 0, 80 },
 	},
 	Guard = {
 		windup = { shoulder = { 80, -50, 0 }, elbow = { 60, 0, 0 }, leftShoulder = { 40, 30, 0 } },
 		strike = { shoulder = { 80, -50, 0 }, elbow = { 60, 0, 0 }, leftShoulder = { 40, 30, 0 } },
+		weaponWindup = { 0, 0, 85 },
+		weaponStrike = { 0, 0, 85 },
 	},
 	Dodge = {
 		windup = { root = { -15, 0, 0 }, shoulder = { 20, 0, 0 }, leftShoulder = { 20, 0, 0 } },
 		strike = { root = { -25, 0, 0 }, shoulder = { 30, 0, 0 }, leftShoulder = { 30, 0, 0 } },
 	},
+	Flinch = {
+		windup = { root = { 12, 0, 0 }, waist = { 10, 15, 0 }, shoulder = { 30, 0, 0 } },
+		strike = { root = { 6, 0, 0 } },
+		weaponWindup = { -20, 0, -30 },
+		weaponStrike = { 0, 0, 0 },
+	},
 	Ultimate = {
 		windup = { shoulder = { 175, 0, 0 }, leftShoulder = { 175, 0, 0 }, waist = { -15, 0, 0 }, root = { 10, 0, 0 } },
 		strike = { shoulder = { 70, 0, 0 }, leftShoulder = { 40, 0, 0 }, waist = { 20, 0, 0 }, root = { -10, 0, 0 } },
 		spin = true,
+		weaponWindup = { -150, 0, 0 },
+		weaponStrike = { 40, 0, 0 },
 	},
 } :: { [string]: Style }
+
+-- Trails glow from slightly before the active window until slightly after it.
+AnimationConfig.TrailLead = 0.04
+AnimationConfig.TrailLinger = 0.08
 
 -- Parry/guard and dodge timings (they are not WeaponConfig moves).
 AnimationConfig.GuardHold = 0.45

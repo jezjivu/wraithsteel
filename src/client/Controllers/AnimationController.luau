@@ -38,7 +38,34 @@ type Playing = {
 	active: number,
 	recovery: number,
 	joints: Joints,
+	grip: Weld?, -- HeldWeapon grip weld (swung around its BaseC0)
+	trail: Trail?,
 }
+
+-- Finds the held weapon's grip weld and trail on a rig (players and NPCs).
+local function weaponParts(model: Model): (Weld?, Trail?)
+	local held = model:FindFirstChild("HeldWeapon")
+	local handle = held and held:FindFirstChild("Handle")
+	if handle == nil then
+		return nil, nil
+	end
+	local weld = handle:FindFirstChild("GripWeld")
+	local trail = handle:FindFirstChild("SwingTrail")
+	return (if weld and weld:IsA("Weld") then weld else nil), (if trail and trail:IsA("Trail") then trail else nil)
+end
+
+local function restoreWeapon(p: Playing)
+	local grip = p.grip
+	if grip and grip.Parent then
+		local base = grip:GetAttribute("BaseC0")
+		if typeof(base) == "CFrame" then
+			grip.C0 = base
+		end
+	end
+	if p.trail then
+		p.trail.Enabled = false
+	end
+end
 
 local playing: { [Model]: Playing } = {}
 
@@ -70,6 +97,10 @@ function AnimationController.StyleFor(action: string, moveId: string?): string
 		return "Ultimate"
 	elseif action == "HeavyAttack" and moveId == nil then
 		return "Overhead" -- enemy heavy/perilous telegraphs
+	elseif action == "AltAttack" then
+		return "SlashLeft" -- enemy alternate swing
+	elseif action == "Flinch" then
+		return "Flinch"
 	end
 	if moveId then
 		local explicit = AnimationConfig.MoveStyles[moveId]
@@ -119,6 +150,11 @@ function AnimationController.Play(model: Model, action: string, moveId: string?,
 		end
 		windup, active, recovery = move.windup, math.max(move.active, 0.08), move.recovery
 	end
+	local previous = playing[model]
+	if previous then
+		restoreWeapon(previous)
+	end
+	local grip, trail = weaponParts(model)
 	playing[model] = {
 		style = style,
 		start = os.clock(),
@@ -126,6 +162,8 @@ function AnimationController.Play(model: Model, action: string, moveId: string?,
 		active = active,
 		recovery = recovery,
 		joints = joints(model),
+		grip = grip,
+		trail = trail,
 	}
 end
 
@@ -168,10 +206,31 @@ local function attackOffsets(p: Playing, now: number): { [string]: CFrame }?
 		local hold = p.recovery * 0.4
 		local out = math.max(AnimationConfig.BlendOut, p.recovery - hold)
 		if r > hold + out then
+			restoreWeapon(p)
 			return nil
 		end
 		fromPose, toPose, k = p.style.strike, empty, if r < hold then 0 else ease((r - hold) / out)
 	end
+	-- Weapon swing around the grip (works for any rig, even without arm joints).
+	local grip = p.grip
+	if grip and grip.Parent then
+		local base = grip:GetAttribute("BaseC0")
+		if typeof(base) == "CFrame" then
+			local wFrom = if fromPose == p.style.windup then p.style.weaponWindup elseif fromPose == p.style.strike then p.style.weaponStrike else nil
+			local wTo = if toPose == p.style.windup then p.style.weaponWindup elseif toPose == p.style.strike then p.style.weaponStrike else nil
+			local a = wFrom or { 0, 0, 0, 0 }
+			local b = wTo or { 0, 0, 0, 0 }
+			local function lerp(i: number): number
+				local x, y = a[i] or 0, b[i] or 0
+				return x + (y - x) * k
+			end
+			grip.C0 = base * CFrame.new(0, lerp(4), 0) * CFrame.Angles(math.rad(lerp(1)), math.rad(lerp(2)), math.rad(lerp(3)))
+		end
+	end
+	if p.trail then
+		p.trail.Enabled = t >= p.windup - AnimationConfig.TrailLead and t <= p.windup + p.active + AnimationConfig.TrailLinger
+	end
+
 	local offsets: { [string]: CFrame } = {}
 	for _, name in JOINTS do
 		local offset = lerpAngles((fromPose :: any)[name], (toPose :: any)[name], k)

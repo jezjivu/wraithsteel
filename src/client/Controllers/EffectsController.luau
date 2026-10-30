@@ -20,8 +20,11 @@ local Config = ReplicatedStorage:WaitForChild("Config")
 local FormatNumber = require(Shared:WaitForChild("FormatNumber"))
 local EffectsConfig = require(Config:WaitForChild("EffectsConfig"))
 local AnimationConfig = require(Config:WaitForChild("AnimationConfig"))
+local CombatConfig = require(Config:WaitForChild("CombatConfig"))
 
 local CombatController = require(script.Parent.CombatController)
+local DataController = require(script.Parent.DataController)
+local Fx = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Fx"))
 local AnimationController = require(script.Parent.AnimationController)
 
 local EffectsController = { Name = "EffectsController", Priority = 25 }
@@ -29,6 +32,7 @@ local EffectsController = { Name = "EffectsController", Priority = 25 }
 local COMBATANT_TAG = "Combatant"
 local localPlayer = Players.LocalPlayer
 local byId: { [string]: Model } = {}
+local lastLevel: number? = nil
 
 local function rgb(c: { number }): Color3
 	return Color3.fromRGB(c[1], c[2], c[3])
@@ -205,6 +209,17 @@ local function track(model: Instance)
 		end
 	end)
 	task.defer(attachBars, model)
+	-- Enemies dissolve into embers when they die.
+	if Players:GetPlayerFromCharacter(model) == nil then
+		task.defer(function()
+			local hum = model:FindFirstChildOfClass("Humanoid")
+			if hum then
+				hum.Died:Connect(function()
+					Fx.Dissolve(model, rgb(EffectsConfig.Death.color), EffectsConfig.Death.seconds)
+				end)
+			end
+		end)
+	end
 end
 
 -- Event handlers -----------------------------------------------------------------------------
@@ -230,6 +245,12 @@ local function onDamage(e: { [string]: any })
 		end
 		flash(target, rgb(EffectsConfig.HitFlash.color), EffectsConfig.HitFlash.seconds)
 		playSound(EffectsConfig.Sounds.hit, part, 0.7)
+		local sparkColor = if e.outcome == "Blocked" then rgb(EffectsConfig.Guard.color) elseif mine then Color3.fromRGB(255, 90, 70) else rgb(EffectsConfig.Sparks.color)
+		Fx.Burst(part.Position, { color = sparkColor, count = if (e.damage or 0) >= EffectsConfig.DamageNumber.bigHitThreshold then 28 else 14, speed = 22, size = 0.45, lifetime = 0.35 })
+		Fx.LightFlash(part.Position, sparkColor, 10, 0.15)
+		if fromMe and (e.damage or 0) >= EffectsConfig.DamageNumber.bigHitThreshold then
+			Fx.CameraPunch(EffectsConfig.Shake.bigHitFov)
+		end
 		if mine then
 			shake(EffectsConfig.Shake.takenHit)
 		end
@@ -237,6 +258,13 @@ local function onDamage(e: { [string]: any })
 		floatText(part, outcome.text :: string, rgb(outcome.color), 30)
 		spark(part, rgb(outcome.color))
 		playSound(EffectsConfig.Sounds.parry, part, 1.6)
+		Fx.Glint(part.Position, rgb(outcome.color))
+		Fx.Burst(part.Position, { color = rgb(outcome.color), count = 36, speed = 30, size = 0.6, lifetime = 0.45 })
+		Fx.Shockwave(part.Position - Vector3.new(0, 2, 0), rgb(outcome.color), 8, 0.3)
+		if mine then
+			Fx.ScreenFlash(rgb(outcome.color), 0.25, 0.2)
+			Fx.CameraPunch(-EffectsConfig.Shake.bigHitFov)
+		end
 		if mine or fromMe then
 			shake(EffectsConfig.Shake.parry)
 		end
@@ -247,10 +275,22 @@ local function onDamage(e: { [string]: any })
 		local b = EffectsConfig.Outcome.Broken
 		floatText(part, b.text :: string, rgb(b.color), 26)
 		flash(target, rgb(b.color), 0.5, 0.2)
+		Fx.Shockwave(part.Position - Vector3.new(0, 2.5, 0), rgb(b.color), 14, 0.45)
+		Fx.Burst(part.Position, { texture = Fx.Textures.Fire, color = rgb(b.color), count = 30, speed = 16, size = 1, lifetime = 0.7 })
 		if mine or fromMe then
 			shake(EffectsConfig.Shake.broken)
 		end
 	end
+end
+
+local function weaponPoint(model: Model, name: string): Vector3?
+	local held = model:FindFirstChild("HeldWeapon")
+	local handle = held and held:FindFirstChild("Handle")
+	local att = handle and handle:FindFirstChild(name)
+	if att and att:IsA("Attachment") then
+		return att.WorldPosition
+	end
+	return nil
 end
 
 local function onTelegraph(e: { [string]: any })
@@ -258,15 +298,62 @@ local function onTelegraph(e: { [string]: any })
 	if model == nil then
 		return
 	end
+	local windup = math.max(0.15, tonumber(e.windup) or 0.4)
+	local active = math.max(0.08, tonumber(e.active) or 0.2)
+	local recovery = math.max(0.1, tonumber(e.recovery) or 0.4)
 	local color = rgb(if e.perilous then AnimationConfig.PerilousColor else AnimationConfig.TelegraphColor)
-	flash(model, color, math.max(0.2, tonumber(e.windup) or 0.4), if e.perilous then 0.15 else 0.55)
+	flash(model, color, windup, if e.perilous then 0.15 else 0.6)
 	local part = anchorPart(model)
 	if e.perilous and part then
 		floatText(part, "!", color, 46)
 	end
-	-- Rigged enemies (once real rigs exist) also get a procedural wind-up pose.
-	local windup = math.max(0.15, tonumber(e.windup) or 0.4)
-	AnimationController.Play(model, if e.perilous then "HeavyAttack" else "LightAttack", nil, { windup = windup, active = 0.2, recovery = 0.4 })
+	-- Swing the rig + weapon with the server's exact timing (the hit lands at windup end).
+	local action = if e.perilous then "HeavyAttack" elseif math.random() < 0.5 then "LightAttack" else "AltAttack"
+	AnimationController.Play(model, action, nil, { windup = windup, active = active, recovery = recovery })
+	-- Parry cue: the blade glints exactly when a press of F would land inside the parry window.
+	local glintAt = math.max(0, windup - CombatConfig.ParryWindow * 0.8)
+	task.delay(glintAt, function()
+		if model.Parent == nil then
+			return
+		end
+		local where = weaponPoint(model, "Glint") or (part and part.Position)
+		if where then
+			Fx.Glint(where, if e.perilous then rgb(AnimationConfig.PerilousColor) else rgb(EffectsConfig.Glint.color))
+			playSound(EffectsConfig.Sounds.parry, part, if e.perilous then 0.6 else 2.2)
+		end
+	end)
+end
+
+local function onFlinch(e: { [string]: any })
+	local model = EffectsController.ModelFor(e.sourceId)
+	if model == nil then
+		return
+	end
+	AnimationController.Play(model, "Flinch", nil, { windup = 0.08, active = 0.12, recovery = 0.2 })
+	local root = model:FindFirstChild("HumanoidRootPart")
+	if root and root:IsA("BasePart") then
+		Fx.Burst(root.Position - Vector3.new(0, 2.5, 0), { texture = Fx.Textures.Smoke, color = Color3.fromRGB(170, 160, 150), count = 6, speed = 4, size = 1.5, lifetime = 0.5, lightEmission = 0, acceleration = Vector3.new(0, 2, 0) })
+	end
+end
+
+local function onGuard(e: { [string]: any })
+	local model = EffectsController.ModelFor(e.sourceId)
+	if model == nil then
+		return
+	end
+	local seconds = tonumber(e.seconds) or 1
+	AnimationController.Play(model, "Parry", nil, { windup = 0.08, active = seconds, recovery = 0.15 })
+	local h = Instance.new("Highlight")
+	h.FillColor = rgb(EffectsConfig.Guard.color)
+	h.OutlineColor = rgb(EffectsConfig.Guard.color)
+	h.FillTransparency = 0.75
+	h.OutlineTransparency = 0.2
+	h.Parent = model
+	Debris:AddItem(h, seconds)
+	local part = anchorPart(model)
+	if part then
+		floatText(part, "GUARD", rgb(EffectsConfig.Guard.color), 18)
+	end
 end
 
 local function onAction(e: { [string]: any })
@@ -302,6 +389,10 @@ function EffectsController.Start()
 			onTelegraph(e)
 		elseif e.kind == "Action" then
 			onAction(e)
+		elseif e.kind == "Flinch" then
+			onFlinch(e)
+		elseif e.kind == "Guard" then
+			onGuard(e)
 		end
 	end)
 
@@ -310,6 +401,34 @@ function EffectsController.Start()
 		local part = character and anchorPart(character)
 		if moveId and part then
 			playSound(if action == "HeavyAttack" then EffectsConfig.Sounds.heavy else EffectsConfig.Sounds.swing, part)
+		end
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if root and root:IsA("BasePart") then
+			if action == "Dodge" then
+				Fx.Burst(root.Position - Vector3.new(0, 2.5, 0), { texture = Fx.Textures.Smoke, color = Color3.fromRGB(200, 195, 185), count = 10, speed = 6, size = 2, lifetime = 0.6, lightEmission = 0, acceleration = Vector3.new(0, 3, 0) })
+			elseif action == "Ultimate" then
+				Fx.ScreenFlash(rgb(EffectsConfig.Ultimate.color), 0.35, 0.4)
+				Fx.Shockwave(root.Position - Vector3.new(0, 2.5, 0), rgb(EffectsConfig.Ultimate.color), 18, 0.6)
+				Fx.Pillar(root.Position - Vector3.new(0, 2.5, 0), rgb(EffectsConfig.Ultimate.color), 24)
+				Fx.CameraPunch(EffectsConfig.Shake.bigHitFov * 2)
+			elseif action == "Parry" then
+				Fx.Burst(root.Position + root.CFrame.LookVector * 2, { color = rgb(EffectsConfig.Guard.color), count = 6, speed = 6, size = 0.4, lifetime = 0.25 })
+			end
+		end
+	end)
+
+	-- Level up: pillar of light on your character.
+	DataController.Changed:Connect(function(key, value)
+		if key == "level" and lastLevel and value > lastLevel then
+			local character = localPlayer.Character
+			local root = character and character:FindFirstChild("HumanoidRootPart")
+			if root and root:IsA("BasePart") then
+				Fx.Pillar(root.Position - Vector3.new(0, 2.5, 0), rgb(EffectsConfig.LevelUp.color), 40)
+				Fx.ScreenFlash(rgb(EffectsConfig.LevelUp.color), 0.2, 0.5)
+			end
+		end
+		if key == "level" then
+			lastLevel = value
 		end
 	end)
 

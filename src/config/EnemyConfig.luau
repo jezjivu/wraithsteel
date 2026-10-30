@@ -13,6 +13,7 @@ export type EnemyAttack = {
 	arcDegrees: number,
 	weight: number, -- chance weight when choosing an attack in range
 	perilous: boolean?,
+	lunge: number?, -- studs the enemy surges forward during the active frames
 	animationId: string,
 }
 
@@ -45,6 +46,10 @@ export type EnemyDef = {
 	xpReward: number,
 	modelId: number,
 	training: boolean?, -- training dummy: never attacks, gives no rewards or quest progress
+	combos: { { string } }?, -- attack strings performed back-to-back
+	comboChance: number?, -- chance to use a combo instead of a single attack
+	flinch: boolean?, -- hits outside its active frames interrupt it (light enemies)
+	guardChance: number?, -- chance to raise its guard after being hit (blocks until posture breaks)
 	look: RigLook?,
 }
 
@@ -61,6 +66,12 @@ EnemyConfig.DespawnAfterDeath = 4
 EnemyConfig.DefaultRespawnSeconds = 20
 EnemyConfig.DefaultSpawnScatter = 6 -- studs; spawn Parts can override with attribute Scatter
 EnemyConfig.PostureBrokenSeconds = 2.5
+EnemyConfig.ComboGap = 0.12 -- seconds between strikes in a combo (instead of full recovery)
+EnemyConfig.FlinchSeconds = 0.35
+EnemyConfig.FlinchCooldown = 1.4 -- an enemy cannot be flinch-locked
+EnemyConfig.GuardSeconds = 1.4
+EnemyConfig.GuardDamageMultiplier = 0.2 -- health damage taken through guard
+EnemyConfig.GuardPostureMultiplier = 1.4 -- guard soaks more posture (break it!)
 EnemyConfig.SpawnFolderName = "EnemySpawns" -- TODO(Studio/Agent D): Workspace folder of spawn Parts
 EnemyConfig.TemplateFolderName = "Enemies" -- TODO(Studio/Agent C): ServerStorage folder of rigs
 
@@ -98,10 +109,14 @@ EnemyConfig.Enemies = {
 		attackCooldown = 1.6,
 		attacks = {
 			slash = { name = "Rusted Slash", damage = 8, postureDamage = 10, windup = 0.45, active = 0.15, recovery = 0.5, range = 7, arcDegrees = 90, weight = 3, animationId = PLACEHOLDER_ANIM },
-			lunge = { name = "Desperate Lunge", damage = 12, postureDamage = 14, windup = 0.7, active = 0.2, recovery = 0.8, range = 12, arcDegrees = 40, weight = 1, animationId = PLACEHOLDER_ANIM },
+			lunge = { name = "Desperate Lunge", damage = 12, postureDamage = 14, windup = 0.7, active = 0.2, recovery = 0.8, range = 12, arcDegrees = 40, weight = 1, lunge = 7, animationId = PLACEHOLDER_ANIM },
 		},
 		emberReward = 6,
 		xpReward = 10,
+		combos = { { "slash", "slash" }, { "slash", "lunge" } },
+		comboChance = 0.4,
+		flinch = true,
+		guardChance = 0.25,
 		modelId = 0,
 		look = { skin = { 200, 160, 130 }, body = { 120, 60, 40 }, legs = { 60, 50, 45 }, headwear = "Hood", accent = { 150, 80, 40 }, weapon = "dao_rustcutter", scale = 1 },
 	},
@@ -122,6 +137,7 @@ EnemyConfig.Enemies = {
 		},
 		emberReward = 9,
 		xpReward = 14,
+		flinch = true,
 		modelId = 0,
 		look = { skin = { 120, 140, 120 }, body = { 50, 55, 50 }, legs = { 40, 40, 40 }, headwear = "Lantern", accent = { 255, 190, 90 }, glow = { 255, 170, 70 }, scale = 1.1 },
 	},
@@ -139,10 +155,14 @@ EnemyConfig.Enemies = {
 		attackCooldown = 1.3,
 		attacks = {
 			hook = { name = "Bark-Hook Slash", damage = 22, postureDamage = 16, windup = 0.35, active = 0.12, recovery = 0.45, range = 8, arcDegrees = 100, weight = 3, animationId = PLACEHOLDER_ANIM },
-			leap = { name = "Canopy Drop", damage = 30, postureDamage = 22, windup = 0.6, active = 0.2, recovery = 0.7, range = 16, arcDegrees = 45, weight = 1, animationId = PLACEHOLDER_ANIM },
+			leap = { name = "Canopy Drop", damage = 30, postureDamage = 22, windup = 0.6, active = 0.2, recovery = 0.7, range = 16, arcDegrees = 45, weight = 1, lunge = 10, animationId = PLACEHOLDER_ANIM },
 		},
 		emberReward = 30,
 		xpReward = 45,
+		combos = { { "hook", "hook", "leap" } },
+		comboChance = 0.35,
+		flinch = true,
+		guardChance = 0.2,
 		modelId = 0,
 		look = { skin = { 150, 120, 90 }, body = { 70, 85, 50 }, legs = { 60, 50, 35 }, headwear = "Hood", accent = { 90, 110, 60 }, weapon = "spear_reedline", scale = 1.05 },
 	},
@@ -163,6 +183,9 @@ EnemyConfig.Enemies = {
 		},
 		emberReward = 55,
 		xpReward = 80,
+		combos = { { "hammer", "hammer" } },
+		comboChance = 0.3,
+		guardChance = 0.4,
 		modelId = 0,
 		look = { skin = { 120, 90, 70 }, body = { 110, 70, 45 }, legs = { 90, 60, 40 }, headwear = "Helm", accent = { 150, 85, 45 }, weapon = "staff_pilgrim", scale = 1.45 },
 	},

@@ -25,6 +25,7 @@ local Net = require(Shared:WaitForChild("Net"))
 local Signal = require(Shared:WaitForChild("Signal"))
 local CombatConfig = require(Config:WaitForChild("CombatConfig"))
 local WeaponConfig = require(Config:WaitForChild("WeaponConfig"))
+local EnemyConfig = require(Config:WaitForChild("EnemyConfig"))
 
 local Logic = script.Parent.Parent:WaitForChild("Logic")
 local CombatRules = require(Logic:WaitForChild("CombatRules"))
@@ -52,6 +53,7 @@ export type Combatant = {
 	invulnerable: boolean,
 	dead: boolean,
 	contributions: { [Player]: number },
+	guardUntil: number?, -- enemies: guard raised until this time (blocks until posture breaks)
 }
 
 export type Hit = {
@@ -145,6 +147,14 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	local res: CombatRules.Resolution
 	if target.rules then
 		res = CombatRules.ResolveIncoming(target.rules, hit, now)
+	elseif target.guardUntil and now < target.guardUntil and not hit.perilous then
+		-- Enemy guard: little health damage, extra posture damage. Break the guard to punish.
+		res = {
+			outcome = "Blocked",
+			damage = hit.damage * EnemyConfig.GuardDamageMultiplier,
+			postureDamage = hit.postureDamage * EnemyConfig.GuardPostureMultiplier,
+			reflectPosture = 0,
+		}
 	else
 		res = { outcome = "Hit", damage = hit.damage, postureDamage = hit.postureDamage, reflectPosture = 0 }
 	end

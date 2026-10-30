@@ -193,6 +193,54 @@ shapes.Greatblade = function(b, v)
 	tassel(b, v, -0.6)
 end
 
+-- Blade span in handle space (base -> tip along +Y) per class, for trails and the parry glint.
+local function bladeSpan(class: string, v: Visual): (number, number)
+	local L = v.length
+	if class == "Jian" then
+		return 1.0, L + 0.9
+	elseif class == "Dao" then
+		return 1.05, L + 1.05
+	elseif class == "Spear" then
+		return L - 1.8, L - 0.5
+	elseif class == "Fan" then
+		return 0.6, L + 0.2
+	elseif class == "Staff" then
+		return L * 0.1, L * 0.65
+	end
+	return 1.5, L + 1.4 -- Greatblade
+end
+
+-- Adds TrailBase/TrailTip attachments, a disabled "SwingTrail" (clients enable it during
+-- active frames) and a "Glint" attachment at the tip (parry-timing flash).
+local function addTrail(handle: BasePart, class: string, v: Visual)
+	local baseY, tipY = bladeSpan(class, v)
+	local a0 = Instance.new("Attachment")
+	a0.Name = "TrailBase"
+	a0.Position = Vector3.new(0, baseY, 0)
+	a0.Parent = handle
+	local a1 = Instance.new("Attachment")
+	a1.Name = "TrailTip"
+	a1.Position = Vector3.new(0, tipY, 0)
+	a1.Parent = handle
+	local glint = Instance.new("Attachment")
+	glint.Name = "Glint"
+	glint.Position = Vector3.new(0, tipY - 0.2, 0)
+	glint.Parent = handle
+	local color = if v.glow then rgb(v.glow) else rgb(v.blade):Lerp(Color3.new(1, 1, 1), 0.6)
+	local trail = Instance.new("Trail")
+	trail.Name = "SwingTrail"
+	trail.Attachment0 = a0
+	trail.Attachment1 = a1
+	trail.Color = ColorSequence.new(color, color:Lerp(Color3.new(1, 1, 1), 0.5))
+	trail.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.15), NumberSequenceKeypoint.new(1, 1) })
+	trail.LightEmission = 1
+	trail.Lifetime = 0.2
+	trail.MinLength = 0.05
+	trail.FaceCamera = true
+	trail.Enabled = false
+	trail.Parent = handle
+end
+
 -- Builds the weapon model. anchored = true for displays (racks, viewports); false for held
 -- weapons (parts are massless, non-colliding and welded to Handle).
 function WeaponModels.Build(weaponId: string, anchored: boolean): Model?
@@ -214,6 +262,9 @@ function WeaponModels.Build(weaponId: string, anchored: boolean): Model?
 	local shape = shapes[def.class]
 	if shape then
 		shape(b, def.visual)
+	end
+	if not anchored then
+		addTrail(handle, def.class, def.visual)
 	end
 
 	for _, d in model:GetDescendants() do
@@ -258,9 +309,12 @@ function WeaponModels.AttachToHand(rig: Model, weaponId: string, name: string): 
 	local offset = CFrame.new(0, -hand.Size.Y * WeaponConfig.GripDepth, 0) * CFrame.Angles(math.rad(r[1]), math.rad(r[2]), math.rad(r[3]))
 	model:PivotTo(hand.CFrame * offset)
 	local weld = Instance.new("Weld")
+	weld.Name = "GripWeld"
 	weld.Part0 = hand
 	weld.Part1 = handle
 	weld.C0 = offset
+	-- Clients swing the weapon by offsetting C0 from this base (AnimationController).
+	weld:SetAttribute("BaseC0", offset)
 	weld.Parent = handle
 	model.Parent = rig
 	return model
