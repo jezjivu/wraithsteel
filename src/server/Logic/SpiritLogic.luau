@@ -21,6 +21,7 @@ export type SpiritData = {
 	spiritStorage: number,
 	nextUid: number,
 	ember: number,
+	expeditions: { [string]: Types.ExpeditionState }?,
 }
 
 local SpiritLogic = {}
@@ -60,9 +61,43 @@ function SpiritLogic.IsEquipped(data: SpiritData, uid: string): boolean
 	return table.find(data.equippedSpirits, uid) ~= nil
 end
 
+-- True while the Spirit is away on an expedition (cannot be equipped, fused or released).
+function SpiritLogic.IsAway(data: SpiritData, uid: string): boolean
+	if data.expeditions == nil then
+		return false
+	end
+	for _, e in data.expeditions do
+		if table.find(e.spiritUids, uid) then
+			return true
+		end
+	end
+	return false
+end
+
+-- Adds Spirit XP, leveling up to SpiritConfig.LevelCap. Returns levels gained.
+function SpiritLogic.AddXp(inst: SpiritInstance, xp: number): number
+	local start = inst.level
+	inst.xp += math.max(0, xp)
+	while inst.level < SpiritConfig.LevelCap do
+		local need = SpiritConfig.XpToNext(inst.level)
+		if inst.xp < need then
+			break
+		end
+		inst.xp -= need
+		inst.level += 1
+	end
+	if inst.level >= SpiritConfig.LevelCap then
+		inst.xp = 0
+	end
+	return inst.level - start
+end
+
 function SpiritLogic.Equip(data: SpiritData, uid: string, slotBonus: number): (boolean, string?)
 	if data.spirits[uid] == nil then
 		return false, "Spirit not found"
+	end
+	if SpiritLogic.IsAway(data, uid) then
+		return false, "That Spirit is on an expedition"
 	end
 	if SpiritLogic.IsEquipped(data, uid) then
 		return true, nil
@@ -95,6 +130,9 @@ function SpiritLogic.Release(data: SpiritData, uids: { string }): (number?, stri
 		end
 		if s.locked then
 			return nil, "A selected Spirit is locked"
+		end
+		if SpiritLogic.IsAway(data, uid) then
+			return nil, "A selected Spirit is on an expedition"
 		end
 		seen[uid] = true
 		refund += (EconomyConfig.ReleaseRefund :: any)[s.rarity] or 0
@@ -159,6 +197,9 @@ function SpiritLogic.PlanFusion(data: SpiritData, uids: { string }): (FusionPlan
 		end
 		if SpiritLogic.IsEquipped(data, uid) then
 			return nil, "Unequip Spirits before fusing"
+		end
+		if SpiritLogic.IsAway(data, uid) then
+			return nil, "A selected Spirit is on an expedition"
 		end
 		local mOrder = SpiritConfig.Mutations[s.mutation].order
 		if mOrder > bestOrder then

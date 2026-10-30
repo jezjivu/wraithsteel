@@ -90,6 +90,11 @@ SpiritConfig.Passives = {
 SpiritConfig.LevelCap = 50
 SpiritConfig.PowerPerLevel = 0.04 -- +4% of base per level
 
+-- Spirit XP needed to go from `level` to `level + 1` (XP comes from expeditions).
+function SpiritConfig.XpToNext(level: number): number
+	return math.floor(50 * level ^ 1.4)
+end
+
 -- Power of one spirit instance.
 function SpiritConfig.PowerOf(id: string, rarity: string, mutation: string, level: number): number
 	local def = SpiritConfig.Spirits[id]

@@ -53,7 +53,7 @@ MonetizationConfig.Passes = {
 	LongExpeditions = {
 		id = 0,
 		name = "Long Road",
-		description = "Offline earnings cap raised from 8h to 12h.",
+		description = "Offline earnings cap raised from 8h to 12h, plus a 3rd expedition slot.",
 		giftProduct = nil,
 	},
 } :: { [string]: PassDef }

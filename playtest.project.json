@@ -3,8 +3,12 @@
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
-      "Shared": { "$path": "src/shared" },
-      "Config": { "$path": "src/config" }
+      "Shared": {
+        "$path": "src/shared"
+      },
+      "Config": {
+        "$path": "src/config"
+      }
     },
     "ServerScriptService": {
       "$path": "src/server"
@@ -15,15 +19,29 @@
       }
     },
     "Workspace": {
-      "$properties": { "FilteringEnabled": true },
+      "$properties": {
+        "FilteringEnabled": true
+      },
       "Baseplate": {
         "$className": "Part",
         "$properties": {
           "Anchored": true,
-          "Size": [512, 20, 512],
-          "Position": [0, -10, 0],
+          "Size": [
+            512,
+            20,
+            512
+          ],
+          "Position": [
+            0,
+            -10,
+            0
+          ],
           "Material": "Slate",
-          "Color": [0.27, 0.25, 0.23],
+          "Color": [
+            0.27,
+            0.25,
+            0.23
+          ],
           "Locked": true
         }
       },
@@ -31,8 +49,16 @@
         "$className": "SpawnLocation",
         "$properties": {
           "Anchored": true,
-          "Size": [12, 1, 12],
-          "Position": [0, 0.5, 0],
+          "Size": [
+            12,
+            1,
+            12
+          ],
+          "Position": [
+            0,
+            0.5,
+            0
+          ],
           "Material": "Wood",
           "Duration": 0
         }
@@ -45,11 +71,27 @@
             "Anchored": true,
             "CanCollide": false,
             "Transparency": 0.6,
-            "Size": [4, 1, 4],
-            "Position": [0, 0.5, -45],
-            "Color": [0.6, 0.35, 0.2]
+            "Size": [
+              4,
+              1,
+              4
+            ],
+            "Position": [
+              0,
+              0.5,
+              -45
+            ],
+            "Color": [
+              0.6,
+              0.35,
+              0.2
+            ]
           },
-          "$attributes": { "EnemyId": "rustbound_bandit", "Count": 3, "RespawnSeconds": 15 }
+          "$attributes": {
+            "EnemyId": "rustbound_bandit",
+            "Count": 3,
+            "RespawnSeconds": 15
+          }
         },
         "GhoulShrine": {
           "$className": "Part",
@@ -57,11 +99,83 @@
             "Anchored": true,
             "CanCollide": false,
             "Transparency": 0.6,
-            "Size": [4, 1, 4],
-            "Position": [45, 0.5, -10],
-            "Color": [0.3, 0.5, 0.35]
+            "Size": [
+              4,
+              1,
+              4
+            ],
+            "Position": [
+              45,
+              0.5,
+              -10
+            ],
+            "Color": [
+              0.3,
+              0.5,
+              0.35
+            ]
           },
-          "$attributes": { "EnemyId": "lantern_ghoul", "Count": 2, "RespawnSeconds": 20 }
+          "$attributes": {
+            "EnemyId": "lantern_ghoul",
+            "Count": 2,
+            "RespawnSeconds": 20
+          }
+        },
+        "RustwoodGrove": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true,
+            "CanCollide": false,
+            "Transparency": 0.6,
+            "Size": [
+              4,
+              1,
+              4
+            ],
+            "Position": [
+              -45,
+              0.5,
+              40
+            ],
+            "Color": [
+              0.35,
+              0.3,
+              0.2
+            ]
+          },
+          "$attributes": {
+            "EnemyId": "rustwood_stalker",
+            "Count": 2,
+            "RespawnSeconds": 25
+          }
+        },
+        "SentinelPost": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true,
+            "CanCollide": false,
+            "Transparency": 0.6,
+            "Size": [
+              4,
+              1,
+              4
+            ],
+            "Position": [
+              55,
+              0.5,
+              50
+            ],
+            "Color": [
+              0.45,
+              0.4,
+              0.35
+            ]
+          },
+          "$attributes": {
+            "EnemyId": "rust_eaten_sentinel",
+            "Count": 1,
+            "RespawnSeconds": 30
+          }
         }
       },
       "BossArenas": {
@@ -70,12 +184,51 @@
           "$className": "Part",
           "$properties": {
             "Anchored": true,
-            "Size": [8, 1, 8],
-            "Position": [-60, 0.5, -60],
+            "Size": [
+              8,
+              1,
+              8
+            ],
+            "Position": [
+              -60,
+              0.5,
+              -60
+            ],
             "Material": "CorrodedMetal",
-            "Color": [0.55, 0.3, 0.15]
+            "Color": [
+              0.55,
+              0.3,
+              0.15
+            ]
           },
-          "$attributes": { "BossId": "rust_tiger" }
+          "$attributes": {
+            "BossId": "rust_tiger"
+          }
+        },
+        "HollowAbbotArena": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true,
+            "Size": [
+              8,
+              1,
+              8
+            ],
+            "Position": [
+              80,
+              0.5,
+              -80
+            ],
+            "Material": "Slate",
+            "Color": [
+              0.4,
+              0.4,
+              0.45
+            ]
+          },
+          "$attributes": {
+            "BossId": "hollow_abbot"
+          }
         }
       }
     }

@@ -22,7 +22,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] AnalyticsService (onboarding funnel once per profile, economy + custom events)
 - [x] ProgressionService (Ember, Jade, XP/levels, Power with chapter caps, multipliers)
 - [x] MarketService (idempotent ProcessReceipt, pass cache, gifted passes incl. offline via profile messages, boosts, gift tokens)
-- [x] Pure-Luau test harness + specs (`tools/run_tests.py`, 43 tests) and luau-lsp type check (`tools/check.sh`)
+- [x] Pure-Luau test harness + specs (`tools/run_tests.py`, 48 tests) and luau-lsp type check (`tools/check.sh`)
 - [ ] Create passes/products on the Creator Dashboard and fill ids (MonetizationConfig)
 
 ## Phase 1 - Prologue vertical slice
@@ -55,9 +55,13 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] CodeService (server-only code table)
 
 ## Phase 2 - Chapter 1 + depth
-- [ ] BossConfig entries for the 4 Chapter 1 bosses; 2-3 Chapter 1 enemies
-- [ ] ExpeditionService (stub exists: API + remotes answer "coming soon")
-- [ ] Spirit leveling (xp field exists), more passives
+- [x] BossConfig entries for the 4 Chapter 1 bosses (Hollow Abbot, Twin Cinder Sisters, Rustwood Matriarch, Gatekeeper of Rust - 3 phases)
+- [x] Chapter 1 enemies: Rustwood Stalker, Rust-Eaten Sentinel
+- [~] Rigs/animations for the Chapter 1 roster; Twin Cinder Sisters as two bodies (currently one combatant)
+- [x] ExpeditionService + ExpeditionConfig (3 routes, 2 slots + 1 with Long Road pass, deterministic Ember + Spirit XP)
+- [x] Spirit leveling (Spirit XP from expeditions, `SpiritConfig.XpToNext`, level cap 50); away Spirits locked from equip/fuse/release
+- [~] Expedition board UI (Studio)
+- [ ] More Spirit passives
 - [ ] More weapons (Dao/Spear/Fan classes reserved in WeaponConfig types)
 
 ## Phase 3 - Co-op + world bosses + Chapters 2-3
@@ -75,11 +79,17 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [ ] Anti-exploit telemetry from `Net.Rejected` (currently only a signal)
 - [ ] Balance pass, economy sinks, events
 
+## Playtesting
+- `rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` -> open in Studio -> Play.
+  Test map: bandits, ghouls, Rustwood stalkers, a sentinel, Rust Tiger + Hollow Abbot arenas.
+  Studio-only chat commands via DebugService (`/ember`, `/odds`, `/open`, `/spirits`, `/equipall`, `/daily`, `/stats`).
+
 ## Next up (for the next run)
 1. Add `WRAITHSTEEL_AGENT_GUIDE.md` to the repo and reconcile `Shared/Types`, `NetSchema`,
    service APIs and this checklist with §8.3/§11.
 2. Studio session: build EnemySpawns + BossArenas in a test place, playtest combat timings.
-3. Phase 2 code: Chapter 1 enemies/bosses, ExpeditionService, Spirit leveling.
+3. Feedback from the first Studio playtest (combat timings, enemy movement on placeholder rigs).
+4. Phase 3 code: PartyService (4-player parties, party bonus), WorldBossService, ZoneService.
 
 ## Known risks
 - **Contracts are reconstructed**, not copied from the guide - expect renames when reconciling.

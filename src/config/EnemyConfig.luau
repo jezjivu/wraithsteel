@@ -89,6 +89,45 @@ EnemyConfig.Enemies = {
 		xpReward = 14,
 		modelId = 0,
 	},
+	-- Chapter 1: Rustwood Pass
+	rustwood_stalker = {
+		name = "Rustwood Stalker",
+		chapter = 1,
+		maxHealth = 260,
+		maxPosture = 90,
+		postureRegen = 10,
+		walkSpeed = 17,
+		aggroRange = 45,
+		leashRange = 100,
+		preferredRange = 12,
+		attackCooldown = 1.3,
+		attacks = {
+			hook = { name = "Bark-Hook Slash", damage = 22, postureDamage = 16, windup = 0.35, active = 0.12, recovery = 0.45, range = 8, arcDegrees = 100, weight = 3, animationId = PLACEHOLDER_ANIM },
+			leap = { name = "Canopy Drop", damage = 30, postureDamage = 22, windup = 0.6, active = 0.2, recovery = 0.7, range = 16, arcDegrees = 45, weight = 1, animationId = PLACEHOLDER_ANIM },
+		},
+		emberReward = 30,
+		xpReward = 45,
+		modelId = 0,
+	},
+	rust_eaten_sentinel = {
+		name = "Rust-Eaten Sentinel",
+		chapter = 1,
+		maxHealth = 520,
+		maxPosture = 180,
+		postureRegen = 4,
+		walkSpeed = 8,
+		aggroRange = 30,
+		leashRange = 60,
+		preferredRange = 7,
+		attackCooldown = 2.4,
+		attacks = {
+			hammer = { name = "Seized Hammer", damage = 34, postureDamage = 30, windup = 0.8, active = 0.2, recovery = 0.9, range = 8, arcDegrees = 80, weight = 3, animationId = PLACEHOLDER_ANIM },
+			quake = { name = "Groaning Quake", damage = 26, postureDamage = 10, windup = 1.1, active = 0.3, recovery = 1.1, range = 11, arcDegrees = 360, weight = 1, perilous = true, animationId = PLACEHOLDER_ANIM },
+		},
+		emberReward = 55,
+		xpReward = 80,
+		modelId = 0,
+	},
 } :: { [string]: EnemyDef }
 
 return EnemyConfig
