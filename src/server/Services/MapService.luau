@@ -686,6 +686,44 @@ local function stairs(parent: Instance, center: Vector3, radius: number, useTerr
 	end
 end
 
+-- Wooden signposts at every side-path junction, pointing to the area the path leads to.
+local function signposts()
+	local m = model("Signposts")
+	for _, sp in MapConfig.SidePaths do
+		local a, b = xz(sp[1]), xz(sp[2])
+		-- The area whose center is closest to the path's end.
+		local best, bestD = nil, math.huge
+		for _, area in MapConfig.Areas do
+			local d = (xz(area.center) - b).Magnitude
+			if d < bestD then
+				best, bestD = area, d
+			end
+		end
+		if best then
+			local dir = (b - a).Unit
+			local side = Vector3.new(-dir.Z, 0, dir.X)
+			local base = a + dir * 9 + side * (MapConfig.SidePathWidth / 2 + 2)
+			column(m, "SignPost", 6, 0.5, base, C.DarkWood, Enum.Material.Wood)
+			local board = part(m, "SignBoard", Vector3.new(7, 1.4, 0.3), CFrame.lookAt(base + Vector3.new(0, 5, 0), base + Vector3.new(0, 5, 0) + side) * CFrame.Angles(0, math.rad(90), 0), C.Wood, Enum.Material.WoodPlanks)
+			for _, faceId in { Enum.NormalId.Front, Enum.NormalId.Back } do
+				local gui = Instance.new("SurfaceGui")
+				gui.Face = faceId
+				gui.CanvasSize = Vector2.new(350, 70)
+				gui.LightInfluence = 0.3
+				gui.Parent = board
+				local t = Instance.new("TextLabel")
+				t.Size = UDim2.fromScale(1, 1)
+				t.BackgroundTransparency = 1
+				t.Font = Enum.Font.Antique
+				t.TextScaled = true
+				t.TextColor3 = Color3.fromRGB(245, 230, 200)
+				t.Text = best.name
+				t.Parent = gui
+			end
+		end
+	end
+end
+
 -- Flagstones along the main path (two staggered rows) and stepping stones on side paths.
 local function flagstones()
 	local m = model("Flagstones")
@@ -761,6 +799,7 @@ local function build()
 	end
 
 	flagstones()
+	signposts()
 
 	-- Main path: lanterns on both sides, torii gates, and the torii tunnel.
 	local path = MapConfig.Path

@@ -17,6 +17,9 @@ GuideConfig.Text = {
 	allDone = "Chapter cleared! Hunt world bosses, fuse Spirits and party up.",
 }
 
+-- Objective waypoint: beacon of light + distance label + screen-edge arrow.
+GuideConfig.Waypoint = { color = { 255, 215, 120 }, beamHeight = 60, hideWithin = 14 }
+
 GuideConfig.Controls = {
 	"Click - Strike combo   R - Heavy",
 	"Strike x2 then R - Finisher (launch!)",
