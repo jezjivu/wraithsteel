@@ -34,32 +34,7 @@ local function attach(player: Player)
 	if character == nil or data == nil then
 		return
 	end
-	local old = character:FindFirstChild(HELD_NAME)
-	if old then
-		old:Destroy()
-	end
-	local hand = character:FindFirstChild("RightHand") or character:FindFirstChild("Right Arm")
-	if hand == nil or not hand:IsA("BasePart") then
-		return
-	end
-	local model = WeaponModels.Build(data.equippedWeapon, false)
-	if model == nil then
-		return
-	end
-	model.Name = HELD_NAME
-	local handle = model.PrimaryPart :: BasePart
-	-- Grip at the bottom of the hand; the blade (+Y of the model) points along the hand's
-	-- forward (-Z), so with the arm hanging the weapon points ahead of the character.
-	-- Uses only the hand part's own axes, so it works the same for R15 and R6 rigs.
-	local r = WeaponConfig.GripRotation
-	local offset = CFrame.new(0, -hand.Size.Y * WeaponConfig.GripDepth, 0) * CFrame.Angles(math.rad(r[1]), math.rad(r[2]), math.rad(r[3]))
-	model:PivotTo(hand.CFrame * offset)
-	local weld = Instance.new("Weld")
-	weld.Part0 = hand
-	weld.Part1 = handle
-	weld.C0 = offset
-	weld.Parent = handle
-	model.Parent = character
+	WeaponModels.AttachToHand(character, data.equippedWeapon, HELD_NAME)
 end
 
 function WeaponService.Equip(player: Player, weaponId: string): boolean

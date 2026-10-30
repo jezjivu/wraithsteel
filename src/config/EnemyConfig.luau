@@ -16,6 +16,19 @@ export type EnemyAttack = {
 	animationId: string,
 }
 
+-- Procedural rig look (RigBuilder) used until a Studio rig exists in ServerStorage.
+-- Colors are {r, g, b}; weapon is a WeaponConfig id held in the right hand.
+export type RigLook = {
+	skin: { number },
+	body: { number },
+	legs: { number },
+	headwear: ("Hood" | "Helm" | "Horns" | "Lantern" | "Sack" | "Hair" | "Bell")?,
+	accent: { number }?,
+	glow: { number }?,
+	weapon: string?,
+	scale: number,
+}
+
 export type EnemyDef = {
 	name: string,
 	chapter: number,
@@ -32,6 +45,7 @@ export type EnemyDef = {
 	xpReward: number,
 	modelId: number,
 	training: boolean?, -- training dummy: never attacks, gives no rewards or quest progress
+	look: RigLook?,
 }
 
 local EnemyConfig = {}
@@ -68,6 +82,7 @@ EnemyConfig.Enemies = {
 		emberReward = 0,
 		xpReward = 0,
 		modelId = 0,
+		look = { skin = { 205, 180, 120 }, body = { 170, 140, 90 }, legs = { 120, 95, 60 }, headwear = "Sack", scale = 1 },
 		training = true,
 	},
 	rustbound_bandit = {
@@ -88,6 +103,7 @@ EnemyConfig.Enemies = {
 		emberReward = 6,
 		xpReward = 10,
 		modelId = 0,
+		look = { skin = { 200, 160, 130 }, body = { 120, 60, 40 }, legs = { 60, 50, 45 }, headwear = "Hood", accent = { 150, 80, 40 }, weapon = "dao_rustcutter", scale = 1 },
 	},
 	lantern_ghoul = {
 		name = "Lantern Ghoul",
@@ -107,6 +123,7 @@ EnemyConfig.Enemies = {
 		emberReward = 9,
 		xpReward = 14,
 		modelId = 0,
+		look = { skin = { 120, 140, 120 }, body = { 50, 55, 50 }, legs = { 40, 40, 40 }, headwear = "Lantern", accent = { 255, 190, 90 }, glow = { 255, 170, 70 }, scale = 1.1 },
 	},
 	-- Chapter 1: Rustwood Pass
 	rustwood_stalker = {
@@ -127,6 +144,7 @@ EnemyConfig.Enemies = {
 		emberReward = 30,
 		xpReward = 45,
 		modelId = 0,
+		look = { skin = { 150, 120, 90 }, body = { 70, 85, 50 }, legs = { 60, 50, 35 }, headwear = "Hood", accent = { 90, 110, 60 }, weapon = "spear_reedline", scale = 1.05 },
 	},
 	rust_eaten_sentinel = {
 		name = "Rust-Eaten Sentinel",
@@ -146,6 +164,7 @@ EnemyConfig.Enemies = {
 		emberReward = 55,
 		xpReward = 80,
 		modelId = 0,
+		look = { skin = { 120, 90, 70 }, body = { 110, 70, 45 }, legs = { 90, 60, 40 }, headwear = "Helm", accent = { 150, 85, 45 }, weapon = "staff_pilgrim", scale = 1.45 },
 	},
 } :: { [string]: EnemyDef }
 

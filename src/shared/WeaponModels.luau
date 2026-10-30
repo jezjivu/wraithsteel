@@ -236,6 +236,36 @@ function WeaponModels.Build(weaponId: string, anchored: boolean): Model?
 	return model
 end
 
+-- Builds the weapon and welds it into `rig`'s right hand (R15 RightHand or R6 Right Arm),
+-- replacing any previous model with the same name. The grip uses only the hand part's own
+-- axes: blade (+Y) along the hand's forward (-Z), so a hanging arm points the weapon ahead.
+function WeaponModels.AttachToHand(rig: Model, weaponId: string, name: string): Model?
+	local old = rig:FindFirstChild(name)
+	if old then
+		old:Destroy()
+	end
+	local hand = rig:FindFirstChild("RightHand") or rig:FindFirstChild("Right Arm")
+	if hand == nil or not hand:IsA("BasePart") then
+		return nil
+	end
+	local model = WeaponModels.Build(weaponId, false)
+	if model == nil then
+		return nil
+	end
+	model.Name = name
+	local handle = model.PrimaryPart :: BasePart
+	local r = WeaponConfig.GripRotation
+	local offset = CFrame.new(0, -hand.Size.Y * WeaponConfig.GripDepth, 0) * CFrame.Angles(math.rad(r[1]), math.rad(r[2]), math.rad(r[3]))
+	model:PivotTo(hand.CFrame * offset)
+	local weld = Instance.new("Weld")
+	weld.Part0 = hand
+	weld.Part1 = handle
+	weld.C0 = offset
+	weld.Parent = handle
+	model.Parent = rig
+	return model
+end
+
 -- Rough bounding length (for camera framing in viewports / rack spacing).
 function WeaponModels.Length(weaponId: string): number
 	local def = WeaponConfig.Weapons[weaponId]

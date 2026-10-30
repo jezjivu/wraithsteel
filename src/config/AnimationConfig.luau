@@ -79,6 +79,16 @@ AnimationConfig.MoveStyles = {
 	fan_heavy = "Thrust",
 } :: { [string]: string }
 
+-- Procedural walk cycle for code-built NPC rigs (they have no Animate script).
+AnimationConfig.Walk = {
+	fullSpeed = 14, -- studs/s at which the cycle reaches full swing
+	cyclesPerSecond = 1.4,
+	legSwingDegrees = 35,
+	armSwingDegrees = 25,
+	kneeBendDegrees = 40,
+	idleBreathDegrees = 1.5,
+}
+
 -- Enemy telegraph highlight colors (windup flash before their attacks land).
 AnimationConfig.TelegraphColor = { 255, 245, 220 }
 AnimationConfig.PerilousColor = { 255, 40, 40 }

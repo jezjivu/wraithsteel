@@ -4,6 +4,8 @@
 -- Prologue + Chapter 1 bosses are specified (5 of 21); the rest are listed in ChapterConfig
 -- and get entries here as their chapters are built.
 
+local EnemyConfig = require(script.Parent.EnemyConfig)
+
 export type BossMove = {
 	name: string,
 	damage: number,
@@ -45,6 +47,7 @@ export type BossDef = {
 	idleBetweenMoves: number,
 	rewards: { ember: number, xp: number, jadeFirstClear: number },
 	modelId: number,
+	look: EnemyConfig.RigLook?,
 }
 
 local BossConfig = {}
@@ -78,6 +81,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.8,
 		rewards = { ember = 300, xp = 400, jadeFirstClear = 25 },
 		modelId = 0, -- TODO(Studio/Agent C): Rust Tiger rig
+		look = { skin = { 220, 130, 50 }, body = { 200, 110, 40 }, legs = { 60, 40, 30 }, headwear = "Horns", accent = { 40, 30, 25 }, weapon = "dao_rustcutter", scale = 2.2 },
 	},
 	-- Chapter 1: Rustwood Pass
 	hollow_abbot = {
@@ -105,6 +109,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.7,
 		rewards = { ember = 1200, xp = 1500, jadeFirstClear = 30 },
 		modelId = 0, -- TODO(Studio/Agent C)
+		look = { skin = { 170, 165, 160 }, body = { 90, 90, 100 }, legs = { 70, 70, 80 }, headwear = "Hood", accent = { 200, 190, 170 }, weapon = "staff_bellringer", scale = 1.9 },
 	},
 	twin_cinder_sisters = {
 		name = "Twin Cinder Sisters",
@@ -130,6 +135,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.7,
 		rewards = { ember = 1400, xp = 1700, jadeFirstClear = 30 },
 		modelId = 0, -- TODO(Studio/Agent C)
+		look = { skin = { 230, 190, 160 }, body = { 170, 40, 35 }, legs = { 90, 25, 25 }, headwear = "Hair", accent = { 255, 140, 60 }, weapon = "fan_iron_lotus", glow = { 255, 120, 50 }, scale = 1.7 },
 	},
 	rustwood_matriarch = {
 		name = "Rustwood Matriarch",
@@ -155,6 +161,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.7,
 		rewards = { ember = 1700, xp = 2000, jadeFirstClear = 35 },
 		modelId = 0, -- TODO(Studio/Agent C)
+		look = { skin = { 110, 130, 80 }, body = { 80, 70, 45 }, legs = { 60, 50, 35 }, headwear = "Horns", accent = { 140, 160, 90 }, weapon = "spear_crimson_tassel", scale = 2.5 },
 	},
 	gatekeeper_of_rust = {
 		name = "Gatekeeper of Rust",
@@ -182,6 +189,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.7,
 		rewards = { ember = 2600, xp = 3000, jadeFirstClear = 50 },
 		modelId = 0, -- TODO(Studio/Agent C)
+		look = { skin = { 90, 90, 100 }, body = { 60, 60, 70 }, legs = { 45, 45, 55 }, headwear = "Helm", accent = { 160, 80, 40 }, weapon = "gb_gatebreaker", scale = 2.7 },
 	},
 	-- World bosses (WorldBossService) ---------------------------------------------------------
 	hollow_carillon = {
@@ -210,6 +218,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.9,
 		rewards = { ember = 1500, xp = 1200, jadeFirstClear = 40 },
 		modelId = 0, -- TODO(Studio/Agent C): giant bell construct rig
+		look = { skin = { 150, 115, 60 }, body = { 130, 95, 45 }, legs = { 90, 65, 35 }, headwear = "Bell", accent = { 255, 200, 120 }, weapon = "staff_bellringer", glow = { 255, 190, 110 }, scale = 3.4 },
 	},
 } :: { [string]: BossDef }
 

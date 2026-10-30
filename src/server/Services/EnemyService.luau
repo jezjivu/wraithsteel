@@ -34,6 +34,7 @@ local AttackDirector = require(Logic:WaitForChild("AttackDirector"))
 local CombatRules = require(Logic:WaitForChild("CombatRules"))
 local Posture = require(Logic:WaitForChild("Posture"))
 
+local RigBuilder = require(script.Parent.Parent:WaitForChild("World"):WaitForChild("RigBuilder"))
 local CombatService = require(script.Parent.CombatService)
 local ProgressionService = require(script.Parent.ProgressionService)
 local QuestService = require(script.Parent.QuestService)
@@ -106,6 +107,14 @@ local function getRig(enemyId: string): Model
 	local template = folder and folder:FindFirstChild(enemyId)
 	if template and template:IsA("Model") then
 		return template:Clone()
+	end
+	-- No Studio rig yet: build a code-made R15 humanoid from the config look.
+	local def = EnemyConfig.Enemies[enemyId]
+	if def and def.look then
+		local rig = RigBuilder.Build(def.look, def.name)
+		if rig then
+			return rig
+		end
 	end
 	return placeholderRig(enemyId)
 end
@@ -238,6 +247,8 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 	model:PivotTo(cframe)
 	local humanoid = model:FindFirstChildOfClass("Humanoid") :: Humanoid
 	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart
+	-- Stand the rig on the spawn point (scaled bosses have tall hips).
+	model:PivotTo(cframe + Vector3.new(0, humanoid.HipHeight + root.Size.Y / 2, 0))
 	humanoid.MaxHealth = def.maxHealth
 	humanoid.Health = def.maxHealth
 	humanoid.WalkSpeed = def.walkSpeed
