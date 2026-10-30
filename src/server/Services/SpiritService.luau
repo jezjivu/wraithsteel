@@ -1,13 +1,14 @@
 --!strict
 -- SpiritService: owns the player's Spirit collection (equip/lock/release) on top of SpiritLogic.
--- Spawning follower models is a Studio task (TODO(Studio/Agent B): Spirit follower models,
--- idle/follow animation; models will live in ServerStorage.Spirits/<spiritId>).
+-- Equipped Spirits are published as the SpiritParty player attribute; every client renders them
+-- as part-built companions (SpiritFollowerController + Shared/SpiritModels).
 --
 -- API:
 --   SpiritService.Grant(player, spiritId, rarity, mutation) -> SpiritInstance?
 --   SpiritService.Equip / Unequip / SetLocked / Release (also exposed as remotes)
 --   SpiritService.SlotBonus(player) -> number
 --   SpiritService.CollectionChanged: Signal(player)
+--   SpiritService.PublishParty(player)  -- sets player attribute SpiritParty for companions
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -30,7 +31,25 @@ local SpiritService = {
 	CollectionChanged = Signal.new(),
 }
 
+-- Publishes equipped Spirits as "id:mutation:rarity,..." so every client can render
+-- everyone's companions (SpiritFollowerController).
+function SpiritService.PublishParty(player: Player)
+	local data = DataService.GetData(player)
+	if data == nil then
+		return
+	end
+	local parts = {}
+	for _, uid in data.equippedSpirits do
+		local s = data.spirits[uid]
+		if s then
+			table.insert(parts, s.id .. ":" .. s.mutation .. ":" .. s.rarity)
+		end
+	end
+	player:SetAttribute("SpiritParty", table.concat(parts, ","))
+end
+
 local function changed(player: Player)
+	SpiritService.PublishParty(player)
 	DataService.Changed(player, "spirits", "equippedSpirits", "ember")
 	ProgressionService.RefreshPower(player)
 	SpiritService.CollectionChanged:Fire(player)
@@ -106,6 +125,7 @@ end
 function SpiritService.Init() end
 
 function SpiritService.Start()
+	DataService.ProfileLoaded:Connect(SpiritService.PublishParty)
 	Net.Server.OnInvoke("EquipSpirit", SpiritService.Equip)
 	Net.Server.OnInvoke("UnequipSpirit", SpiritService.Unequip)
 	Net.Server.OnInvoke("LockSpirit", SpiritService.SetLocked)

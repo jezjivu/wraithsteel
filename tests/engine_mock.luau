@@ -63,6 +63,8 @@ CF.__add = function(a, b) return cf({ a.p[1] + b.X, a.p[2] + b.Y, a.p[3] + b.Z }
 CF.__index = function(self, k)
 	if k == "Position" then
 		return v3(self.p[1], self.p[2], self.p[3])
+	elseif k == "Rotation" then
+		return cf({ 0, 0, 0 }, self.R)
 	elseif k == "LookVector" then
 		return v3(-self.R[1][3], -self.R[2][3], -self.R[3][3])
 	elseif k == "RightVector" then

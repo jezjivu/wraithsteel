@@ -28,6 +28,15 @@ export type SpiritDef = {
 	passive: string?, -- passive id handled by SpiritService
 	modelId: number,
 	iconId: number,
+	visual: SpiritVisual, -- part-built companion model (Shared/SpiritModels)
+}
+
+export type SpiritVisual = {
+	shape: "Winged" | "Beast" | "Fish" | "Wraith",
+	color: { number }, -- body RGB
+	accent: { number }, -- glow/detail RGB
+	size: number,
+	features: { string }?, -- Beast details: Ears, BushyTail, Toad, Tusks, Scales, Horns, Mane
 }
 
 local SpiritConfig = {}
@@ -64,17 +73,17 @@ SpiritConfig.Mutations = {
 
 SpiritConfig.Spirits = {
 	-- Prologue: The Cracked Bell
-	lantern_moth = { name = "Lantern Moth", rarity = "Common", basePower = 3, chapter = 0, element = "Flame", passive = nil, modelId = 0, iconId = 0 },
-	ember_sparrow = { name = "Ember Sparrow", rarity = "Common", basePower = 4, chapter = 0, element = "Flame", passive = nil, modelId = 0, iconId = 0 },
-	reed_fox = { name = "Reed Fox", rarity = "Uncommon", basePower = 6, chapter = 0, element = "Wind", passive = "ember_find_small", modelId = 0, iconId = 0 },
-	inkcap_toad = { name = "Inkcap Toad", rarity = "Uncommon", basePower = 7, chapter = 0, element = "Water", passive = nil, modelId = 0, iconId = 0 },
-	brass_carp = { name = "Brass Carp", rarity = "Rare", basePower = 12, chapter = 0, element = "Metal", passive = "posture_guard_small", modelId = 0, iconId = 0 },
+	lantern_moth = { name = "Lantern Moth", rarity = "Common", basePower = 3, chapter = 0, element = "Flame", passive = nil, modelId = 0, iconId = 0, visual = { shape = "Winged", color = { 230, 200, 140 }, accent = { 255, 170, 60 }, size = 1 } },
+	ember_sparrow = { name = "Ember Sparrow", rarity = "Common", basePower = 4, chapter = 0, element = "Flame", passive = nil, modelId = 0, iconId = 0, visual = { shape = "Winged", color = { 200, 90, 50 }, accent = { 255, 140, 60 }, size = 0.9 } },
+	reed_fox = { name = "Reed Fox", rarity = "Uncommon", basePower = 6, chapter = 0, element = "Wind", passive = "ember_find_small", modelId = 0, iconId = 0, visual = { shape = "Beast", color = { 210, 140, 70 }, accent = { 250, 240, 220 }, features = { "Ears", "BushyTail" }, size = 1 } },
+	inkcap_toad = { name = "Inkcap Toad", rarity = "Uncommon", basePower = 7, chapter = 0, element = "Water", passive = nil, modelId = 0, iconId = 0, visual = { shape = "Beast", color = { 60, 70, 90 }, accent = { 120, 200, 220 }, features = { "Toad" }, size = 0.9 } },
+	brass_carp = { name = "Brass Carp", rarity = "Rare", basePower = 12, chapter = 0, element = "Metal", passive = "posture_guard_small", modelId = 0, iconId = 0, visual = { shape = "Fish", color = { 210, 160, 70 }, accent = { 250, 220, 140 }, size = 1 } },
 	-- Chapter 1: Rustwood Pass
-	mist_heron = { name = "Mist Heron", rarity = "Rare", basePower = 16, chapter = 1, element = "Water", passive = "dodge_cooldown_small", modelId = 0, iconId = 0 },
-	rustwood_boar = { name = "Rustwood Boar", rarity = "Uncommon", basePower = 9, chapter = 1, element = "Wood", passive = nil, modelId = 0, iconId = 0 },
-	thunder_pangolin = { name = "Thunder Pangolin", rarity = "Epic", basePower = 30, chapter = 1, element = "Thunder", passive = "parry_ember", modelId = 0, iconId = 0 },
-	jade_qilin_cub = { name = "Jade Qilin Cub", rarity = "Legendary", basePower = 60, chapter = 1, element = "Wood", passive = "luck_small", modelId = 0, iconId = 0 },
-	ninth_bell_wraith = { name = "Ninth-Bell Wraith", rarity = "Mythic", basePower = 120, chapter = 1, element = "Void", passive = "posture_break_bonus", modelId = 0, iconId = 0 },
+	mist_heron = { name = "Mist Heron", rarity = "Rare", basePower = 16, chapter = 1, element = "Water", passive = "dodge_cooldown_small", modelId = 0, iconId = 0, visual = { shape = "Winged", color = { 220, 230, 240 }, accent = { 140, 190, 230 }, size = 1.2 } },
+	rustwood_boar = { name = "Rustwood Boar", rarity = "Uncommon", basePower = 9, chapter = 1, element = "Wood", passive = nil, modelId = 0, iconId = 0, visual = { shape = "Beast", color = { 120, 70, 45 }, accent = { 230, 220, 200 }, features = { "Tusks", "Ears" }, size = 1.15 } },
+	thunder_pangolin = { name = "Thunder Pangolin", rarity = "Epic", basePower = 30, chapter = 1, element = "Thunder", passive = "parry_ember", modelId = 0, iconId = 0, visual = { shape = "Beast", color = { 80, 90, 120 }, accent = { 140, 200, 255 }, features = { "Scales" }, size = 1.1 } },
+	jade_qilin_cub = { name = "Jade Qilin Cub", rarity = "Legendary", basePower = 60, chapter = 1, element = "Wood", passive = "luck_small", modelId = 0, iconId = 0, visual = { shape = "Beast", color = { 80, 190, 140 }, accent = { 240, 200, 90 }, features = { "Horns", "Mane", "BushyTail" }, size = 1.2 } },
+	ninth_bell_wraith = { name = "Ninth-Bell Wraith", rarity = "Mythic", basePower = 120, chapter = 1, element = "Void", passive = "posture_break_bonus", modelId = 0, iconId = 0, visual = { shape = "Wraith", color = { 40, 30, 60 }, accent = { 200, 120, 255 }, size = 1.3 } },
 } :: { [string]: SpiritDef }
 
 -- Passive effects (numbers only; SpiritService applies them).
@@ -85,6 +94,24 @@ SpiritConfig.Passives = {
 	parry_ember = { stat = "EmberOnParry", value = 2 },
 	luck_small = { stat = "Luck", value = 0.05 },
 	posture_break_bonus = { stat = "PostureDamageDealt", value = 0.1 },
+}
+
+-- Mutation looks for companion models: tint over the body color + glow color.
+SpiritConfig.MutationLooks = {
+	Ashen = { tint = { 150, 150, 150 }, tintAmount = 0.6, glow = { 200, 200, 200 } },
+	Gilded = { tint = { 255, 205, 80 }, tintAmount = 0.55, glow = { 255, 215, 100 } },
+	Moonlit = { tint = { 200, 220, 255 }, tintAmount = 0.5, glow = { 170, 200, 255 } },
+	Stormforged = { tint = { 90, 140, 255 }, tintAmount = 0.45, glow = { 120, 190, 255 } },
+	Hollow = { tint = { 30, 20, 40 }, tintAmount = 0.7, glow = { 190, 90, 255 } },
+} :: { [string]: { tint: { number }, tintAmount: number, glow: { number } } }
+
+-- Companion followers (SpiritFollowerController).
+SpiritConfig.Follow = {
+	distance = 4.5, -- studs behind the player
+	spacing = 2.6, -- between companions
+	height = 3, -- above the ground-ish (relative to the root)
+	bob = 0.35,
+	smoothing = 8, -- higher = snappier follow
 }
 
 SpiritConfig.LevelCap = 50
