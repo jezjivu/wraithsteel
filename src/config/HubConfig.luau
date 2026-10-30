@@ -28,7 +28,7 @@ HubConfig.Name = "Ninefold Crossing"
 HubConfig.Origin = { 0, 0, 150 } -- plaza center (studs)
 HubConfig.PlazaRadius = 64
 HubConfig.StallRing = 44 -- distance of stalls from the center
-HubConfig.PromptDistance = 12
+HubConfig.PromptDistance = 14
 
 HubConfig.Stations = {
 	{ kind = "LanternShrine", name = "Lantern Shrine", subtitle = "Light a lantern, call a Spirit", angle = -40, color = { 220, 150, 60 } },

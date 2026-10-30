@@ -65,12 +65,15 @@ def strip_export(src: str) -> str:
     return "\n".join(lines)
 
 
-def main():
+def build_bundle(specs, preludes=()):
+    """specs: list of (name, source). preludes: extra Luau files loaded after the harness."""
     project = json.loads((ROOT / "default.project.json").read_text())
     entries = []
     collect(project["tree"], [], entries)
 
     parts = [(ROOT / "tests" / "harness.luau").read_text()]
+    for pre in preludes:
+        parts.append((ROOT / pre).read_text())
     for inst_path, src in entries:
         parts.append("__node(%s)" % json.dumps(inst_path).replace("[", "{").replace("]", "}"))
         if src is not None and not src.name.endswith((".server.luau", ".client.luau")):
@@ -79,18 +82,20 @@ def main():
                 "__source(%s, function(script, require)\n%s\nend)"
                 % (json.dumps(inst_path).replace("[", "{").replace("]", "}"), body)
             )
-    specs = sorted((ROOT / "tests").glob("*.spec.luau"))
-    for spec in specs:
+    for name, source in specs:
         parts.append(
-            "__spec(%s, function(game, require)\n%s\nend)"
-            % (json.dumps(spec.name), strip_export(spec.read_text()))
+            "__spec(%s, function(game, require)\n%s\nend)" % (json.dumps(name), strip_export(source))
         )
     parts.append("__run()")
+    return "\n".join(parts)
 
+
+def main():
+    specs = [(p.name, p.read_text()) for p in sorted((ROOT / "tests").glob("*.spec.luau"))]
     build = ROOT / "build"
     build.mkdir(exist_ok=True)
     bundle = build / "tests.bundle.luau"
-    bundle.write_text("\n".join(parts))
+    bundle.write_text(build_bundle(specs))
     res = subprocess.run([LUAU, str(bundle)])
     sys.exit(res.returncode)
 

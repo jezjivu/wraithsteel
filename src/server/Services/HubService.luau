@@ -106,10 +106,11 @@ local function addPrompt(part: BasePart, actionText: string, objectText: string)
 	prompt.MaxActivationDistance = HubConfig.PromptDistance
 	prompt.RequiresLineOfSight = false
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.HoldDuration = 0
 	prompt.Parent = part
 end
 
--- A pitched-roof market stall facing the plaza center. Returns the counter (station) part.
+-- A pitched-roof market stall facing the plaza center. Returns its station point part.
 local function stall(parent: Instance, def: HubConfig.StationDef): BasePart
 	local c = center()
 	local a = math.rad(def.angle)
@@ -122,7 +123,7 @@ local function stall(parent: Instance, def: HubConfig.StationDef): BasePart
 	local roofColor = rgb(def.color)
 	local wood = Color3.fromRGB(95, 65, 40)
 
-	block(model, "Floor", Vector3.new(16, 0.6, 12), face * CFrame.new(0, 0.3, 0), Color3.fromRGB(120, 100, 80), Enum.Material.WoodPlanks)
+	block(model, "Floor", Vector3.new(16, 0.4, 12), face * CFrame.new(0, 0.05, 0), Color3.fromRGB(120, 100, 80), Enum.Material.WoodPlanks)
 	block(model, "BackWall", Vector3.new(16, 9, 0.8), face * CFrame.new(0, 5, 5.6), wood, Enum.Material.WoodPlanks)
 	for _, x in { -7.5, 7.5 } do
 		for _, z in { -5.5, 5.5 } do
@@ -134,20 +135,35 @@ local function stall(parent: Instance, def: HubConfig.StationDef): BasePart
 	block(model, "RoofR", Vector3.new(18, 0.6, 7.6), face * CFrame.new(0, 11.4, 3.1) * CFrame.Angles(math.rad(25), 0, 0), roofColor, Enum.Material.Slate)
 	block(model, "Ridge", Vector3.new(18.6, 0.8, 0.8), face * CFrame.new(0, 13.1, 0), Color3.fromRGB(40, 30, 25), Enum.Material.Wood)
 
-	local counter = block(model, "Counter", Vector3.new(10, 3.4, 2.2), face * CFrame.new(0, 2.3, -3.5), Color3.fromRGB(110, 75, 45), Enum.Material.Wood)
-	counter:SetAttribute("Station", def.kind)
+	local counter = block(model, "Counter", Vector3.new(10, 2.6, 2.2), face * CFrame.new(0, 1.3, -3.5), Color3.fromRGB(110, 75, 45), Enum.Material.Wood)
 	sign(counter, def.name, def.subtitle, roofColor:Lerp(Color3.new(1, 1, 1), 0.45), 9)
-	addPrompt(counter, "Open", def.name)
-	stationPositions[def.kind] = counter.Position
+	-- The prompt lives on an invisible, non-colliding point in front of the counter, at chest
+	-- height on the plaza side, so it is always reachable without climbing anything.
+	local point = block(model, "StationPoint", Vector3.new(4, 4, 1), face * CFrame.new(0, 3, -6.5), roofColor)
+	point.Transparency = 1
+	point.CanCollide = false
+	point.CanQuery = false
+	point:SetAttribute("Station", def.kind)
+	addPrompt(point, "Open", def.name)
+	stationPositions[def.kind] = point.Position
 
 	lanternPost(model, (face * CFrame.new(-9.5, 0, -6)).Position, Color3.fromRGB(255, 170, 80))
 	lanternPost(model, (face * CFrame.new(9.5, 0, -6)).Position, Color3.fromRGB(255, 170, 80))
-	return counter
+	return point
+end
+
+-- Level frame facing the plaza, at ground height, origin at the stall center (the station
+-- point sits 6.5 studs in front of it).
+local function flatFrame(point: BasePart): CFrame
+	local p = point.Position
+	local ground = Vector3.new(p.X, HubConfig.Origin[2], p.Z)
+	local c = center()
+	return CFrame.lookAt(ground, Vector3.new(c.X, ground.Y, c.Z)) * CFrame.new(0, 0, 6.5)
 end
 
 -- Racks along both sides of the Weapon Smith showing every weapon model with name + price.
 local function weaponRacks(parent: Instance, counter: BasePart)
-	local face = CFrame.lookAt(counter.Position, center()) * CFrame.new(0, -2.3, 3.5)
+	local face = flatFrame(counter)
 	local rack = Instance.new("Model")
 	rack.Name = "WeaponRacks"
 	rack.Parent = parent
@@ -158,12 +174,12 @@ local function weaponRacks(parent: Instance, counter: BasePart)
 		local slot = if i <= perSide then i - 1 else i - perSide - 1
 		-- Racks run outward from each side of the stall, toward the plaza.
 		local base = face * CFrame.new(side * 11.5, 0, -2 - slot * 2.6)
-		local stand = block(rack, "Stand", Vector3.new(2, 1.2, 2), base * CFrame.new(0, 0.6, 0), Color3.fromRGB(60, 45, 35), Enum.Material.Wood)
+		local stand = block(rack, "Stand", Vector3.new(2, 0.8, 2), base * CFrame.new(0, 0.4, 0), Color3.fromRGB(60, 45, 35), Enum.Material.Wood)
 		local model = WeaponModels.Build(id, true)
 		if model then
 			local def = WeaponConfig.Weapons[id]
 			-- Stand the weapon upright, blade up, edge turned toward the walkway.
-			model:PivotTo(base * CFrame.new(0, 3, 0) * CFrame.Angles(0, math.rad(90 * side), 0))
+			model:PivotTo(base * CFrame.new(0, 2.6, 0) * CFrame.Angles(0, math.rad(90 * side), 0))
 			model.Parent = rack
 			local priceText = if def.price == 0 then "Free" else FormatNumber.Short(def.price) .. " " .. def.currency
 			local rarity = SpiritConfig.Rarities[def.rarity]
@@ -174,15 +190,16 @@ local function weaponRacks(parent: Instance, counter: BasePart)
 end
 
 local function lanternShrine(parent: Instance, counter: BasePart)
-	local face = CFrame.lookAt(counter.Position, center()) * CFrame.new(0, -2.3, 3.5)
+	local face = flatFrame(counter)
 	for i, lanternId in HubConfig.ShrineLanterns do
 		local def = LanternConfig.Lanterns[lanternId]
 		if def then
 			local x = (i - (#HubConfig.ShrineLanterns + 1) / 2) * 7
 			local pedestalCf = face * CFrame.new(x, 0, -11)
-			cylinderY(parent, "Pedestal", 2.4, 4, (pedestalCf * CFrame.new(0, 1.2, 0)).Position, Color3.fromRGB(90, 85, 80), Enum.Material.Slate)
+			cylinderY(parent, "Pedestal", 0.8, 4, (pedestalCf * CFrame.new(0, 0.4, 0)).Position, Color3.fromRGB(90, 85, 80), Enum.Material.Slate)
 			local color = if def.paid then Color3.fromRGB(90, 230, 160) elseif def.chapter > 0 then Color3.fromRGB(230, 120, 60) else Color3.fromRGB(255, 210, 120)
-			local lamp = block(parent, def.name, Vector3.new(2.2, 3, 2.2), pedestalCf * CFrame.new(0, 4.2, 0), color, Enum.Material.Neon)
+			local lamp = block(parent, def.name, Vector3.new(2.2, 3, 2.2), pedestalCf * CFrame.new(0, 3.2, 0), color, Enum.Material.Neon)
+			lamp.CanCollide = false
 			local light = Instance.new("PointLight")
 			light.Color = color
 			light.Range = 14
@@ -204,7 +221,7 @@ local function bellTower(parent: Instance)
 			block(parent, "TowerPillar", Vector3.new(1.6, 22, 1.6), CFrame.new(c + Vector3.new(x, 11, z)), Color3.fromRGB(140, 40, 35), Enum.Material.Wood)
 		end
 	end
-	block(parent, "TowerBase", Vector3.new(14, 1.2, 14), CFrame.new(c + Vector3.new(0, 0.6, 0)), stone, Enum.Material.Cobblestone)
+	block(parent, "TowerBase", Vector3.new(14, 0.4, 14), CFrame.new(c + Vector3.new(0, 0.2, 0)), stone, Enum.Material.Cobblestone)
 	block(parent, "TowerRoof", Vector3.new(16, 1.4, 16), CFrame.new(c + Vector3.new(0, 22.7, 0)), Color3.fromRGB(50, 45, 50), Enum.Material.Slate)
 	block(parent, "TowerRoofTop", Vector3.new(9, 1.4, 9), CFrame.new(c + Vector3.new(0, 24.1, 0)), Color3.fromRGB(50, 45, 50), Enum.Material.Slate)
 	cylinderY(parent, "BellBody", 6, 6, c + Vector3.new(0, 17, 0), Color3.fromRGB(150, 110, 55), Enum.Material.Metal)
@@ -263,9 +280,9 @@ local function build()
 	hub.Name = "Hub"
 	local c = center()
 
-	local plaza = block(hub, "Plaza", Vector3.new(1, HubConfig.PlazaRadius * 2, HubConfig.PlazaRadius * 2), CFrame.new(c + Vector3.new(0, 0.05, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(125, 120, 112), Enum.Material.Cobblestone)
+	local plaza = block(hub, "Plaza", Vector3.new(0.4, HubConfig.PlazaRadius * 2, HubConfig.PlazaRadius * 2), CFrame.new(c + Vector3.new(0, -0.05, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(125, 120, 112), Enum.Material.Cobblestone)
 	plaza.Shape = Enum.PartType.Cylinder
-	local inner = block(hub, "PlazaInner", Vector3.new(1.05, 30, 30), CFrame.new(c + Vector3.new(0, 0.07, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(150, 140, 125), Enum.Material.Slate)
+	local inner = block(hub, "PlazaInner", Vector3.new(0.42, 30, 30), CFrame.new(c + Vector3.new(0, -0.04, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(150, 140, 125), Enum.Material.Slate)
 	inner.Shape = Enum.PartType.Cylinder
 
 	bellTower(hub)
@@ -290,8 +307,8 @@ local function build()
 	local spawn = Instance.new("SpawnLocation")
 	spawn.Name = "HubSpawn"
 	spawn.Anchored = true
-	spawn.Size = Vector3.new(10, 1, 10)
-	spawn.CFrame = CFrame.new(c + Vector3.new(0, 0.6, -14))
+	spawn.Size = Vector3.new(10, 0.4, 10)
+	spawn.CFrame = CFrame.new(c + Vector3.new(0, 0.05, -14))
 	spawn.Material = Enum.Material.Slate
 	spawn.Color = Color3.fromRGB(150, 140, 125)
 	spawn.Duration = 0
