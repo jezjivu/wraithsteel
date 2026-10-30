@@ -168,9 +168,9 @@ shapes.Staff = function(b, v)
 	rod(b, "Shaft", len, 0.2, len / 2 - len * 0.35, v.blade, Enum.Material.Wood)
 	local bottom = -len * 0.35
 	local top = len - len * 0.35
-	rod(b, "CapTop", 0.4, 0.26, top - 0.2, v.accent)
-	rod(b, "CapBottom", 0.4, 0.26, bottom + 0.2, v.accent)
-	rod(b, "Wrap", 0.8, 0.22, 0.1, v.grip, Enum.Material.Fabric)
+	rod(b, "CapTop", 0.5, 0.32, top - 0.25, v.accent)
+	rod(b, "CapBottom", 0.5, 0.32, bottom + 0.25, v.accent)
+	rod(b, "Wrap", 0.9, 0.25, 0.1, v.tassel or v.accent, Enum.Material.Fabric)
 	if v.glow then
 		local g = ball(b, "Glow", 0.3, top + 0.05, v.glow, Enum.Material.Neon)
 		local light = Instance.new("PointLight")
