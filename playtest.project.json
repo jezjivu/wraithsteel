@@ -1,0 +1,83 @@
+{
+  "name": "WraithsteelPlaytest",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": { "$path": "src/shared" },
+      "Config": { "$path": "src/config" }
+    },
+    "ServerScriptService": {
+      "$path": "src/server"
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "$path": "src/client"
+      }
+    },
+    "Workspace": {
+      "$properties": { "FilteringEnabled": true },
+      "Baseplate": {
+        "$className": "Part",
+        "$properties": {
+          "Anchored": true,
+          "Size": [512, 20, 512],
+          "Position": [0, -10, 0],
+          "Material": "Slate",
+          "Color": [0.27, 0.25, 0.23],
+          "Locked": true
+        }
+      },
+      "SpawnLocation": {
+        "$className": "SpawnLocation",
+        "$properties": {
+          "Anchored": true,
+          "Size": [12, 1, 12],
+          "Position": [0, 0.5, 0],
+          "Material": "Wood",
+          "Duration": 0
+        }
+      },
+      "EnemySpawns": {
+        "$className": "Folder",
+        "BanditCamp": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true,
+            "CanCollide": false,
+            "Transparency": 0.6,
+            "Size": [4, 1, 4],
+            "Position": [0, 0.5, -45],
+            "Color": [0.6, 0.35, 0.2]
+          },
+          "$attributes": { "EnemyId": "rustbound_bandit", "Count": 3, "RespawnSeconds": 15 }
+        },
+        "GhoulShrine": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true,
+            "CanCollide": false,
+            "Transparency": 0.6,
+            "Size": [4, 1, 4],
+            "Position": [45, 0.5, -10],
+            "Color": [0.3, 0.5, 0.35]
+          },
+          "$attributes": { "EnemyId": "lantern_ghoul", "Count": 2, "RespawnSeconds": 20 }
+        }
+      },
+      "BossArenas": {
+        "$className": "Folder",
+        "RustTigerArena": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true,
+            "Size": [8, 1, 8],
+            "Position": [-60, 0.5, -60],
+            "Material": "CorrodedMetal",
+            "Color": [0.55, 0.3, 0.15]
+          },
+          "$attributes": { "BossId": "rust_tiger" }
+        }
+      }
+    }
+  }
+}

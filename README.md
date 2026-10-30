@@ -44,6 +44,13 @@ not touched by Rojo - save the place file as usual.
 
 Controls: Left click = strike, R = heavy, F = parry, Q = dodge, 1/2 = skills, G = ultimate.
 
+## Quick playtest without Rojo
+
+`rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` makes a place file with all code
+plus a tiny test map (enemy spawns + Rust Tiger arena). Open it in Studio and press Play.
+Studio-only chat commands: `/ember 1000`, `/odds paper_lantern`, `/open paper_lantern`,
+`/spirits`, `/equipall`, `/daily`, `/stats` (DebugService; disabled in live servers).
+
 ## For developers / agents
 
 - Read `CLAUDE.md` (standing rules) and `PROGRESS.md` (what is done / next).
