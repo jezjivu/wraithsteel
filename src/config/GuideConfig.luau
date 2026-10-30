@@ -4,7 +4,7 @@
 
 local GuideConfig = {}
 
-GuideConfig.LevelGoal = 3 -- "fight in the Wilds" step lasts until this level
+GuideConfig.LevelGoal = 2 -- "fight in the Wilds" step lasts until this level
 GuideConfig.ControlsCardSeconds = 25 -- controls card auto-hides after this (H toggles it)
 
 GuideConfig.Text = {

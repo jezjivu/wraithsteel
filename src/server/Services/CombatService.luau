@@ -83,6 +83,7 @@ local CombatService = {
 }
 
 local combatants: { [string]: Combatant } = {}
+local lastHurtAt: { [Combatant]: number } = {} -- players only: for out-of-combat regen
 local byPlayer: { [Player]: Combatant } = {}
 local rng = Random.new()
 
@@ -101,6 +102,7 @@ function CombatService.Unregister(id: string)
 	local c = combatants[id]
 	if c then
 		combatants[id] = nil
+		lastHurtAt[c] = nil
 		if c.player and byPlayer[c.player] == c then
 			byPlayer[c.player] = nil
 		end
@@ -174,6 +176,9 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 
 	if damage > 0 then
 		target.humanoid.Health = math.max(0, target.humanoid.Health - damage)
+		if target.player then
+			lastHurtAt[target] = now
+		end
 	end
 	local broke = Posture.Add(target.posture, postureDamage, now, target.brokenSeconds)
 	if broke then
@@ -356,6 +361,14 @@ function CombatService.Init() end
 
 function CombatService.Start()
 	Net.Server.On("CombatAction", onCombatAction)
+	-- Level ups raise max health immediately and heal to full.
+	ProgressionService.LevelUp:Connect(function(player: Player, level: number)
+		local c = byPlayer[player]
+		if c and not c.dead then
+			c.humanoid.MaxHealth = CombatConfig.PlayerMaxHealth + (level - 1) * CombatConfig.PlayerHealthPerLevel
+			c.humanoid.Health = c.humanoid.MaxHealth
+		end
+	end)
 	local function hook(player: Player)
 		player.CharacterAdded:Connect(function(character)
 			onCharacterAdded(player, character)
@@ -386,6 +399,13 @@ function CombatService.Start()
 		acc = 0
 		local now = os.clock()
 		for _, c in combatants do
+			-- Players heal quickly once they have been out of combat for a moment.
+			if c.player and not c.dead then
+				local hum = c.humanoid
+				if hum.Health > 0 and hum.Health < hum.MaxHealth and now - (lastHurtAt[c] or 0) >= CombatConfig.OutOfCombatRegenDelay then
+					hum.Health = math.min(hum.MaxHealth, hum.Health + hum.MaxHealth * CombatConfig.OutOfCombatRegenPerSecond * step)
+				end
+			end
 			local before = c.posture.value
 			Posture.Update(c.posture, now, step)
 			if math.abs(before - c.posture.value) > 0.5 or (before > 0 and c.posture.value == 0) then

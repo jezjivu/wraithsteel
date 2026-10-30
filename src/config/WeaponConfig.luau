@@ -214,27 +214,27 @@ WeaponConfig.Weapons = {
 		visual = { blade = STEEL, accent = BRASS, grip = CLOTH, tassel = { 180, 40, 40 }, length = 3.2 },
 	}),
 	dao_rustcutter = weapon({
-		name = "Rustcutter Dao", class = "Dao", rarity = "Common", power = 8, price = 600, currency = "Ember", unlockChapter = 0,
+		name = "Rustcutter Dao", class = "Dao", rarity = "Common", power = 8, price = 250, currency = "Ember", unlockChapter = 0,
 		description = "Forged from bandit scrap. Bites deeper than it looks.",
 		visual = { blade = RUST, accent = DARK_STEEL, grip = WOOD, length = 3.0 },
 	}),
 	spear_reedline = weapon({
-		name = "Reedline Spear", class = "Spear", rarity = "Common", power = 8, price = 750, currency = "Ember", unlockChapter = 0,
+		name = "Reedline Spear", class = "Spear", rarity = "Common", power = 8, price = 300, currency = "Ember", unlockChapter = 0,
 		description = "A marsh-guard's spear, light as a reed.",
 		visual = { blade = STEEL, accent = DARK_STEEL, grip = WOOD, tassel = { 170, 40, 40 }, length = 6.5 },
 	}),
 	fan_paper_crane = weapon({
-		name = "Paper Crane Fan", class = "Fan", rarity = "Uncommon", power = 7, price = 750, currency = "Ember", unlockChapter = 0,
+		name = "Paper Crane Fan", class = "Fan", rarity = "Uncommon", power = 7, price = 300, currency = "Ember", unlockChapter = 0,
 		description = "Steel ribs under painted paper. Folds into a club.",
 		visual = { blade = { 235, 225, 205 }, accent = DARK_STEEL, grip = LACQUER, tassel = { 220, 60, 60 }, length = 2.0 },
 	}),
 	staff_pilgrim = weapon({
-		name = "Pilgrim's Staff", class = "Staff", rarity = "Common", power = 7, price = 600, currency = "Ember", unlockChapter = 0,
+		name = "Pilgrim's Staff", class = "Staff", rarity = "Common", power = 7, price = 250, currency = "Ember", unlockChapter = 0,
 		description = "Walked a thousand miles. Cracked a thousand helmets.",
 		visual = { blade = WOOD, accent = BRASS, grip = WOOD, length = 6.0 },
 	}),
 	jian_moonwater = weapon({
-		name = "Moonwater Jian", class = "Jian", rarity = "Rare", power = 14, price = 2500, currency = "Ember", unlockChapter = 0,
+		name = "Moonwater Jian", class = "Jian", rarity = "Rare", power = 14, price = 1200, currency = "Ember", unlockChapter = 0,
 		description = "Its edge ripples like moonlight on a still pond.",
 		visual = { blade = { 190, 215, 245 }, accent = { 220, 225, 235 }, grip = { 30, 40, 80 }, tassel = { 120, 170, 240 }, length = 3.4, glow = { 140, 190, 255 } },
 	}),

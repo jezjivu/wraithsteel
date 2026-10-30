@@ -203,8 +203,9 @@ cases["Rust Tiger: gap closer only at range, break interrupts"] = function()
 	expectEq(m.move, nil)
 	m:Update(0.3 + BossConfig.Bosses.rust_tiger.postureBrokenSeconds, { hasTarget = true, targetDistance = 20, hpFraction = 1 })
 	expectEq(m.state, "Chase")
-	expectEq(BossStateMachine.ScaledHealth("rust_tiger", 1), 1400)
-	expectEq(BossStateMachine.ScaledHealth("rust_tiger", 4), 3920)
+	local def = BossConfig.Bosses.rust_tiger
+	expectEq(BossStateMachine.ScaledHealth("rust_tiger", 1), def.maxHealth)
+	expectEq(BossStateMachine.ScaledHealth("rust_tiger", 4), math.floor(def.maxHealth * (1 + 3 * def.healthPerExtraPlayer) + 0.5))
 end
 
 return cases

@@ -28,7 +28,7 @@ LanternConfig.Lanterns = {
 		name = "Paper Lantern",
 		chapter = 0,
 		currency = "Ember",
-		price = 40,
+		price = 60,
 		paid = false,
 		entries = {
 			{ spirit = "lantern_moth", weight = 4500 },

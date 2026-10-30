@@ -163,7 +163,9 @@ cases["Weapons: every weapon is in the shop list with a valid class moveset"] = 
 end
 
 cases["Weapons: purchase rules"] = function()
-	local d = { weapons = { jian_wanderer = true }, chapter = 0, ember = 700, jade = 0 }
+	-- Enough for the cheapest Prologue weapon, not for the Spear.
+	local d = { weapons = { jian_wanderer = true }, chapter = 0, ember = WeaponConfig.Weapons.dao_rustcutter.price, jade = 0 }
+	expectTrue(WeaponConfig.Weapons.spear_reedline.price > d.ember)
 	expectEq(select(2, WeaponLogic.CanBuy(d, "jian_wanderer")), "You already own this weapon")
 	expectTrue(WeaponLogic.CanBuy(d, "dao_rustcutter"))
 	expectEq(select(2, WeaponLogic.CanBuy(d, "spear_reedline")), "Not enough Ember")

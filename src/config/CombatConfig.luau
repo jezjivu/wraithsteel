@@ -6,6 +6,8 @@ local CombatConfig = {}
 -- Player defaults ---------------------------------------------------------------------------
 CombatConfig.PlayerMaxHealth = 100
 CombatConfig.PlayerHealthPerLevel = 6
+CombatConfig.OutOfCombatRegenDelay = 5 -- seconds without taking damage before fast regen
+CombatConfig.OutOfCombatRegenPerSecond = 0.08 -- fraction of max health per second
 CombatConfig.PlayerMaxPosture = 100
 CombatConfig.PostureRegenPerSecond = 18 -- while not blocking/attacking
 CombatConfig.PostureRegenDelay = 1.2 -- seconds after last posture damage before regen

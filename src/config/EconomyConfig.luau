@@ -51,8 +51,8 @@ EconomyConfig.Multipliers = {
 EconomyConfig.MaxLuck = 3
 
 -- Enemy & boss rewards (multiplied by Ember multiplier) --------------------------------------
-EconomyConfig.EnemyEmberBase = 4
-EconomyConfig.EnemyXpBase = 6
+EconomyConfig.EnemyEmberBase = 10
+EconomyConfig.EnemyXpBase = 12
 EconomyConfig.BossFirstClearJade = 25
 
 -- Offline / expeditions ----------------------------------------------------------------------
