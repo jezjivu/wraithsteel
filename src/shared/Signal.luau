@@ -17,12 +17,14 @@ export type Signal<T...> = {
 	DisconnectAll: (self: Signal<T...>) -> (),
 }
 
-local spawnFn: (any, ...any) -> any = if task ~= nil then task.spawn else function(fn, ...)
-	fn(...)
+local function spawnFn(fn: (...any) -> (), ...: any)
+	task.spawn(fn, ...)
 end
 
+type Handler = { Connected: boolean, _fn: (...any) -> (), Disconnect: (Handler) -> () }
+
 function Signal.new(): any
-	return setmetatable({ _handlers = {} :: { any } }, Signal)
+	return setmetatable({ _handlers = {} :: { Handler } }, Signal)
 end
 
 function Signal:Connect(fn)
@@ -54,7 +56,7 @@ end
 
 function Signal:Fire(...)
 	-- Copy so handlers may disconnect during iteration.
-	local snapshot = table.clone(self._handlers)
+	local snapshot: { Handler } = table.clone(self._handlers)
 	for _, conn in snapshot do
 		if conn.Connected then
 			spawnFn(conn._fn, ...)
@@ -71,7 +73,8 @@ function Signal:Wait()
 end
 
 function Signal:DisconnectAll()
-	for _, conn in table.clone(self._handlers) do
+	local snapshot: { Handler } = table.clone(self._handlers)
+	for _, conn in snapshot do
 		conn:Disconnect()
 	end
 end

@@ -4,6 +4,9 @@ local Odds = require(Shared.Odds)
 local FormatNumber = require(Shared.FormatNumber)
 local Time = require(Shared.Time)
 local Signal = require(Shared.Signal)
+local RateLimiter = require(Shared.RateLimiter)
+local NetValidate = require(Shared.NetValidate)
+local NetSchema = require(Shared.NetSchema)
 
 local cases = {}
 
@@ -140,6 +143,56 @@ cases["Signal connect/fire/disconnect/once"] = function()
 	c:Disconnect()
 	s:Fire(1)
 	expectEq(got, 102)
+end
+
+cases["RateLimiter burst then refill"] = function()
+	local now = 0
+	local rl = RateLimiter.new(3, 1, function()
+		return now
+	end)
+	expectTrue(rl:Allow("p"))
+	expectTrue(rl:Allow("p"))
+	expectTrue(rl:Allow("p"))
+	expectTrue(not rl:Allow("p"))
+	expectTrue(rl:Allow("other"))
+	now = 1.01
+	expectTrue(rl:Allow("p"))
+	expectTrue(not rl:Allow("p"))
+	now = 100
+	for _ = 1, 3 do
+		expectTrue(rl:Allow("p"))
+	end
+	expectTrue(not rl:Allow("p"))
+end
+
+cases["NetValidate accepts good and rejects bad args"] = function()
+	expectTrue(NetValidate.Check({ "string", "integer" }, table.pack("lantern_ash", 3)))
+	expectTrue(not NetValidate.Check({ "string", "integer" }, table.pack("x", 1.5)))
+	expectTrue(not NetValidate.Check({ "string", "integer" }, table.pack("x", 0 / 0)))
+	expectTrue(not NetValidate.Check({ "string" }, table.pack("x", "extra")))
+	expectTrue(not NetValidate.Check({ "string" }, table.pack(string.rep("a", 65))))
+	expectTrue(not NetValidate.Check({ "number" }, table.pack(math.huge)))
+	expectTrue(NetValidate.Check({ "string", "integer?" }, table.pack("invite")))
+	expectTrue(not NetValidate.Check({ "string" }, table.pack(nil)))
+	expectTrue(NetValidate.Check({ "uidList" }, table.pack({ "a", "b" })))
+	expectTrue(not NetValidate.Check({ "uidList" }, table.pack({ a = "x" })))
+	expectTrue(not NetValidate.Check({ "uidList" }, table.pack({ "a", 5 })))
+	expectTrue(not NetValidate.Check({ "table" }, table.pack(setmetatable({}, {}))))
+end
+
+cases["NetSchema entries are well formed"] = function()
+	for name, def in NetSchema do
+		expectTrue(def.kind == "Event" or def.kind == "Function", name)
+		if def.direction == "ToServer" then
+			expectTrue(def.args ~= nil, name .. " needs args spec")
+			expectTrue(def.rate ~= nil, name .. " needs rate limit")
+			for _, t in def.args do
+				expectTrue(NetValidate.Check({ t }, table.pack(nil)) ~= nil, name)
+			end
+		else
+			expectEq(def.direction, "ToClient", name)
+		end
+	end
 end
 
 return cases
