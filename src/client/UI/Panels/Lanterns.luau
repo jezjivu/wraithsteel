@@ -11,6 +11,7 @@ local FormatNumber = require(Shared:WaitForChild("FormatNumber"))
 local LanternConfig = require(Config:WaitForChild("LanternConfig"))
 local SpiritConfig = require(Config:WaitForChild("SpiritConfig"))
 local HubConfig = require(Config:WaitForChild("HubConfig"))
+local SpiritModels = require(Shared:WaitForChild("SpiritModels"))
 
 local UI = script.Parent.Parent
 local Kit = require(UI:WaitForChild("Kit"))
@@ -83,16 +84,20 @@ local Panel: PanelTypes.Panel = {
 		Kit.Label(actions, "x3 needs the Lantern Festival pass", { size = 12, color = C.Muted, width = 220 })
 
 		if #lastResults > 0 then
-			Kit.Label(body, "You hatched:", { bold = true, color = C.Gold })
+			-- Hatch reveal: a big card for each Spirit, rarity-colored, with its 3D model.
+			Kit.Label(body, "A Spirit answers the lantern!", { bold = true, size = 20, color = C.Gold })
 			for _, r in lastResults do
 				local s = SpiritConfig.Spirits[r.spirit]
 				local rarity = SpiritConfig.Rarities[r.rarity]
+				local color = Kit.RarityColor(rarity and rarity.color)
+				local card = Kit.Row(body, 132)
+				card.BackgroundColor3 = color:Lerp(C.Panel, 0.75)
+				Kit.SpiritViewport(card, SpiritModels.Build(r.spirit, r.mutation, r.rarity), 118, color:Lerp(C.Ink, 0.6))
+				local info = Kit.Stack(card, -140)
 				local mutation = if r.mutation ~= "None" then r.mutation .. " " else ""
-				Kit.Label(body, string.format("%s%s  (%s)%s", mutation, s.name, r.rarity, if r.pity then "  - guaranteed!" else ""), {
-					bold = true,
-					size = 18,
-					color = Kit.RarityColor(rarity and rarity.color),
-				})
+				Kit.Label(info, mutation .. s.name, { bold = true, size = 24, color = color })
+				Kit.Label(info, r.rarity .. (if r.pity then "  ·  guaranteed!" else ""), { size = 16, color = color })
+				Kit.Label(info, "Equip it at the Spirit Shrine to boost your Power.", { size = 13, color = C.Muted })
 			end
 		end
 	end,

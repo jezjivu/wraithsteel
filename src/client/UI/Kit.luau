@@ -153,11 +153,12 @@ function Kit.Row(parent: Instance, height: number, alt: boolean?): Frame
 	return row
 end
 
--- Vertical stack (for name + details inside a row). width: pixel width or nil to fill.
+-- Vertical stack (for name + details inside a row).
 function Kit.Stack(parent: Instance, width: number?): Frame
 	local f = Instance.new("Frame")
 	f.BackgroundTransparency = 1
-	f.Size = if width then UDim2.new(0, width, 1, 0) else UDim2.new(1, -260, 1, 0)
+	-- width > 0: fixed pixels; width < 0: fill the row minus that many pixels; nil: fill - 260.
+	f.Size = if width == nil then UDim2.new(1, -260, 1, 0) elseif width < 0 then UDim2.new(1, width, 1, 0) else UDim2.new(0, width, 1, 0)
 	f.LayoutOrder = nextOrder()
 	f.Parent = parent
 	local list = Instance.new("UIListLayout")
@@ -237,6 +238,31 @@ function Kit.Viewport(parent: Instance, model: Model?, size: number, length: num
 		local mid = (CFrame.Angles(0, 0, math.rad(-45)) * CFrame.new(0, length / 2 - 0.8, 0)).Position
 		cam.FieldOfView = 30
 		cam.CFrame = CFrame.lookAt(mid + Vector3.new(0, 0, length * 1.9 + 1), mid)
+		cam.Parent = vp
+		vp.CurrentCamera = cam
+	end
+	return vp
+end
+
+-- A ViewportFrame showing a Spirit model (takes ownership) from a 3/4 angle, slowly turning.
+function Kit.SpiritViewport(parent: Instance, model: Model?, size: number, background: Color3?): ViewportFrame
+	local vp = Instance.new("ViewportFrame")
+	vp.Size = UDim2.fromOffset(size, size)
+	vp.BackgroundColor3 = background or Kit.Colors.Ink
+	vp.Ambient = Color3.fromRGB(180, 175, 170)
+	vp.LightColor = Color3.fromRGB(255, 245, 230)
+	vp.LightDirection = Vector3.new(-1, -1, -0.5)
+	vp.LayoutOrder = nextOrder()
+	vp.Parent = parent
+	corner(vp, 8)
+	if model then
+		model:PivotTo(CFrame.new())
+		model.Parent = vp
+		local cam = Instance.new("Camera")
+		cam.FieldOfView = 35
+		local _, extents = model:GetBoundingBox()
+		local radius = math.max(extents.X, extents.Y, extents.Z)
+		cam.CFrame = CFrame.lookAt(Vector3.new(radius * 1.3, radius * 0.6, -radius * 1.6), Vector3.new())
 		cam.Parent = vp
 		vp.CurrentCamera = cam
 	end

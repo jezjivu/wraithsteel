@@ -7,6 +7,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = ReplicatedStorage:WaitForChild("Config")
 local Net = require(Shared:WaitForChild("Net"))
 local SpiritConfig = require(Config:WaitForChild("SpiritConfig"))
+local SpiritModels = require(Shared:WaitForChild("SpiritModels"))
 
 local UI = script.Parent.Parent
 local Kit = require(UI:WaitForChild("Kit"))
@@ -83,7 +84,7 @@ local Panel: PanelTypes.Panel = {
 			local s = entry.s
 			local def = SpiritConfig.Spirits[s.id]
 			local rarity = SpiritConfig.Rarities[s.rarity]
-			local row = Kit.Row(body, 64, i % 2 == 0)
+			local row = Kit.Row(body, 68, i % 2 == 0)
 			local isSelected = selection[entry.uid] == true
 			Kit.Button(row, if isSelected then "[x]" else "[ ]", if isSelected then C.Accent else C.Row, function()
 				if isSelected then
@@ -93,7 +94,8 @@ local Panel: PanelTypes.Panel = {
 				end
 				ctx.refresh()
 			end, 44)
-			local info = Kit.Stack(row)
+			Kit.SpiritViewport(row, SpiritModels.Build(s.id, s.mutation, s.rarity), 56)
+			local info = Kit.Stack(row, -330)
 			local mutation = if s.mutation ~= "None" then s.mutation .. " " else ""
 			Kit.Label(info, mutation .. def.name, { bold = true, size = 17, color = Kit.RarityColor(rarity and rarity.color) })
 			Kit.Label(info, string.format("%s · Lv %d · Power %.0f%s", s.rarity, s.level, entry.power, if isAway(entry.uid) then " · on expedition" else ""), { size = 13, color = C.Muted })
