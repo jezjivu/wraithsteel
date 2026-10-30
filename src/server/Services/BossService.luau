@@ -236,12 +236,22 @@ local function finish(e: Encounter, victory: boolean)
 				local first = (data.bossesDefeated[e.bossId] or 0) == 0
 				data.bossesDefeated[e.bossId] = (data.bossesDefeated[e.bossId] or 0) + 1
 				DataService.Changed(p, "bossesDefeated")
-				ProgressionService.AddEmber(p, def.rewards.ember, "Boss:" .. e.bossId)
+				local ember = ProgressionService.AddEmber(p, def.rewards.ember, "Boss:" .. e.bossId)
 				ProgressionService.AddXp(p, def.rewards.xp)
 				if first then
 					ProgressionService.AddJade(p, def.rewards.jadeFirstClear, "BossFirstClear:" .. e.bossId)
 					table.insert(firstClears, p)
 				end
+				-- Victory card on the client (StoryController).
+				Net.Server.Fire("StoryEvent", p, {
+					kind = "BossDefeated",
+					bossId = e.bossId,
+					name = def.name,
+					ember = ember,
+					xp = def.rewards.xp,
+					jade = if first then def.rewards.jadeFirstClear else 0,
+					firstClear = first,
+				})
 				QuestService.Increment(p, "Boss:" .. e.bossId, 1)
 				if e.bossId == "rust_tiger" then
 					AnalyticsService.Onboarding(p, "RustTigerDefeated")
@@ -254,6 +264,7 @@ local function finish(e: Encounter, victory: boolean)
 			e.c.model:Destroy()
 		end)
 	else
+		Net.Server.FireList("StoryEvent", e.participants, { kind = "BossFailed", bossId = e.bossId, name = BossConfig.Bosses[e.bossId].name })
 		CombatService.Unregister(e.c.id)
 		e.c.model:Destroy()
 	end

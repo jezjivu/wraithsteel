@@ -9,7 +9,7 @@ import pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 SERVICE_CLASSES = {
-    "ReplicatedStorage", "ServerScriptService", "StarterPlayer", "Workspace",
+    "ReplicatedStorage", "ReplicatedFirst", "ServerScriptService", "StarterPlayer", "Workspace",
     "ServerStorage", "StarterGui", "Lighting", "SoundService",
 }
 
