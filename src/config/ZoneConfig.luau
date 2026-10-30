@@ -23,6 +23,14 @@ ZoneConfig.Zones = {
 	{ id = "hub", name = "Ninefold Crossing", subtitle = "Where the Cracked Bell hums", center = { 0, 150 }, radius = 80, chapter = 0 },
 } :: { ZoneDef }
 
+-- Every generated map area is a named zone too (banner on entry).
+do
+	local MapConfig = require(script.Parent.MapConfig)
+	for _, a in MapConfig.Areas do
+		table.insert(ZoneConfig.Zones, { id = a.id, name = a.name, subtitle = a.subtitle, center = a.center, radius = a.radius, chapter = 0 })
+	end
+end
+
 ZoneConfig.Fallback = { id = "wilds", name = "The Wilds", subtitle = "Rust and lantern-light", chapter = 0 }
 
 return ZoneConfig

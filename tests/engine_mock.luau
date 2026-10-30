@@ -241,3 +241,69 @@ function __dumpParts(root)
 	end
 	print("[" .. table.concat(out, ",") .. "]")
 end
+
+-- Extras for world-building tools (MapService/HubService rendering) ---------------------------
+V3.__div = function(a, b) return v3(a.X / b, a.Y / b, a.Z / b) end
+Vector3.zero = v3(0, 0, 0)
+
+local realTypeof = typeof
+typeof = function(v)
+	local mt = getmetatable(v)
+	if mt == C3 then return "Color3" end
+	if mt == V3 then return "Vector3" end
+	if mt == CF then return "CFrame" end
+	return realTypeof(v)
+end
+
+ColorSequence = { new = function(a) return { a } end }
+NumberSequence = { new = function(a) return { a } end }
+NumberSequenceKeypoint = { new = function(t, v) return { t, v } end }
+NumberRange = { new = function(a, b) return { a, b or a } end }
+TweenInfo = { new = function() return {} end }
+RaycastParams = { new = function() return {} end }
+Region3 = { new = function(a, b) return { ExpandToGrid = function(self) return self end } end }
+
+Random = { new = function(seed)
+	local state = (seed or 1) % 2147483647
+	if state <= 0 then state = state + 2147483646 end
+	local function nxt()
+		state = (state * 16807) % 2147483647
+		return state / 2147483647
+	end
+	return {
+		NextNumber = function(_, a, b)
+			if a == nil then return nxt() end
+			return a + (b - a) * nxt()
+		end,
+		NextInteger = function(_, a, b) return a + math.floor(nxt() * (b - a + 1)) end,
+	}
+end }
+
+__terrainFills = {}
+local terrain = newInstance("Terrain")
+terrain.Name = "Terrain"
+local function rec(kind, cf, size, material)
+	table.insert(__terrainFills, { kind = kind, p = cf.p, R = cf.R, size = size, material = tostring(material) })
+end
+methods.FillBlock = function(_, cf, size, material) rec("Block", cf, { size.X, size.Y, size.Z }, material) end
+methods.FillBall = function(_, center, radius, material) rec("Ball", CFrame.new(center), { radius }, material) end
+methods.FillCylinder = function(_, cf, height, radius, material) rec("Cylinder", cf, { height, radius }, material) end
+methods.ReadVoxels = function() return {}, {} end
+workspace.Terrain = terrain
+methods.Raycast = function(_, origin, dir)
+	if #__terrainFills > 0 then
+		return { Position = v3(origin.X, 0, origin.Z), Instance = terrain }
+	end
+	return nil
+end
+
+function __dumpTerrain()
+	local out = {}
+	for _, f in __terrainFills do
+		table.insert(out, string.format('{"kind":"%s","p":[%f,%f,%f],"R":[[%f,%f,%f],[%f,%f,%f],[%f,%f,%f]],"size":[%s],"material":"%s"}',
+			f.kind, f.p[1], f.p[2], f.p[3],
+			f.R[1][1], f.R[1][2], f.R[1][3], f.R[2][1], f.R[2][2], f.R[2][3], f.R[3][1], f.R[3][2], f.R[3][3],
+			table.concat(f.size, ","), f.material))
+	end
+	print("TERRAIN[" .. table.concat(out, ",") .. "]")
+end
