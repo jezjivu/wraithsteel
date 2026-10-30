@@ -3,10 +3,12 @@
 --   * top-left: Ember, Jade, Level, Power
 --   * bottom-center: your Health, Posture and Ultimate meters
 --   * top-center: boss bar (name, title, HP, posture, phase) during boss encounters
+--   * zone banner when entering a new area (ZoneService)
 -- Data sources: DataController, character Humanoid + attributes (Posture, Ultimate set by
 -- CombatService), player attributes (Power, Level), BossState remote.
 
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -88,6 +90,26 @@ local function refreshStats()
 	)
 end
 
+-- Big fading banner when entering a new zone (ZoneService sets Zone/ZoneName attributes).
+local banner: TextLabel? = nil
+local bannerSub: TextLabel? = nil
+local function showZoneBanner()
+	local b, sub = banner, bannerSub
+	if b == nil or sub == nil then
+		return
+	end
+	b.Text = tostring(localPlayer:GetAttribute("ZoneName") or "")
+	sub.Text = tostring(localPlayer:GetAttribute("ZoneSubtitle") or "")
+	for _, l in { b, sub } do
+		l.TextTransparency = 0
+		l.TextStrokeTransparency = 0.4
+		TweenService:Create(l, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 2), {
+			TextTransparency = 1,
+			TextStrokeTransparency = 1,
+		}):Play()
+	end
+end
+
 local function bindCharacter(character: Model)
 	local humanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
 	if humanoid == nil then
@@ -154,12 +176,39 @@ function HUDController.Init()
 	bossHp = meter(bf, UDim2.fromOffset(0, 28), UDim2.new(1, 0, 0, 18), Color3.fromRGB(180, 40, 40), "")
 	bossPosture = meter(bf, UDim2.fromOffset(60, 50), UDim2.new(1, -120, 0, 10), Color3.fromRGB(240, 190, 70), "")
 	bossFrame = bf
+
+	local zb = Instance.new("TextLabel")
+	zb.AnchorPoint = Vector2.new(0.5, 0)
+	zb.Position = UDim2.fromScale(0.5, 0.22)
+	zb.Size = UDim2.fromOffset(600, 50)
+	zb.BackgroundTransparency = 1
+	zb.Font = Enum.Font.Antique
+	zb.TextSize = 44
+	zb.TextColor3 = C.Gold
+	zb.TextTransparency = 1
+	zb.TextStrokeTransparency = 1
+	zb.Parent = gui
+	banner = zb
+	local zs = Instance.new("TextLabel")
+	zs.AnchorPoint = Vector2.new(0.5, 0)
+	zs.Position = UDim2.new(0.5, 0, 0.22, 52)
+	zs.Size = UDim2.fromOffset(600, 26)
+	zs.BackgroundTransparency = 1
+	zs.Font = Enum.Font.GothamMedium
+	zs.TextSize = 20
+	zs.TextColor3 = C.Text
+	zs.TextTransparency = 1
+	zs.TextStrokeTransparency = 1
+	zs.Parent = gui
+	bannerSub = zs
 end
 
 function HUDController.Start()
 	DataController.Changed:Connect(refreshStats)
 	localPlayer:GetAttributeChangedSignal("Power"):Connect(refreshStats)
 	refreshStats()
+
+	localPlayer:GetAttributeChangedSignal("Zone"):Connect(showZoneBanner)
 
 	localPlayer.CharacterAdded:Connect(bindCharacter)
 	if localPlayer.Character then
