@@ -26,6 +26,7 @@ local Odds = require(Shared:WaitForChild("Odds"))
 local Signal = require(Shared:WaitForChild("Signal"))
 local EnemyConfig = require(Config:WaitForChild("EnemyConfig"))
 local EconomyConfig = require(Config:WaitForChild("EconomyConfig"))
+local PartyConfig = require(Config:WaitForChild("PartyConfig"))
 
 local Logic = script.Parent.Parent:WaitForChild("Logic")
 local AIScheduler = require(Logic:WaitForChild("AIScheduler"))
@@ -37,6 +38,7 @@ local CombatService = require(script.Parent.CombatService)
 local ProgressionService = require(script.Parent.ProgressionService)
 local QuestService = require(script.Parent.QuestService)
 local AnalyticsService = require(script.Parent.AnalyticsService)
+local PartyService = require(script.Parent.PartyService)
 
 type Combatant = CombatService.Combatant
 
@@ -296,8 +298,17 @@ local function rewardKill(c: Combatant, contributions: { [Player]: number })
 	if def == nil or def.training then
 		return
 	end
+	-- Everyone who hit it, plus their party members nearby, gets the full reward.
+	local recipients: { [Player]: boolean } = {}
 	for player, dealt in contributions do
 		if dealt > 0 and player.Parent == Players then
+			for _, member in PartyService.MembersNear(player, PartyConfig.ShareRadius) do
+				recipients[member] = true
+			end
+		end
+	end
+	for player in recipients do
+		if player.Parent == Players then
 			ProgressionService.AddEmber(player, def.emberReward + EconomyConfig.EnemyEmberBase, "Enemy:" .. (c.defId :: string))
 			ProgressionService.AddXp(player, def.xpReward + EconomyConfig.EnemyXpBase)
 			QuestService.Increment(player, "EnemiesDefeated", 1)

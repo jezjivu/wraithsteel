@@ -6,7 +6,7 @@
 --
 -- API:
 --   UIController.Open(panelName, opts?)   panelName = "Weapons" | "Lanterns" | "Spirits" |
---                                          "Expeditions" | "Quests" | "Store" | "Codes"
+--                                          "Expeditions" | "Quests" | "Store" | "Codes" | "Party"
 --   UIController.Close()
 
 local Players = game:GetService("Players")
@@ -42,6 +42,7 @@ local MENU = {
 	{ panel = "Quests", label = "Quests" },
 	{ panel = "Expeditions", label = "Expeditions" },
 	{ panel = "Store", label = "Store" },
+	{ panel = "Party", label = "Party" },
 	{ panel = "Codes", label = "Codes" },
 }
 
@@ -110,6 +111,12 @@ function UIController.Open(name: string, opts: { atStation: boolean?, lanternId:
 	o = { name = name, window = window, ctx = ctx, token = 0 }
 	current = o
 	window.close.Activated:Connect(UIController.Close)
+	if panel.Changed then
+		local conn = panel.Changed:Connect(ctx.refresh)
+		window.root.Destroying:Connect(function()
+			conn:Disconnect()
+		end)
+	end
 	InputController.SetEnabled(false)
 	render(o)
 end

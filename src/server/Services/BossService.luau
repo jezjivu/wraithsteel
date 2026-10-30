@@ -33,6 +33,7 @@ local CombatService = require(script.Parent.CombatService)
 local ProgressionService = require(script.Parent.ProgressionService)
 local QuestService = require(script.Parent.QuestService)
 local AnalyticsService = require(script.Parent.AnalyticsService)
+local PartyService = require(script.Parent.PartyService)
 
 type Combatant = CombatService.Combatant
 
@@ -344,6 +345,12 @@ local function setupArena(arena: BasePart)
 			local pc = CombatService.GetByPlayer(p)
 			if pc and not pc.dead and (pc.root.Position - arena.Position).Magnitude <= CHALLENGE_RADIUS then
 				table.insert(participants, p)
+			end
+		end
+		-- Party members fight together even if they wander a bit further from the arena.
+		for _, member in PartyService.MembersNear(player, CHALLENGE_RADIUS * 2) do
+			if table.find(participants, member) == nil then
+				table.insert(participants, member)
 			end
 		end
 		if table.find(participants, player) == nil then

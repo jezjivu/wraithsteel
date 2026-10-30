@@ -12,6 +12,7 @@ export type Ctx = {
 export type Panel = {
 	Title: string,
 	WatchKeys: { string }, -- re-render when any of these profile keys change
+	Changed: any?, -- optional Signal: re-render whenever it fires (non-profile state)
 	Render: (body: ScrollingFrame, ctx: Ctx) -> (),
 }
 
