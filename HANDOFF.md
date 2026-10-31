@@ -92,6 +92,10 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
 - EnemyConfig/BossConfig: `perilousKind`, `deflectChance` (`BossConfig.DefaultDeflect`).
 - AnimationController poses joint anchors (`Motor6D.C0` or `AnimationConstraint.Attachment0.CFrame`, base saved as attribute `BaseAnchor`). If arms still do not move in Studio, check Output for `[AnimationController] no posable joints`.
 
+## Animation tracks (part 9)
+- `UI/AnimBuilder` builds KeyframeSequences from AnimationConfig poses and registers them with `KeyframeSequenceProvider:RegisterKeyframeSequence` (temporary ids, client-side). If registration fails it warns once and AnimationController falls back to joint-anchor posing.
+- Known risk: temporary ids are meant for local testing; if they do not work in a published game, upload the generated sequences (or real animations) and set `animationId`s.
+
 ## Things for Studio agents
 - See README "What you need to build in Studio" and `AssetLog.md`.
 - Enemy spawns: `Workspace.EnemySpawns/<Part>` (attrs `EnemyId`, `Count`, `RespawnSeconds`).

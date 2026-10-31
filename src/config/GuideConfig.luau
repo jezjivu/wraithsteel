@@ -28,7 +28,7 @@ GuideConfig.Controls = {
 	"Hold F - Guard   Tap F as a hit lands - DEFLECT (+ riposte)",
 	"Red attacks: PIERCE = dash into it, SWEEP = jump, GRASP = dash away",
 	"Break posture, then strike - SEVERING BLOW",
-	"Shift - Sprint   Tab - Lock on",
+	"Shift - Sprint   Tab - Lock on   Q - Spring Flask (heal)",
 	"Z / X / C - Qi arts (spells)   T - Spirit Burst",
 	"1 / 2 - Skills   G - Ultimate   E - Use stations",
 	"H - Toggle this card",

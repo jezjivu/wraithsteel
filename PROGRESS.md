@@ -126,6 +126,11 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Enemies/bosses deflect strikes (guarding enemies, bosses between attacks) and counter; posture regen scales with health, faster while guarding
 - [ ] Verify stance/attack angles by eye in Studio; tune deflect chances
 
+## Real animation tracks + content (night 1, part 9)
+- [x] Body animation now plays as REAL AnimationTracks: poses are baked into KeyframeSequences at runtime (UI/AnimBuilder, KeyframeSequenceProvider) and played by each character's Animator (stances at Idle priority, moves at Action, NPC walk cycle at Movement). Joint posing stays as fallback. Output prints `[AnimBuilder] generated body animations active` when it works.
+- [x] New enemies: Ashen Duelist (deflects, Pierce thrust), Mire Brute (Sweep + Grasp); spawns at the pagoda, village, pond and gorge
+- [x] Spring Flask (Q): 3 heals of 45%, slows you while drinking, refills at the hot springs and on respawn; HUD counter
+
 ## Phase 2 - Chapter 1 + depth
 - [x] BossConfig entries for the 4 Chapter 1 bosses (Hollow Abbot, Twin Cinder Sisters, Rustwood Matriarch, Gatekeeper of Rust - 3 phases)
 - [x] Chapter 1 enemies: Rustwood Stalker, Rust-Eaten Sentinel

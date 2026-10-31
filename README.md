@@ -45,7 +45,7 @@ not touched by Rojo - save the place file as usual.
 
 Controls: Left click = strike, R = heavy (after 2 strikes = finisher), hold F = guard (tap F just as a hit lands = deflect), Ctrl = dash (also in
 the air; strike right after = dash strike), Space twice = double jump (strike in the air = air
-slam), Shift = sprint, Tab = lock on, 1/2 = skills, G = ultimate, Z / X / C = Qi arts (spells),
+slam), Shift = sprint, Q = Spring Flask (3 heals, refill at the hot springs), Tab = lock on, 1/2 = skills, G = ultimate, Z / X / C = Qi arts (spells),
 T = Spirit Burst (all your Spirits cast at once).
 E = use a hub station, H = controls card. Attacks auto-aim at the nearest enemy in front of you. Menu buttons (bottom-left): Spirits, Weapons, Arts, Styles, Quests, Expeditions, Store, Party, Trade, Codes.
 

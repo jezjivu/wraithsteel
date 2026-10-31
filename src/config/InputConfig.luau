@@ -16,6 +16,7 @@ InputConfig.Bindings = {
 	Skill1 = { inputs = { Enum.KeyCode.One, Enum.KeyCode.ButtonX }, touchButton = true, title = "Skill 1" },
 	Skill2 = { inputs = { Enum.KeyCode.Two, Enum.KeyCode.ButtonY }, touchButton = true, title = "Skill 2" },
 	Ultimate = { inputs = { Enum.KeyCode.G, Enum.KeyCode.ButtonL2 }, touchButton = true, title = "Ultimate" },
+	Flask = { inputs = { Enum.KeyCode.Q, Enum.KeyCode.ButtonSelect }, touchButton = true, title = "Flask" },
 	SpiritCall = { inputs = { Enum.KeyCode.T, Enum.KeyCode.DPadUp }, touchButton = true, title = "Burst" },
 	-- Qi arts (SpellController handles these; CombatController ignores them).
 	Spell1 = { inputs = { Enum.KeyCode.Z, Enum.KeyCode.DPadLeft }, touchButton = true, title = "Art 1" },

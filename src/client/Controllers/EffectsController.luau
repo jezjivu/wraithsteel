@@ -498,6 +498,9 @@ local function onAction(e: { [string]: any })
 	elseif e.action == "GuardRelease" then
 		AnimationController.HoldGuard(model, false)
 		return
+	elseif e.action == "Flask" then
+		AnimationController.Play(model, "Drink", nil, { windup = 0.2, active = 0.35, recovery = 0.25 })
+		return
 	end
 	AnimationController.Play(model, e.action, e.moveId, nil, e.route, tonumber(e.speed))
 	local part = anchorPart(model)

@@ -78,6 +78,9 @@ CombatConfig.Counter = {
 	stagger = 1.2, -- seconds the countered attacker reels
 }
 
+-- Spring Flask (Q): limited heals. Refills on respawn and at healing areas (hot springs).
+CombatConfig.Flask = { charges = 3, heal = 0.45, drinkSeconds = 0.75 }
+
 -- Guard: hold F. A press is a timed deflect (ParryWindow); holding keeps a block up.
 CombatConfig.GuardMaxHold = 12 -- seconds a single hold can last
 

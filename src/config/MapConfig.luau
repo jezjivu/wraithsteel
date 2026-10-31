@@ -65,6 +65,10 @@ MapConfig.EnemySpawns = {
 	{ name = "VillageBandits", enemyId = "rustbound_bandit", count = 2, respawn = 18, at = { -138, -52 } },
 	{ name = "GorgeStalkers", enemyId = "rustwood_stalker", count = 2, respawn = 25, at = { 120, -160 } },
 	{ name = "StairSentinel", enemyId = "rust_eaten_sentinel", count = 1, respawn = 35, at = { -86, -188 } },
+	{ name = "PagodaDuelists", enemyId = "ashen_duelist", count = 2, respawn = 25, at = { -40, -100 } },
+	{ name = "VillageDuelist", enemyId = "ashen_duelist", count = 1, respawn = 25, at = { -160, -85 } },
+	{ name = "PondBrute", enemyId = "mire_brute", count = 1, respawn = 35, at = { -95, 10 } },
+	{ name = "GorgeBrute", enemyId = "mire_brute", count = 1, respawn = 35, at = { 135, -190 } },
 }
 
 -- Boss shrines (pad + prompt, created in Workspace.BossArenas if that folder does not exist).

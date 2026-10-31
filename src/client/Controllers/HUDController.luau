@@ -104,6 +104,7 @@ local function setMeter(m: Meter, frac: number, text: string?)
 end
 
 local health: Meter? = nil
+local flaskLabel: TextLabel? = nil
 local shieldFill: Frame? = nil
 local posture: Meter? = nil
 local ultimate: Meter? = nil
@@ -211,6 +212,11 @@ local function bindCharacter(character: Model)
 				sf.Visible = shield > 0
 			end
 		end
+		if flaskLabel then
+			local n = tonumber(character:GetAttribute("Flask")) or 0
+			flaskLabel.Text = string.format("Flask x%d  (Q)", n)
+			flaskLabel.TextColor3 = if n > 0 then Color3.fromRGB(150, 220, 255) else Color3.fromRGB(150, 140, 140)
+		end
 		if posture then
 			local p = tonumber(character:GetAttribute("Posture")) or 0
 			setMeter(posture, p, if p >= 0.75 then "Posture - careful!" else "Posture")
@@ -225,6 +231,7 @@ local function bindCharacter(character: Model)
 	character:GetAttributeChangedSignal("Posture"):Connect(refresh)
 	character:GetAttributeChangedSignal("Ultimate"):Connect(refresh)
 	character:GetAttributeChangedSignal("Shield"):Connect(refresh)
+	character:GetAttributeChangedSignal("Flask"):Connect(refresh)
 	refresh()
 end
 
@@ -248,6 +255,20 @@ function HUDController.Init()
 
 	-- Player meters (bottom center, above the default toolbar area).
 	health = meter(gui, UDim2.new(0.5, -160, 1, -92), UDim2.fromOffset(320, 22), Color3.fromRGB(190, 55, 50), "Health")
+	local fl = Instance.new("TextLabel")
+	fl.Position = UDim2.new(0.5, -270, 1, -92)
+	fl.Size = UDim2.fromOffset(104, 22)
+	fl.BackgroundColor3 = C.Ink
+	fl.BackgroundTransparency = 0.2
+	fl.Font = Enum.Font.GothamBold
+	fl.TextSize = 13
+	fl.TextColor3 = Color3.fromRGB(150, 220, 255)
+	fl.Text = "Flask"
+	fl.Parent = gui
+	local flc = Instance.new("UICorner")
+	flc.CornerRadius = UDim.new(0, 6)
+	flc.Parent = fl
+	flaskLabel = fl
 	-- Shield overlay (pale jade over the health bar).
 	local sf = Instance.new("Frame")
 	sf.Size = UDim2.fromScale(0, 1)

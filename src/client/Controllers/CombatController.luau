@@ -23,6 +23,7 @@ local AnimationController = require(script.Parent.AnimationController)
 local MovementController = require(script.Parent.MovementController)
 local CameraController = require(script.Parent.CameraController)
 local DataController = require(script.Parent.DataController)
+local Fx = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Fx"))
 
 local PLACEHOLDER_ANIM = "rbxassetid://0"
 
@@ -236,7 +237,7 @@ end
 local function send(action: string)
 	local character0 = localPlayer.Character
 	seq += 1
-	local aim = if action == "Dodge" or action == "Parry" then nil else aimDirection()
+	local aim = if action == "Dodge" or action == "Parry" or action == "Flask" then nil else aimDirection()
 	if aim and CombatConfig.AimAssist.faceOnAttack then
 		faceToward(aim)
 	end
@@ -260,7 +261,7 @@ local function send(action: string)
 		lastDashAt = os.clock()
 		MovementController.Dash()
 	end
-	local moveId = if action == "Dodge" or action == "Parry" then nil else predictMove(action)
+	local moveId = if action == "Dodge" or action == "Parry" or action == "Flask" then nil else predictMove(action)
 	local move = moveId and WeaponConfig.Moves[moveId]
 	local style = StyleConfig.Get(DataController.Get("fightingStyle"))
 	if move then
@@ -276,7 +277,27 @@ local function send(action: string)
 			end
 		end)
 	end
-	if action == "Parry" then
+	if action == "Flask" then
+		if character then
+			if (tonumber(character:GetAttribute("Flask")) or 0) <= 0 then
+				Fx.CenterText("FLASK EMPTY - rest at the hot springs", Color3.fromRGB(150, 200, 255), 26, 0.6)
+				return
+			end
+			AnimationController.Play(character, "Drink", nil, { windup = 0.2, active = 0.35, recovery = 0.25 })
+			local hum = character:FindFirstChildOfClass("Humanoid")
+			if hum then
+				-- Drinking slows you down: commit to it.
+				local before = hum.WalkSpeed
+				hum.WalkSpeed = before * 0.35
+				task.delay(CombatConfig.Flask.drinkSeconds, function()
+					if hum.WalkSpeed < before then
+						hum.WalkSpeed = before
+					end
+				end)
+			end
+			predictedBusyUntil = os.clock() + CombatConfig.Flask.drinkSeconds
+		end
+	elseif action == "Parry" then
 		if character then
 			AnimationController.HoldGuard(character, true)
 		end

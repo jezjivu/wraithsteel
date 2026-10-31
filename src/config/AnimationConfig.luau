@@ -120,6 +120,11 @@ AnimationConfig.Styles = {
 		weaponWindup = { -150, 0, 0 },
 		weaponStrike = { 40, 0, 0 },
 	},
+	-- Spring Flask: left hand lifts the flask to the mouth, head tips back.
+	Drink = {
+		windup = { leftShoulder = { 120, 30, 0 }, leftElbow = { 110, 0, 0 }, waist = { -8, 0, 0 } },
+		strike = { leftShoulder = { 140, 35, 0 }, leftElbow = { 120, 0, 0 }, waist = { -18, 0, 0 } },
+	},
 	-- Perilous telegraphs (enemies): low sweep and two-handed grab.
 	Sweep = {
 		windup = { shoulder = { 40, 70, 30 }, elbow = { 20, 0, 0 }, waist = { 10, 50, 0 }, root = { 15, 0, 0 }, leftHip = { 40, 0, 0 }, rightHip = { 30, 0, 0 }, leftKnee = { -70, 0, 0 }, rightKnee = { -80, 0, 0 } },

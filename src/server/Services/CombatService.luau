@@ -65,6 +65,7 @@ export type Combatant = {
 	shieldUntil: number?,
 	dodgeAt: number?, -- players: last dash (for Needle Counters against Pierce attacks)
 	dodgeDir: Vector3?,
+	flask: number?, -- players: Spring Flask charges left
 	deflectChance: number?, -- enemies/bosses: chance to deflect a strike while canDeflect()
 	canDeflect: (() -> boolean)?,
 }
@@ -96,6 +97,7 @@ local VALID_ACTIONS = {
 	Ultimate = true,
 	SpiritCall = true,
 	GuardRelease = true,
+	Flask = true,
 }
 
 local CombatService = {
@@ -484,6 +486,25 @@ local function onCombatAction(player: Player, req: { [string]: any })
 	if type(action) ~= "string" or not VALID_ACTIONS[action] or type(seq) ~= "number" or seq ~= seq then
 		return
 	end
+	if action == "Flask" then
+		local rules = c.rules :: CombatRules.State
+		local now0 = os.clock()
+		if (c.flask or 0) <= 0 or now0 < rules.stunnedUntil or now0 < rules.busyUntil then
+			Net.Server.Fire("CombatEvent", player, { kind = "Rejected", seq = seq, reason = if (c.flask or 0) <= 0 then "FlaskEmpty" else "Busy" })
+			return
+		end
+		c.flask = (c.flask or 0) - 1
+		c.model:SetAttribute("Flask", c.flask)
+		rules.busyUntil = now0 + CombatConfig.Flask.drinkSeconds
+		rules.blockUntil = 0
+		broadcast({ kind = "Action", sourceId = c.id, action = "Flask", seq = seq })
+		task.delay(CombatConfig.Flask.drinkSeconds * 0.7, function()
+			if not c.dead and byPlayer[player] == c then
+				CombatService.Heal(c, c.humanoid.MaxHealth * CombatConfig.Flask.heal)
+			end
+		end)
+		return
+	end
 	if action == "SpiritCall" then
 		if CombatService.OnSpiritCall then
 			CombatService.OnSpiritCall(player)
@@ -599,6 +620,8 @@ local function onCharacterAdded(player: Player, character: Model)
 		dead = false,
 		contributions = {},
 	}
+	c.flask = CombatConfig.Flask.charges
+	character:SetAttribute("Flask", c.flask)
 	CombatService.Register(c)
 	humanoid.Died:Connect(function()
 		c.dead = true
@@ -669,6 +692,10 @@ function CombatService.Start()
 					for _, h in healAreas do
 						if (Vector3.new(pos.X, 0, pos.Z) - h.center).Magnitude <= h.radius then
 							rate = math.max(rate, h.rate)
+							if (c.flask or 0) < CombatConfig.Flask.charges then
+								c.flask = CombatConfig.Flask.charges
+								c.model:SetAttribute("Flask", c.flask)
+							end
 						end
 					end
 					if rate > 0 then
