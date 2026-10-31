@@ -66,8 +66,35 @@ CombatConfig.LockOn = {
 	smoothing = 10,
 }
 
--- Perilous attacks (red flash): cannot be parried or blocked; must be dodged.
+-- Perilous attacks (red flash): cannot be parried or blocked. Each kind has its own answer:
+--   Pierce (thrust/charge): dash INTO it -> Needle Counter (no damage, crushes its posture)
+--   Sweep (low/ground wave): be in the air -> Crane Leap (no damage, your next strike is empowered)
+--   Grasp (grab/curse): dash away (i-frames)
 CombatConfig.PerilousTelegraphSeconds = 0.6
+CombatConfig.Counter = {
+	window = 0.45, -- a dash this recent counts for a Needle Counter
+	towardDot = 0.35, -- dash direction must point this much toward the attacker
+	reflectPosture = 2.5, -- x the attack's posture damage, dealt to the attacker
+	stagger = 1.2, -- seconds the countered attacker reels
+}
+
+-- Guard: hold F. A press is a timed deflect (ParryWindow); holding keeps a block up.
+CombatConfig.GuardMaxHold = 12 -- seconds a single hold can last
+
+-- Posture recovers faster with high health and while guarding (low health = slow recovery).
+CombatConfig.PostureHealthFloor = 0.25 -- regen multiplier at 0 health (1 at full)
+CombatConfig.GuardPostureRegen = 1.6 -- regen multiplier while holding guard
+
+-- Severing Blow: strike an enemy whose posture is broken. Regular enemies die; bosses lose a
+-- large chunk of health (their phases do the rest).
+CombatConfig.Severing = { bossFraction = 0.3, hitStop = 0.35 }
+
+-- Enemy deflects: guarding enemies may deflect your strike outright (no damage).
+CombatConfig.Deflect = {
+	targetPosture = 0.35, -- x the strike's posture damage, still added to the deflecting enemy
+	attackerPosture = 0.3, -- x the strike's posture damage, added to YOU
+	counterDelay = 0.15, -- the enemy counterattacks this soon after a deflect
+}
 
 -- Damage formula ----------------------------------------------------------------------------
 -- damage = move.damage * (1 + attackerPower / PowerToDamageScale) * random(0.95, 1.05)

@@ -86,6 +86,12 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
 - AnimationController now poses joints through `Motor6D.C0 = baseC0 * offset` (base saved in attribute `BaseC0` on each motor).
 - `ServerScriptService.EditTools`: BuildWorld()/ClearWorld() for edit mode; Map/Hub/Ambience services expose `Build()`/`Apply()`; generated containers carry attribute `Generated = true`.
 
+## Posture combat (part 8)
+- CombatRules: `GuardRelease` action, hold-to-guard (`GuardMaxHold`), `ResolveIncoming(state, hit, now, ctx?)` with outcomes `Countered` / `Jumped` / `Deflected`; `IsGuarding`.
+- CombatService: Hit gains `perilousKind`, `severing`; combatants gain `dodgeAt/dodgeDir` (from the Dodge request's `move` vector), `deflectChance`, `canDeflect`; signal `Deflected(enemy, attacker)`; model attribute `Broken`.
+- EnemyConfig/BossConfig: `perilousKind`, `deflectChance` (`BossConfig.DefaultDeflect`).
+- AnimationController poses joint anchors (`Motor6D.C0` or `AnimationConstraint.Attachment0.CFrame`, base saved as attribute `BaseAnchor`). If arms still do not move in Studio, check Output for `[AnimationController] no posable joints`.
+
 ## Things for Studio agents
 - See README "What you need to build in Studio" and `AssetLog.md`.
 - Enemy spawns: `Workspace.EnemySpawns/<Part>` (attrs `EnemyId`, `Count`, `RespawnSeconds`).

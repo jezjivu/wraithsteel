@@ -63,6 +63,10 @@ export type Combatant = {
 	guardUntil: number?, -- enemies: guard raised until this time (blocks until posture breaks)
 	shield: number?, -- absorbs health damage until shieldUntil (spirit wards, Jade Barrier)
 	shieldUntil: number?,
+	dodgeAt: number?, -- players: last dash (for Needle Counters against Pierce attacks)
+	dodgeDir: Vector3?,
+	deflectChance: number?, -- enemies/bosses: chance to deflect a strike while canDeflect()
+	canDeflect: (() -> boolean)?,
 }
 
 export type Hit = {
@@ -76,6 +80,8 @@ export type Hit = {
 	crit: boolean?, -- critical hit (for effects)
 	source: string?, -- "spirit" | "spell" (for effects; also no lifesteal from spirits)
 	color: { number }?, -- damage number tint
+	perilousKind: string?, -- "Pierce" | "Sweep" | "Grasp" (see CombatConfig)
+	severing: boolean?, -- Severing Blow on a posture-broken enemy
 }
 
 local MAX_TARGETS_PER_SWING = 4
@@ -89,6 +95,7 @@ local VALID_ACTIONS = {
 	Skill2 = true,
 	Ultimate = true,
 	SpiritCall = true,
+	GuardRelease = true,
 }
 
 local CombatService = {
@@ -98,6 +105,7 @@ local CombatService = {
 	PostureBroken = Signal.new(),
 	Died = Signal.new(),
 	Staggered = Signal.new(), -- (combatant, seconds): its attack was parried
+	Deflected = Signal.new(), -- (enemy, attacker): an enemy deflected a player's strike (counter now)
 	OnSpiritCall = nil :: ((player: Player) -> ())?,
 }
 
@@ -237,8 +245,29 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	local now = os.clock()
 	local res: CombatRules.Resolution
 	if target.rules then
-		res = CombatRules.ResolveIncoming(target.rules, hit, now)
-	elseif target.guardUntil and now < target.guardUntil and not hit.perilous then
+		local ctx: CombatRules.Context = {}
+		if hit.perilous and attacker then
+			local hum = target.humanoid
+			local state = hum:GetState()
+			ctx.airborne = hum.FloorMaterial == Enum.Material.Air
+				or state == Enum.HumanoidStateType.Freefall
+				or state == Enum.HumanoidStateType.Jumping
+				or target.root.Position.Y > attacker.root.Position.Y + 3
+			local dir = target.dodgeDir
+			if target.dodgeAt and dir and now - target.dodgeAt <= CombatConfig.Counter.window then
+				local toward = attacker.root.Position - target.root.Position
+				local flat = Vector3.new(toward.X, 0, toward.Z)
+				ctx.dashedToward = flat.Magnitude < 0.5 or flat.Unit:Dot(dir) >= CombatConfig.Counter.towardDot
+			end
+		end
+		res = CombatRules.ResolveIncoming(target.rules, hit, now, ctx)
+	elseif attacker and attacker.player and hit.source == nil and not hit.severing and target.deflectChance
+		and not Posture.IsBroken(target.posture, now)
+		and (if target.canDeflect then target.canDeflect() else (target.guardUntil ~= nil and now < target.guardUntil))
+		and rng:NextNumber() < target.deflectChance then
+		-- The enemy deflects your strike: no damage, both postures take a little, it counters.
+		res = { outcome = "Deflected", damage = 0, postureDamage = hit.postureDamage * CombatConfig.Deflect.targetPosture, reflectPosture = hit.postureDamage * CombatConfig.Deflect.attackerPosture }
+	elseif target.guardUntil and now < target.guardUntil and not hit.perilous and not hit.severing then
 		-- Enemy guard: little health damage, extra posture damage. Break the guard to punish.
 		res = {
 			outcome = "Blocked",
@@ -251,7 +280,7 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	end
 
 	local damage = res.damage
-	if Posture.IsBroken(target.posture, now) then
+	if Posture.IsBroken(target.posture, now) and not hit.severing then
 		damage *= CombatConfig.PostureBrokenDamageMultiplier
 	end
 	local postureDamage = res.postureDamage
@@ -298,6 +327,7 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 			target.rules.stunnedUntil = now + target.brokenSeconds
 		end
 		CombatService.PostureBroken:Fire(target)
+		target.model:SetAttribute("Broken", true)
 		if attacker and attacker.player then
 			QuestService.Increment(attacker.player, "PostureBreaks", 1)
 		end
@@ -312,9 +342,21 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		CombatService.Knockback(target, (dir * (hit.knockback or 0) + Vector3.new(0, hit.launch or 0, 0)) * scale)
 	end
 
-	-- Parry reflects posture damage back to the attacker, and staggers it.
-	if res.outcome == "Parried" and attacker then
-		CombatService.Staggered:Fire(attacker, CombatConfig.ParriedStaggerSeconds)
+	-- Enemy deflect: your posture takes the rebound, the enemy counters.
+	if res.outcome == "Deflected" and attacker then
+		if Posture.Add(attacker.posture, res.reflectPosture, now, attacker.brokenSeconds) then
+			if attacker.rules then
+				attacker.rules.stunnedUntil = now + attacker.brokenSeconds
+			end
+			CombatService.PostureBroken:Fire(attacker)
+		end
+		attacker.model:SetAttribute("Posture", Posture.Fraction(attacker.posture))
+		CombatService.Deflected:Fire(target, attacker)
+	end
+
+	-- Parry / Needle Counter reflect posture damage back to the attacker, and stagger it.
+	if (res.outcome == "Parried" or res.outcome == "Countered") and attacker then
+		CombatService.Staggered:Fire(attacker, if res.outcome == "Countered" then CombatConfig.Counter.stagger else CombatConfig.ParriedStaggerSeconds)
 		if Posture.Add(attacker.posture, res.reflectPosture, now, attacker.brokenSeconds) then
 			if attacker.rules then
 				attacker.rules.stunnedUntil = now + attacker.brokenSeconds
@@ -339,6 +381,7 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		postureFrac = Posture.Fraction(target.posture),
 		broken = broke,
 		riposte = hit.riposte,
+		severing = hit.severing,
 		crit = hit.crit,
 		source = hit.source,
 		color = hit.color,
@@ -462,6 +505,10 @@ local function onCombatAction(player: Player, req: { [string]: any })
 	local dodgeMult = (1 - (stats.Haste or 0)) * style.dashCooldown
 	CombatRules.Commit(c.rules :: CombatRules.State, decision, now, dodgeMult, { speed = style.speed, parryWindowBonus = style.parryWindowBonus })
 	syncUltimate(c)
+	if action == "Dodge" then
+		c.dodgeAt = now
+		c.dodgeDir = sanitizeAim(req.move) or c.root.CFrame.LookVector
+	end
 	broadcast({ kind = "Action", sourceId = c.id, action = action, moveId = decision.moveId, seq = seq, route = decision.kind, speed = style.speed })
 
 	local moveId = decision.moveId
@@ -485,6 +532,21 @@ local function onCombatAction(player: Player, req: { [string]: any })
 		local attackMult = 1 + (CombatService.PlayerStats(player).Attack or 0)
 		for _, target in CombatService.TargetsInArc(c, move.range + (move.step or 0) * 0.5, move.arcDegrees, aim) do
 			hitAny = true
+			-- Severing Blow: an enemy with broken posture is finished (bosses lose a big chunk).
+			if target.kind ~= "Player" and Posture.IsBroken(target.posture, os.clock()) then
+				local sever = if target.kind == "Boss" then target.humanoid.MaxHealth * CombatConfig.Severing.bossFraction else target.humanoid.Health + 1
+				target.posture.brokenUntil = os.clock()
+				target.posture.value = 0
+				target.model:SetAttribute("Broken", false)
+				CombatService.ApplyHit(c, target, {
+					damage = sever,
+					postureDamage = 0,
+					moveId = moveId :: string,
+					knockback = kb * 2,
+					severing = true,
+				})
+				continue
+			end
 			local critMult, crit = CombatService.RollCrit(player)
 			CombatService.ApplyHit(c, target, {
 				crit = crit,
@@ -619,7 +681,15 @@ function CombatService.Start()
 				syncShield(c)
 			end
 			local before = c.posture.value
-			Posture.Update(c.posture, now, step)
+			local hpFrac = c.humanoid.Health / math.max(1, c.humanoid.MaxHealth)
+			local regen = CombatConfig.PostureHealthFloor + (1 - CombatConfig.PostureHealthFloor) * hpFrac
+			if c.rules and CombatRules.IsGuarding(c.rules, now) then
+				regen *= CombatConfig.GuardPostureRegen
+			end
+			Posture.Update(c.posture, now, step * regen)
+			if c.model:GetAttribute("Broken") == true and not Posture.IsBroken(c.posture, now) then
+				c.model:SetAttribute("Broken", false)
+			end
 			if math.abs(before - c.posture.value) > 0.5 or (before > 0 and c.posture.value == 0) then
 				c.model:SetAttribute("Posture", Posture.Fraction(c.posture))
 			end

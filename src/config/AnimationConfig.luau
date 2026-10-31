@@ -120,6 +120,24 @@ AnimationConfig.Styles = {
 		weaponWindup = { -150, 0, 0 },
 		weaponStrike = { 40, 0, 0 },
 	},
+	-- Perilous telegraphs (enemies): low sweep and two-handed grab.
+	Sweep = {
+		windup = { shoulder = { 40, 70, 30 }, elbow = { 20, 0, 0 }, waist = { 10, 50, 0 }, root = { 15, 0, 0 }, leftHip = { 40, 0, 0 }, rightHip = { 30, 0, 0 }, leftKnee = { -70, 0, 0 }, rightKnee = { -80, 0, 0 } },
+		strike = { shoulder = { 30, -90, 30 }, elbow = { 0, 0, 0 }, waist = { 10, -50, 0 }, root = { 15, 0, 0 }, leftHip = { 40, 0, 0 }, rightHip = { 30, 0, 0 }, leftKnee = { -70, 0, 0 }, rightKnee = { -80, 0, 0 } },
+		weaponWindup = { -10, 0, -100 },
+		weaponStrike = { -10, 0, 100 },
+	},
+	Grasp = {
+		windup = { shoulder = { 60, 0, 40 }, leftShoulder = { 60, 0, -40 }, elbow = { 60, 0, 0 }, leftElbow = { 60, 0, 0 }, waist = { -15, 0, 0 }, root = { 8, 0, 0 } },
+		strike = { shoulder = { 100, 0, 0 }, leftShoulder = { 100, 0, 0 }, elbow = { 0, 0, 0 }, leftElbow = { 0, 0, 0 }, waist = { 20, 0, 0 }, root = { -15, 0, 0 }, leftHip = { -40, 0, 0 }, rightHip = { 30, 0, 0 } },
+	},
+	-- Severing Blow (finishing a posture-broken enemy): two-handed downward plunge.
+	Sever = {
+		windup = { shoulder = { 170, 0, 0 }, leftShoulder = { 160, 0, 0 }, waist = { -20, 0, 0 }, root = { 8, 0, 0 }, leftKnee = { -30, 0, 0 } },
+		strike = { shoulder = { 40, 0, 0 }, leftShoulder = { 40, 0, 0 }, waist = { 35, 0, 0 }, root = { -15, 0, 0 }, leftHip = { -60, 0, 0 }, rightHip = { 30, 0, 0 }, leftKnee = { -60, 0, 0 }, rightKnee = { -40, 0, 0 } },
+		weaponWindup = { -170, 0, 0 },
+		weaponStrike = { 60, 0, 0 },
+	},
 	-- Qi arts (SpellController plays these by name with explicit timing).
 	CastPush = {
 		windup = { shoulder = { 40, 30, 0 }, leftShoulder = { 40, -30, 0 }, elbow = { 70, 0, 0 }, waist = { 0, 30, 0 }, leftHip = { -10, 0, 0 }, rightHip = { 20, 0, 0 } },

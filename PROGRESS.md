@@ -117,6 +117,15 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Edit-mode world: `require(game.ServerScriptService.EditTools).BuildWorld()` in the Command Bar builds map/hub/lighting so it can be edited and saved
 - [ ] Tune spell/spirit numbers after a real playtest; real VFX/sound assets (currently built-in textures/sounds)
 
+## Body animation + posture combat pass (night 1, part 8)
+- [x] AnimationController rewrite: joints found by moving part (Motor6D C0 or AnimationConstraint attachment, R15 + R6), poses in parent-part axes; warns in Output if a rig has no posable joints
+- [x] Combat stances per weapon class (one-handed / two-handed / fans): arms, torso and legs stay connected to the weapon; every move blends from and back to the stance
+- [x] Hold-to-guard (F) with timed deflect on press; GuardRelease action; attacking drops guard
+- [x] Perilous kinds with answers: Pierce -> Needle Counter (dash in), Sweep -> Crane Leap (jump), Grasp -> dash away; labelled telegraphs
+- [x] Severing Blow on posture-broken enemies (SEVER marker; bosses lose 30% HP), cinematic
+- [x] Enemies/bosses deflect strikes (guarding enemies, bosses between attacks) and counter; posture regen scales with health, faster while guarding
+- [ ] Verify stance/attack angles by eye in Studio; tune deflect chances
+
 ## Phase 2 - Chapter 1 + depth
 - [x] BossConfig entries for the 4 Chapter 1 bosses (Hollow Abbot, Twin Cinder Sisters, Rustwood Matriarch, Gatekeeper of Rust - 3 phases)
 - [x] Chapter 1 enemies: Rustwood Stalker, Rust-Eaten Sentinel

@@ -93,6 +93,10 @@ function CombatRules.Validate(state: State, weaponId: string, action: string, se
 		return { ok = false, reason = "Seq", action = action }
 	end
 	state.lastSeq = seq
+	-- Releasing the guard is always allowed (a stuck guard would be worse than a lost press).
+	if action == "GuardRelease" then
+		return { ok = true, action = action }
+	end
 	if not rateOk(state, now) then
 		return { ok = false, reason = "Rate", action = action }
 	end
@@ -155,7 +159,7 @@ function CombatRules.Validate(state: State, weaponId: string, action: string, se
 		end
 		return { ok = true, action = action, moveId = moveId }
 	end
-	-- SpiritCall and unknown actions: not available yet (Phase 2).
+	-- SpiritCall is handled by SpiritAbilityService before validation; anything else is unknown.
 	return { ok = false, reason = "Unavailable", action = action }
 end
 
@@ -170,10 +174,15 @@ function CombatRules.Commit(state: State, d: Decision, now: number, dodgeCooldow
 		state.dodgeReadyAt = now + CombatConfig.DodgeCooldown * (dodgeCooldownMult or 1)
 		state.lastDodgeAt = now
 		return CombatConfig.DodgeDuration
+	elseif d.action == "GuardRelease" then
+		-- Letting go keeps the deflect window that is already running, but drops the block.
+		state.blockUntil = math.min(state.blockUntil, math.max(now, state.parryUntil) + BLOCK_HOLD_SECONDS * 0.25)
+		return 0
 	elseif d.action == "Parry" then
 		local window = CombatConfig.ParryWindow + ((mods and mods.parryWindowBonus) or 0)
 		state.parryUntil = now + window
-		state.blockUntil = now + window + BLOCK_HOLD_SECONDS
+		-- Hold-to-guard: the block lasts until GuardRelease (or GuardMaxHold).
+		state.blockUntil = now + math.max(window + BLOCK_HOLD_SECONDS, CombatConfig.GuardMaxHold)
 		-- Assume a whiff; ResolveIncoming resets the streak on a successful parry.
 		state.parryReadyAt = now + CombatConfig.ParryCooldown + state.whiffStreak * CombatConfig.ParrySpamPenalty
 		state.whiffStreak += 1
@@ -185,6 +194,7 @@ function CombatRules.Commit(state: State, d: Decision, now: number, dodgeCooldow
 	end
 	local total = move.windup / speed + move.active + move.recovery / speed
 	state.busyUntil = now + total
+	state.blockUntil = 0 -- attacking drops your guard
 	state.cancelable = move.dodgeCancelable == true
 	if d.kind == "Air" then
 		state.airUsed = true
@@ -236,16 +246,34 @@ function CombatRules.InArc(ax: number, az: number, lookX: number, lookZ: number,
 	return cos >= math.cos(half)
 end
 
-export type Incoming = { damage: number, postureDamage: number, perilous: boolean? }
+export type Incoming = { damage: number, postureDamage: number, perilous: boolean?, perilousKind: string? }
+-- What the defender was doing (filled by CombatService from server positions).
+export type Context = { airborne: boolean?, dashedToward: boolean? }
 export type Resolution = {
-	outcome: "Hit" | "Blocked" | "Parried" | "Dodged",
+	outcome: "Hit" | "Blocked" | "Parried" | "Dodged" | "Countered" | "Jumped" | "Deflected",
 	damage: number, -- health damage to defender
 	postureDamage: number, -- posture damage to defender
 	reflectPosture: number, -- posture damage back to attacker (parry)
 }
 
 -- Resolves an incoming attack against a defender's state at `now`.
-function CombatRules.ResolveIncoming(state: State, hit: Incoming, now: number): Resolution
+function CombatRules.IsGuarding(state: State, now: number): boolean
+	return now < state.blockUntil
+end
+
+function CombatRules.ResolveIncoming(state: State, hit: Incoming, now: number, ctx: Context?): Resolution
+	-- Perilous answers come first (a dash into a thrust also has i-frames, but it is a counter).
+	if hit.perilous and ctx then
+		local kind = hit.perilousKind or "Grasp"
+		if kind == "Pierce" and ctx.dashedToward then
+			state.riposteUntil = now + CombatConfig.RiposteWindow
+			state.ultimateCharge = math.min(WeaponConfig.UltimateChargeMax, state.ultimateCharge + WeaponConfig.UltimateChargePerParry * 2)
+			return { outcome = "Countered", damage = 0, postureDamage = 0, reflectPosture = hit.postureDamage * CombatConfig.Counter.reflectPosture }
+		elseif kind == "Sweep" and ctx.airborne then
+			state.riposteUntil = now + CombatConfig.RiposteWindow
+			return { outcome = "Jumped", damage = 0, postureDamage = 0, reflectPosture = 0 }
+		end
+	end
 	if now < state.iframeUntil then
 		return { outcome = "Dodged", damage = 0, postureDamage = 0, reflectPosture = 0 }
 	end

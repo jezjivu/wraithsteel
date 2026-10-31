@@ -25,6 +25,7 @@ local Net = require(Shared:WaitForChild("Net"))
 local Odds = require(Shared:WaitForChild("Odds"))
 local Signal = require(Shared:WaitForChild("Signal"))
 local EnemyConfig = require(Config:WaitForChild("EnemyConfig"))
+local CombatConfig = require(Config:WaitForChild("CombatConfig"))
 local EconomyConfig = require(Config:WaitForChild("EconomyConfig"))
 local PartyConfig = require(Config:WaitForChild("PartyConfig"))
 
@@ -198,6 +199,7 @@ local function strike(b: Brain, attackId: string, token: number)
 		sourceId = b.c.id,
 		moveId = attackId,
 		perilous = a.perilous == true,
+		perilousKind = a.perilousKind,
 		windup = a.windup,
 		active = a.active,
 		recovery = a.recovery,
@@ -220,6 +222,7 @@ local function strike(b: Brain, attackId: string, token: number)
 						damage = a.damage,
 						postureDamage = a.postureDamage,
 						perilous = a.perilous,
+						perilousKind = a.perilousKind,
 						moveId = attackId,
 						knockback = if a.perilous then EnemyConfig.PerilousKnockback else EnemyConfig.HitKnockback,
 					})
@@ -349,6 +352,7 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 		invulnerable = false,
 		dead = false,
 		contributions = {},
+		deflectChance = def.deflectChance,
 	}
 	CombatService.Register(c)
 	local brain: Brain = {
@@ -453,6 +457,19 @@ function EnemyService.Start()
 			b.busyUntil = 0
 			director:Release(c.id, os.clock())
 			Net.Server.FireAll("CombatEvent", { kind = "Stagger", sourceId = c.id, seconds = seconds })
+		end
+	end)
+	-- After deflecting a strike, the enemy answers almost immediately (clash -> counter).
+	CombatService.Deflected:Connect(function(c)
+		local b = brains[c.id]
+		if b then
+			task.delay(CombatConfig.Deflect.counterDelay, function()
+				if not b.c.dead and os.clock() >= b.stunnedUntil then
+					b.busyUntil = 0
+					b.nextAttackAt = 0
+					b.c.guardUntil = nil
+				end
+			end)
 		end
 	end)
 	CombatService.PostureBroken:Connect(function(c)

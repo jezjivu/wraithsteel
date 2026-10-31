@@ -180,6 +180,7 @@ local function doHits(e: Encounter, moveId: string)
 						damage = m.damage,
 						postureDamage = m.postureDamage,
 						perilous = m.perilous,
+						perilousKind = m.perilousKind,
 						moveId = moveId,
 						knockback = if m.perilous then BossConfig.Knockback.perilous elseif m.arcDegrees >= 300 then BossConfig.Knockback.wide else BossConfig.Knockback.normal,
 						launch = if m.perilous then BossConfig.Knockback.perilousLaunch else nil,
@@ -322,10 +323,16 @@ function BossService.StartEncounter(bossId: string, cframe: CFrame, participants
 		invulnerable = false,
 		dead = false,
 		contributions = {},
+		deflectChance = def.deflectChance or BossConfig.DefaultDeflect,
 	}
 	CombatService.Register(c)
 
 	local e: Encounter
+	-- Bosses deflect your strikes whenever they are not mid-attack (break their rhythm!).
+	c.canDeflect = function()
+		local st = if e then e.sm.state else "Idle"
+		return st == "Idle" or st == "Chase" or st == "Recovery"
+	end
 	local sm = BossStateMachine.new(bossId, function()
 		return rng:NextNumber()
 	end, function(event, ...)
@@ -341,6 +348,7 @@ function BossService.StartEncounter(bossId: string, cframe: CFrame, participants
 				sourceId = id,
 				moveId = args[1],
 				perilous = args[2],
+				perilousKind = m.perilousKind,
 				windup = m.windup / def.phases[e.sm.phase].speedMultiplier,
 				active = m.active,
 				recovery = m.recovery / def.phases[e.sm.phase].speedMultiplier,

@@ -215,7 +215,26 @@ end
 
 CombatController.FaceToward = faceToward
 
+local guardHeld = false
+
+local function brokenEnemyNear(character: Model): boolean
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if root == nil or not root:IsA("BasePart") then
+		return false
+	end
+	for _, model in CollectionService:GetTagged("Combatant") do
+		if model:IsA("Model") and model ~= character and model:GetAttribute("Broken") == true then
+			local troot = model:FindFirstChild("HumanoidRootPart")
+			if troot and troot:IsA("BasePart") and (troot.Position - root.Position).Magnitude <= 10 then
+				return true
+			end
+		end
+	end
+	return false
+end
+
 local function send(action: string)
+	local character0 = localPlayer.Character
 	seq += 1
 	local aim = if action == "Dodge" or action == "Parry" then nil else aimDirection()
 	if aim and CombatConfig.AimAssist.faceOnAttack then
@@ -225,7 +244,17 @@ local function send(action: string)
 		seq -= 1
 		return -- out of air dashes
 	end
-	Net.Client.Fire("CombatAction", { action = action, seq = seq, aim = aim })
+	local moveDir: Vector3? = nil
+	if action == "Dodge" then
+		local hum = character0 and character0:FindFirstChildOfClass("Humanoid")
+		local root0 = character0 and character0:FindFirstChild("HumanoidRootPart")
+		if hum and hum.MoveDirection.Magnitude > 0.1 then
+			moveDir = hum.MoveDirection
+		elseif root0 and root0:IsA("BasePart") then
+			moveDir = -root0.CFrame.LookVector -- back-step
+		end
+	end
+	Net.Client.Fire("CombatAction", { action = action, seq = seq, aim = aim, move = moveDir })
 	local character = localPlayer.Character
 	if action == "Dodge" then
 		lastDashAt = os.clock()
@@ -247,7 +276,26 @@ local function send(action: string)
 			end
 		end)
 	end
-	if move and move.animationId ~= PLACEHOLDER_ANIM then
+	if action == "Parry" then
+		if character then
+			AnimationController.HoldGuard(character, true)
+		end
+		-- Released before the server even answered: drop the guard right after the deflect window.
+		if not guardHeld then
+			task.delay(CombatConfig.ParryWindow, function()
+				if not guardHeld then
+					seq += 1
+					Net.Client.Fire("CombatAction", { action = "GuardRelease", seq = seq })
+					if localPlayer.Character then
+						AnimationController.HoldGuard(localPlayer.Character, false)
+					end
+				end
+			end)
+		end
+	elseif move and character and (action == "LightAttack" or action == "HeavyAttack") and brokenEnemyNear(character) then
+		-- Severing Blow on a posture-broken enemy: the big two-handed finisher.
+		AnimationController.Play(character, "Sever", nil, { windup = move.windup / style.speed, active = math.max(move.active, 0.12), recovery = move.recovery / style.speed + 0.2 })
+	elseif move and move.animationId ~= PLACEHOLDER_ANIM then
 		playAnimation(move.animationId)
 	elseif character and action ~= "Dodge" then
 		AnimationController.Play(character, action, moveId, nil, predictedKind, style.speed)
@@ -270,7 +318,23 @@ end
 function CombatController.Init() end
 
 function CombatController.Start()
-	InputController.ActionPressed:Connect(onAction)
+	InputController.ActionPressed:Connect(function(action: string)
+		if action == "Parry" then
+			guardHeld = true
+		end
+		onAction(action)
+	end)
+	-- Hold-to-guard: releasing F drops the guard (the timed deflect window still counts).
+	InputController.ActionReleased:Connect(function(action: string)
+		if action == "Parry" and guardHeld then
+			guardHeld = false
+			seq += 1
+			Net.Client.Fire("CombatAction", { action = "GuardRelease", seq = seq })
+			if localPlayer.Character then
+				AnimationController.HoldGuard(localPlayer.Character, false)
+			end
+		end
+	end)
 
 	-- Release buffered input when the predicted move ends.
 	task.spawn(function()

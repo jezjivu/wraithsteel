@@ -18,12 +18,18 @@ local InputController = {
 	Name = "InputController",
 	Priority = 10,
 	ActionPressed = Signal.new(),
+	ActionReleased = Signal.new(), -- (action) on key/button release (hold-to-guard)
 }
 
 local enabled = true
 local BIND_PREFIX = "Wraithsteel_"
 
 local function handler(actionName: string, state: Enum.UserInputState, _input: InputObject): Enum.ContextActionResult
+	if state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
+		-- Releases always go through (a guard must never stay stuck up).
+		InputController.ActionReleased:Fire(string.sub(actionName, #BIND_PREFIX + 1))
+		return Enum.ContextActionResult.Pass
+	end
 	if not enabled then
 		return Enum.ContextActionResult.Pass
 	end

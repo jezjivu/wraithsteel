@@ -21,6 +21,17 @@ EffectsConfig.Outcome = {
 	Parried = { text = "PARRY!", color = { 255, 215, 90 } },
 	Dodged = { text = "DODGE", color = { 120, 200, 255 } },
 	Broken = { text = "POSTURE BROKEN", color = { 255, 120, 40 } },
+	Countered = { text = "NEEDLE COUNTER", color = { 120, 230, 255 } },
+	Jumped = { text = "CRANE LEAP", color = { 170, 255, 190 } },
+	Deflected = { text = "DEFLECTED", color = { 255, 170, 80 } }, -- an enemy deflected your strike
+	Severed = { text = "SEVERED", color = { 230, 30, 40 } },
+}
+
+-- Perilous telegraph labels: what to do about each kind (CombatConfig).
+EffectsConfig.Perilous = {
+	Pierce = { text = "! PIERCE - dash into it", style = "Thrust" },
+	Sweep = { text = "! SWEEP - jump", style = "Sweep" },
+	Grasp = { text = "! GRASP - dash away", style = "Grasp" },
 }
 
 EffectsConfig.HitFlash = { color = { 255, 255, 255 }, seconds = 0.12 }

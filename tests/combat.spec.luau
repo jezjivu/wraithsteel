@@ -82,11 +82,44 @@ cases["Combat: parry window, block, perilous and iframes"] = function()
 	expectEq(CombatRules.ResolveIncoming(s, hit, 0.1).outcome, "Parried")
 	expectEq(s.whiffStreak, 0)
 	expectEq(CombatRules.ResolveIncoming(s, hit, 0.5).outcome, "Blocked")
-	expectEq(CombatRules.ResolveIncoming(s, hit, 2).outcome, "Hit")
+	expectEq(CombatRules.ResolveIncoming(s, hit, 2).outcome, "Blocked") -- still holding guard
+	CombatRules.Commit(s, CombatRules.Validate(s, W, "GuardRelease", 2, 2), 2)
+	expectEq(CombatRules.ResolveIncoming(s, hit, 3).outcome, "Hit")
 	expectEq(CombatRules.ResolveIncoming(s, { damage = 10, postureDamage = 20, perilous = true }, 0.1).outcome, "Hit")
 	local s2 = CombatRules.NewState()
 	CombatRules.Commit(s2, CombatRules.Validate(s2, W, "Dodge", 1, 0), 0)
 	expectEq(CombatRules.ResolveIncoming(s2, { damage = 10, postureDamage = 20, perilous = true }, 0.1).outcome, "Dodged")
+end
+
+cases["Combat: guard release always allowed, attacking drops guard"] = function()
+	local s = CombatRules.NewState()
+	CombatRules.Commit(s, CombatRules.Validate(s, W, "Parry", 1, 0), 0)
+	s.stunnedUntil = 5
+	expectEq(CombatRules.Validate(s, W, "GuardRelease", 2, 1).ok, true)
+	local s2 = CombatRules.NewState()
+	CombatRules.Commit(s2, CombatRules.Validate(s2, W, "Parry", 1, 0), 0)
+	CombatRules.Commit(s2, CombatRules.Validate(s2, W, "LightAttack", 2, 1), 1)
+	expectEq(CombatRules.IsGuarding(s2, 1.1), false)
+end
+
+cases["Combat: perilous answers - Needle Counter, Crane Leap, Grasp needs a dodge"] = function()
+	local s = CombatRules.NewState()
+	local pierce = { damage = 30, postureDamage = 20, perilous = true, perilousKind = "Pierce" }
+	local r = CombatRules.ResolveIncoming(s, pierce, 1, { dashedToward = true })
+	expectEq(r.outcome, "Countered")
+	expectEq(r.damage, 0)
+	expectTrue(r.reflectPosture > 20, "counter crushes attacker posture")
+	expectTrue(s.riposteUntil > 1, "counter opens a riposte")
+	expectEq(CombatRules.ResolveIncoming(CombatRules.NewState(), pierce, 1, {}).outcome, "Hit")
+	local sweep = { damage = 30, postureDamage = 20, perilous = true, perilousKind = "Sweep" }
+	expectEq(CombatRules.ResolveIncoming(CombatRules.NewState(), sweep, 1, { airborne = true }).outcome, "Jumped")
+	expectEq(CombatRules.ResolveIncoming(CombatRules.NewState(), sweep, 1, { airborne = false }).outcome, "Hit")
+	local grasp = { damage = 30, postureDamage = 20, perilous = true, perilousKind = "Grasp" }
+	expectEq(CombatRules.ResolveIncoming(CombatRules.NewState(), grasp, 1, { airborne = true, dashedToward = true }).outcome, "Hit")
+	-- A parry never stops a perilous attack.
+	local p = CombatRules.NewState()
+	CombatRules.Commit(p, CombatRules.Validate(p, W, "Parry", 1, 0), 0)
+	expectEq(CombatRules.ResolveIncoming(p, grasp, 0.05, {}).outcome, "Hit")
 end
 
 cases["Combat: parry spam increases cooldown"] = function()

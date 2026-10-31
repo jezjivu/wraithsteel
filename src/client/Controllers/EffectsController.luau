@@ -195,10 +195,61 @@ local function attachBars(model: Model)
 	gui.Parent = part
 end
 
+-- Red "SEVER" sigil over a posture-broken enemy: strike now for a Severing Blow.
+local function brokenMarker(model: Model)
+	local existing = model:FindFirstChild("SeverMark")
+	if model:GetAttribute("Broken") ~= true or Players:GetPlayerFromCharacter(model) then
+		if existing then
+			existing:Destroy()
+		end
+		return
+	end
+	local part = anchorPart(model)
+	if existing or part == nil then
+		return
+	end
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "SeverMark"
+	gui.Size = UDim2.fromOffset(90, 90)
+	gui.StudsOffset = Vector3.new(0, 3.2, 0)
+	gui.AlwaysOnTop = true
+	gui.MaxDistance = 80
+	gui.Adornee = part
+	local diamond = Instance.new("Frame")
+	diamond.AnchorPoint = Vector2.new(0.5, 0.5)
+	diamond.Position = UDim2.fromScale(0.5, 0.4)
+	diamond.Size = UDim2.fromOffset(34, 34)
+	diamond.Rotation = 45
+	diamond.BackgroundColor3 = Color3.fromRGB(200, 20, 30)
+	diamond.Parent = gui
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(255, 230, 220)
+	stroke.Thickness = 2
+	stroke.Parent = diamond
+	local label = Instance.new("TextLabel")
+	label.AnchorPoint = Vector2.new(0.5, 0)
+	label.Position = UDim2.fromScale(0.5, 0.68)
+	label.Size = UDim2.fromOffset(120, 22)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.GothamBlack
+	label.TextSize = 16
+	label.TextColor3 = Color3.fromRGB(255, 80, 80)
+	label.TextStrokeTransparency = 0.2
+	label.Text = "SEVER - strike!"
+	label.Parent = gui
+	local scale = Instance.new("UIScale")
+	scale.Parent = diamond
+	TweenService:Create(scale, TweenInfo.new(0.35, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Scale = 1.25 }):Play()
+	gui.Parent = model
+end
+
 local function track(model: Instance)
 	if not model:IsA("Model") then
 		return
 	end
+	model:GetAttributeChangedSignal("Broken"):Connect(function()
+		brokenMarker(model)
+	end)
 	local id = model:GetAttribute("CombatantId")
 	if type(id) == "string" then
 		byId[id] = model
@@ -301,6 +352,51 @@ local function onDamage(e: { [string]: any })
 		end
 	elseif e.outcome == "Dodged" then
 		floatText(part, outcome.text :: string, rgb(outcome.color), 20)
+	elseif e.outcome == "Countered" or e.outcome == "Jumped" then
+		-- Perilous attack answered: big cue on the player who did it.
+		local c = rgb(outcome.color)
+		floatText(part, outcome.text :: string, c, 32)
+		Fx.Shockwave(part.Position - Vector3.new(0, 2.5, 0), c, 10, 0.35)
+		Fx.Burst(part.Position, { color = c, count = 34, speed = 30, size = 0.6, lifetime = 0.45 })
+		playSound(EffectsConfig.Sounds.parry, part, 1.2)
+		if mine then
+			AnimationController.HitStop(EffectsConfig.HitStop.parry, 0.08)
+			Fx.CenterText(outcome.text :: string, c, 54, 0.55)
+			Fx.Streaks(c, 18, 0.3)
+			Fx.CameraPunch(-EffectsConfig.Shake.bigHitFov)
+			HUDController.ComboHit()
+		end
+	elseif e.outcome == "Deflected" then
+		-- An enemy deflected YOUR strike: clash sparks, the blade bounces.
+		local c = rgb(outcome.color)
+		floatText(part, outcome.text :: string, c, 24)
+		spark(part, c)
+		Fx.Glint(part.Position, c)
+		playSound(EffectsConfig.Sounds.parry, part, 1.9)
+		if fromMe then
+			AnimationController.HitStop(EffectsConfig.HitStop.hit * 2, 0.1)
+			local mine2 = localPlayer.Character
+			if mine2 then
+				AnimationController.Play(mine2, "Flinch", nil, { windup = 0.05, active = 0.1, recovery = 0.2 })
+			end
+			shake(EffectsConfig.Shake.parry * 0.6)
+		end
+	end
+	if e.severing then
+		-- Severing Blow: slow-motion, ink-red slash, the body crumples.
+		local c = rgb(EffectsConfig.Outcome.Severed.color)
+		floatText(part, EffectsConfig.Outcome.Severed.text :: string, c, 44)
+		Fx.Burst(part.Position, { texture = Fx.Textures.Smoke, color = Color3.fromRGB(120, 10, 20), count = 40, speed = 18, size = 2.2, lifetime = 0.9, lightEmission = 0, acceleration = Vector3.new(0, -6, 0) })
+		Fx.Burst(part.Position, { color = c, count = 50, speed = 40, size = 0.5, lifetime = 0.5 })
+		Fx.Shockwave(part.Position - Vector3.new(0, 2.5, 0), c, 16, 0.5)
+		if fromMe then
+			AnimationController.HitStop(CombatConfig.Severing.hitStop, 0.05)
+			Fx.ColorPulse(-0.8, 0.5, Color3.fromRGB(255, 200, 200), 0.7)
+			Fx.Streaks(c, 26, 0.45)
+			Fx.CenterText(EffectsConfig.Outcome.Severed.text :: string, c, 78, 0.8)
+			Fx.CameraPunch(EffectsConfig.Shake.bigHitFov * 2)
+			shake(EffectsConfig.Shake.broken)
+		end
 	end
 	if e.broken then
 		local b = EffectsConfig.Outcome.Broken
@@ -335,11 +431,15 @@ local function onTelegraph(e: { [string]: any })
 	local color = rgb(if e.perilous then AnimationConfig.PerilousColor else AnimationConfig.TelegraphColor)
 	flash(model, color, windup, if e.perilous then 0.15 else 0.6)
 	local part = anchorPart(model)
-	if e.perilous and part then
-		floatText(part, "!", color, 46)
+	local peril = if e.perilous then EffectsConfig.Perilous[e.perilousKind or "Grasp"] or EffectsConfig.Perilous.Grasp else nil
+	if peril and part then
+		floatText(part, peril.text, color, 30)
+		-- Big red warning sigil + low tone (you cannot parry this one).
+		Fx.Burst(part.Position + Vector3.new(0, 2, 0), { color = color, count = 20, speed = 8, size = 0.9, lifetime = 0.5, acceleration = Vector3.zero })
+		playSound(EffectsConfig.Sounds.heavy, part, 0.45)
 	end
 	-- Swing the rig + weapon with the server's exact timing (the hit lands at windup end).
-	local action = if e.perilous then "HeavyAttack" elseif math.random() < 0.5 then "LightAttack" else "AltAttack"
+	local action = if peril then peril.style elseif math.random() < 0.5 then "LightAttack" else "AltAttack"
 	AnimationController.Play(model, action, nil, { windup = windup, active = active, recovery = recovery })
 	-- Parry cue: the blade glints exactly when a press of F would land inside the parry window.
 	local glintAt = math.max(0, windup - CombatConfig.ParryWindow * 0.8)
@@ -391,6 +491,13 @@ local function onAction(e: { [string]: any })
 	local model = EffectsController.ModelFor(e.sourceId)
 	if model == nil or isLocal(model) then
 		return -- own character already animated by CombatController prediction
+	end
+	if e.action == "Parry" then
+		AnimationController.HoldGuard(model, true)
+		return
+	elseif e.action == "GuardRelease" then
+		AnimationController.HoldGuard(model, false)
+		return
 	end
 	AnimationController.Play(model, e.action, e.moveId, nil, e.route, tonumber(e.speed))
 	local part = anchorPart(model)

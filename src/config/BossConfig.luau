@@ -18,6 +18,7 @@ export type BossMove = {
 	weight: number,
 	cooldown: number,
 	perilous: boolean?,
+	perilousKind: ("Pierce" | "Sweep" | "Grasp")?, -- answer: dash in / jump / dodge (CombatConfig)
 	minRange: number?, -- only chosen when target is at least this far (gap closers)
 	hits: number?, -- multi-hit flurries
 	animationId: string,
@@ -45,6 +46,7 @@ export type BossDef = {
 	moves: { [string]: BossMove },
 	phases: { BossPhaseDef },
 	idleBetweenMoves: number,
+	deflectChance: number?, -- chance to deflect your strikes while not attacking (default BossConfig.DefaultDeflect)
 	rewards: { ember: number, xp: number, jadeFirstClear: number },
 	modelId: number,
 	look: EnemyConfig.RigLook?,
@@ -55,6 +57,7 @@ local BossConfig = {}
 -- Pushback (studs/s) when boss hits land on players.
 BossConfig.StrikeStep = 5 -- studs a boss steps into regular strikes
 BossConfig.StrikeStepSpeed = 2.5 -- walk speed multiplier while stepping
+BossConfig.DefaultDeflect = 0.35
 BossConfig.Knockback = { normal = 16, wide = 30, perilous = 45, perilousLaunch = 18 }
 
 local PLACEHOLDER_ANIM = "rbxassetid://0"
@@ -75,9 +78,9 @@ BossConfig.Bosses = {
 			claw_swipe = { name = "Corroded Swipe", damage = 14, postureDamage = 16, windup = 0.5, active = 0.15, recovery = 0.55, range = 10, arcDegrees = 110, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
 			pounce = { name = "Iron Pounce", damage = 22, postureDamage = 26, windup = 0.75, active = 0.25, recovery = 0.9, range = 28, minRange = 12, arcDegrees = 50, weight = 2, cooldown = 6, animationId = PLACEHOLDER_ANIM },
 			flurry = { name = "Rattling Flurry", damage = 9, postureDamage = 12, windup = 0.4, active = 0.9, recovery = 0.7, range = 10, arcDegrees = 100, weight = 2, cooldown = 7, hits = 4, animationId = PLACEHOLDER_ANIM },
-			tail_sweep = { name = "Chain-Tail Sweep", damage = 16, postureDamage = 10, windup = 0.65, active = 0.2, recovery = 0.6, range = 12, arcDegrees = 360, weight = 1, cooldown = 9, perilous = true, animationId = PLACEHOLDER_ANIM },
+			tail_sweep = { name = "Chain-Tail Sweep", damage = 16, postureDamage = 10, windup = 0.65, active = 0.2, recovery = 0.6, range = 12, arcDegrees = 360, weight = 1, cooldown = 9, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
 			rust_roar = { name = "Rust Roar", damage = 10, postureDamage = 30, windup = 1.0, active = 0.4, recovery = 1.0, range = 18, arcDegrees = 360, weight = 1, cooldown = 14, animationId = PLACEHOLDER_ANIM },
-			corroded_charge = { name = "Corroded Charge", damage = 28, postureDamage = 20, windup = 0.9, active = 0.6, recovery = 1.2, range = 40, minRange = 15, arcDegrees = 30, weight = 2, cooldown = 10, perilous = true, animationId = PLACEHOLDER_ANIM },
+			corroded_charge = { name = "Corroded Charge", damage = 28, postureDamage = 20, windup = 0.9, active = 0.6, recovery = 1.2, range = 40, minRange = 15, arcDegrees = 30, weight = 2, cooldown = 10, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
 			{ hpThreshold = 1.0, moves = { "claw_swipe", "pounce", "flurry", "tail_sweep" }, speedMultiplier = 1, transitionSeconds = 0 },
@@ -104,7 +107,7 @@ BossConfig.Bosses = {
 			staff_sweep = { name = "Rattan Sweep", damage = 40, postureDamage = 30, windup = 0.45, active = 0.15, recovery = 0.5, range = 11, arcDegrees = 140, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
 			bell_palm = { name = "Silent Bell Palm", damage = 55, postureDamage = 60, windup = 0.7, active = 0.15, recovery = 0.7, range = 8, arcDegrees = 50, weight = 2, cooldown = 6, animationId = PLACEHOLDER_ANIM },
 			pilgrim_dash = { name = "Pilgrim's Dash", damage = 50, postureDamage = 35, windup = 0.6, active = 0.3, recovery = 0.8, range = 26, arcDegrees = 40, weight = 2, cooldown = 8, minRange = 12, animationId = PLACEHOLDER_ANIM },
-			hollow_chant = { name = "Hollow Chant", damage = 45, postureDamage = 20, windup = 1.2, active = 0.5, recovery = 1.0, range = 16, arcDegrees = 360, weight = 1, cooldown = 14, perilous = true, animationId = PLACEHOLDER_ANIM },
+			hollow_chant = { name = "Hollow Chant", damage = 45, postureDamage = 20, windup = 1.2, active = 0.5, recovery = 1.0, range = 16, arcDegrees = 360, weight = 1, cooldown = 14, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
 			prayer_beads = { name = "Hundred Prayer Beads", damage = 14, postureDamage = 10, windup = 0.5, active = 1.0, recovery = 0.6, range = 12, arcDegrees = 90, weight = 2, cooldown = 10, hits = 5, animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
@@ -131,7 +134,7 @@ BossConfig.Bosses = {
 			cinder_fan = { name = "Cinder Fan", damage = 38, postureDamage = 26, windup = 0.4, active = 0.15, recovery = 0.45, range = 10, arcDegrees = 120, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
 			ember_crossing = { name = "Ember Crossing", damage = 16, postureDamage = 12, windup = 0.45, active = 0.9, recovery = 0.6, range = 10, arcDegrees = 100, weight = 2, cooldown = 7, hits = 4, animationId = PLACEHOLDER_ANIM },
 			sister_swap = { name = "Sister Swap", damage = 48, postureDamage = 30, windup = 0.55, active = 0.25, recovery = 0.7, range = 24, arcDegrees = 40, weight = 2, cooldown = 8, minRange = 10, animationId = PLACEHOLDER_ANIM },
-			ash_veil = { name = "Ash Veil", damage = 52, postureDamage = 15, windup = 1.0, active = 0.4, recovery = 1.0, range = 14, arcDegrees = 360, weight = 1, cooldown = 13, perilous = true, animationId = PLACEHOLDER_ANIM },
+			ash_veil = { name = "Ash Veil", damage = 52, postureDamage = 15, windup = 1.0, active = 0.4, recovery = 1.0, range = 14, arcDegrees = 360, weight = 1, cooldown = 13, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
 			{ hpThreshold = 1.0, moves = { "cinder_fan", "ember_crossing", "sister_swap" }, speedMultiplier = 1, transitionSeconds = 0 },
@@ -156,7 +159,7 @@ BossConfig.Bosses = {
 		moves = {
 			root_lash = { name = "Root Lash", damage = 44, postureDamage = 28, windup = 0.5, active = 0.2, recovery = 0.6, range = 14, arcDegrees = 120, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
 			thorn_volley = { name = "Thorn Volley", damage = 12, postureDamage = 8, windup = 0.6, active = 1.0, recovery = 0.6, range = 30, arcDegrees = 40, weight = 2, cooldown = 9, hits = 6, minRange = 10, animationId = PLACEHOLDER_ANIM },
-			trampling_charge = { name = "Trampling Charge", damage = 70, postureDamage = 40, windup = 0.9, active = 0.6, recovery = 1.2, range = 40, arcDegrees = 30, weight = 2, cooldown = 11, minRange = 15, perilous = true, animationId = PLACEHOLDER_ANIM },
+			trampling_charge = { name = "Trampling Charge", damage = 70, postureDamage = 40, windup = 0.9, active = 0.6, recovery = 1.2, range = 40, arcDegrees = 30, weight = 2, cooldown = 11, minRange = 15, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
 			sap_burst = { name = "Sap Burst", damage = 40, postureDamage = 45, windup = 1.0, active = 0.3, recovery = 0.9, range = 13, arcDegrees = 360, weight = 1, cooldown = 12, animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
@@ -184,7 +187,7 @@ BossConfig.Bosses = {
 			chain_whip = { name = "Chain Whip", damage = 40, postureDamage = 26, windup = 0.5, active = 0.2, recovery = 0.6, range = 20, arcDegrees = 60, weight = 2, cooldown = 6, minRange = 8, animationId = PLACEHOLDER_ANIM },
 			rust_rush = { name = "Rust Rush", damage = 65, postureDamage = 40, windup = 0.75, active = 0.5, recovery = 1.0, range = 36, arcDegrees = 30, weight = 2, cooldown = 9, minRange = 14, animationId = PLACEHOLDER_ANIM },
 			gate_slam = { name = "Gate Slam", damage = 80, postureDamage = 80, windup = 1.1, active = 0.2, recovery = 1.1, range = 10, arcDegrees = 70, weight = 1, cooldown = 10, animationId = PLACEHOLDER_ANIM },
-			iron_toll = { name = "Iron Toll", damage = 60, postureDamage = 25, windup = 1.3, active = 0.5, recovery = 1.2, range = 20, arcDegrees = 360, weight = 1, cooldown = 15, perilous = true, animationId = PLACEHOLDER_ANIM },
+			iron_toll = { name = "Iron Toll", damage = 60, postureDamage = 25, windup = 1.3, active = 0.5, recovery = 1.2, range = 20, arcDegrees = 360, weight = 1, cooldown = 15, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
 			{ hpThreshold = 1.0, moves = { "gate_cleave", "chain_whip", "gate_slam" }, speedMultiplier = 1, transitionSeconds = 0 },
@@ -213,7 +216,7 @@ BossConfig.Bosses = {
 			chain_lash = { name = "Rusted Chain Lash", damage = 22, postureDamage = 18, windup = 0.5, active = 0.3, recovery = 0.6, range = 26, minRange = 8, arcDegrees = 50, weight = 2, cooldown = 6, animationId = PLACEHOLDER_ANIM },
 			resonance = { name = "Resonance", damage = 9, postureDamage = 14, windup = 0.6, active = 1.2, recovery = 0.8, range = 16, arcDegrees = 360, weight = 2, cooldown = 10, hits = 6, animationId = PLACEHOLDER_ANIM },
 			toll_wave = { name = "Toll Wave", damage = 18, postureDamage = 45, windup = 1.0, active = 0.4, recovery = 1.0, range = 32, arcDegrees = 360, weight = 1, cooldown = 14, animationId = PLACEHOLDER_ANIM },
-			bell_slam = { name = "Falling Bell", damage = 48, postureDamage = 20, windup = 1.4, active = 0.3, recovery = 1.4, range = 18, arcDegrees = 360, weight = 1, cooldown = 16, perilous = true, animationId = PLACEHOLDER_ANIM },
+			bell_slam = { name = "Falling Bell", damage = 48, postureDamage = 20, windup = 1.4, active = 0.3, recovery = 1.4, range = 18, arcDegrees = 360, weight = 1, cooldown = 16, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
 			{ hpThreshold = 1.0, moves = { "clapper_sweep", "chain_lash", "resonance" }, speedMultiplier = 1, transitionSeconds = 0 },
