@@ -2,7 +2,9 @@
 -- AnimationConfig: procedural (code-driven) combat poses used until real animations are
 -- uploaded. AnimationController blends R15 joints between these poses using each move's
 -- windup / active / recovery timing from WeaponConfig, so every weapon class moves differently.
--- Angles are degrees {x, y, z} applied on top of each joint's Motor6D.C0.
+-- Angles are degrees {x, y, z} in the parent part's axes (R15 / R6, Motor6D or
+-- AnimationConstraint joints). +X on a shoulder/hip swings the limb FORWARD, -X on a knee bends
+-- it, +Z on the right shoulder lifts the arm out to the side (use -Z for the left arm).
 -- TODO(Studio/Agent B): tune by eye in Studio; replace with real animations when uploaded
 -- (a move with a non-placeholder animationId plays that instead).
 
@@ -10,6 +12,7 @@ export type Pose = {
 	shoulder: { number }?, -- RightShoulder
 	elbow: { number }?, -- RightElbow
 	leftShoulder: { number }?, -- LeftShoulder
+	leftElbow: { number }?, -- LeftElbow
 	waist: { number }?, -- Waist (UpperTorso twist)
 	root: { number }?, -- Root (whole-body lean / spin)
 	leftHip: { number }?, -- legs: stances, lunges, tucks
@@ -144,6 +147,32 @@ AnimationConfig.Styles = {
 		weaponStrike = { 0, 0, 40 },
 	},
 } :: { [string]: Style }
+
+-- Combat stances: the rest pose of every armed character (moves start from and return to it,
+-- so arms and body always stay connected to the weapon). Legs fade out while walking.
+AnimationConfig.Stances = {
+	-- Blade low and forward in the right hand, left hand guarding, knees bent, weight forward.
+	OneHanded = {
+		shoulder = { 38, -12, 8 }, elbow = { 42, 0, 0 },
+		leftShoulder = { 22, 18, -10 }, leftElbow = { 55, 0, 0 },
+		waist = { 6, -14, 0 }, root = { -4, 12, 0 },
+		leftHip = { 24, 0, -4 }, rightHip = { -16, 0, 6 }, leftKnee = { -26, 0, 0 }, rightKnee = { -22, 0, 0 },
+	},
+	-- Two hands on the shaft/hilt, weapon across the body.
+	TwoHanded = {
+		shoulder = { 42, -25, 6 }, elbow = { 38, 0, 0 },
+		leftShoulder = { 55, 32, -6 }, leftElbow = { 48, 0, 0 },
+		waist = { 6, -22, 0 }, root = { -4, 20, 0 },
+		leftHip = { 26, 0, -6 }, rightHip = { -18, 0, 8 }, leftKnee = { -28, 0, 0 }, rightKnee = { -24, 0, 0 },
+	},
+	-- Fans: both arms open and loose.
+	Open = {
+		shoulder = { 30, 0, 22 }, elbow = { 35, 0, 0 },
+		leftShoulder = { 30, 0, -22 }, leftElbow = { 35, 0, 0 },
+		waist = { 4, -8, 0 }, leftHip = { 18, 0, -4 }, rightHip = { -12, 0, 4 }, leftKnee = { -18, 0, 0 }, rightKnee = { -16, 0, 0 },
+	},
+} :: { [string]: Pose }
+AnimationConfig.StanceByClass = { Jian = "OneHanded", Dao = "OneHanded", Spear = "TwoHanded", Staff = "TwoHanded", Greatblade = "TwoHanded", Fan = "Open" } :: { [string]: string }
 
 -- Which cast pose each art kind uses.
 AnimationConfig.CastStyles = {
