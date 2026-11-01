@@ -214,7 +214,8 @@ local function bindCharacter(character: Model)
 		end
 		if flaskLabel then
 			local n = tonumber(character:GetAttribute("Flask")) or 0
-			flaskLabel.Text = string.format("Flask x%d  (Q)", n)
+			local breath = character:GetAttribute("Breath") == true
+			flaskLabel.Text = string.format("Flask x%d%s", n, if breath then "  ✦" else "")
 			flaskLabel.TextColor3 = if n > 0 then Color3.fromRGB(150, 220, 255) else Color3.fromRGB(150, 140, 140)
 		end
 		if posture then
@@ -232,6 +233,7 @@ local function bindCharacter(character: Model)
 	character:GetAttributeChangedSignal("Ultimate"):Connect(refresh)
 	character:GetAttributeChangedSignal("Shield"):Connect(refresh)
 	character:GetAttributeChangedSignal("Flask"):Connect(refresh)
+	character:GetAttributeChangedSignal("Breath"):Connect(refresh)
 	refresh()
 end
 

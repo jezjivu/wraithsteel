@@ -75,6 +75,7 @@ MapConfig.EnemySpawns = {
 MapConfig.BossArenas = {
 	{ name = "RustTigerArena", bossId = "rust_tiger", at = { -60, -66 } },
 	{ name = "HollowAbbotArena", bossId = "hollow_abbot", at = { 80, -88 } },
+	{ name = "SableCraneArena", bossId = "sable_crane", at = { -165, -58 } },
 }
 
 -- Mountains ringing the valley (terrain balls: x, z, radius); snow caps on the tallest.

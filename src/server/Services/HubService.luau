@@ -287,7 +287,7 @@ local function trainingYard(parent: Instance)
 		block(parent, "YardFence", Vector3.new(0.6, 2.4, 16), CFrame.new(yard + Vector3.new(x, 1.2, 0)), fence, Enum.Material.Wood)
 	end
 	local signPost = block(parent, "YardSign", Vector3.new(4, 0.4, 0.4), CFrame.new(yard + Vector3.new(0, 6, -8)), fence, Enum.Material.Wood)
-	sign(signPost, "Training Yard", "Try your weapons on the dummies", Color3.fromRGB(240, 220, 170), 2, 260)
+	sign(signPost, "Training Yard", "Dummies + a Sparring Master: practise deflects & counters", Color3.fromRGB(240, 220, 170), 2, 260)
 
 	-- Dojo pavilion at the back of the yard: pick a fighting style.
 	local dojo = Instance.new("Model")
@@ -318,6 +318,13 @@ local function trainingYard(parent: Instance)
 		spawns.Name = EnemyConfig.SpawnFolderName
 		spawns.Parent = workspace
 	end
+	local master = block(spawns :: Instance, "SparringMasterSpawn", Vector3.new(2, 0.2, 2), CFrame.new(yard + Vector3.new(0, 0.5, -4)), fence)
+	master.Transparency = 1
+	master.CanCollide = false
+	master:SetAttribute("EnemyId", "sparring_master")
+	master:SetAttribute("Count", 1)
+	master:SetAttribute("RespawnSeconds", 5)
+	master:SetAttribute("Scatter", 0)
 	for i = 1, HubConfig.TrainingDummies do
 		local x = (i - (HubConfig.TrainingDummies + 1) / 2) * 8
 		local spot = block(spawns :: Instance, "TrainingDummySpawn" .. i, Vector3.new(2, 0.2, 2), CFrame.new(yard + Vector3.new(x, 0.5, 2)), fence)

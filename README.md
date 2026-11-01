@@ -54,6 +54,10 @@ it breaks, a red SEVER mark appears - strike to finish them (bosses lose a big c
 Red (perilous) attacks can't be guarded: dash INTO a Pierce, jump over a Sweep, dash away from a
 Grasp. Guarding enemies and bosses deflect your strings and counter - don't just mash.
 
+Practise in the hub's Training Yard: the Sparring Master throws every kind of attack at you for
+almost no damage. Once per life, Second Breath (✦ next to your flask) saves you from a killing
+blow. Optional duel: Sable Crane, at the shrine pad in Ashen Village.
+
 Spirits are more than Power: each one gives stats (attack, crit, health, lifesteal, cooldowns,
 Ember find, luck...) and fights beside you with its own ability. The Spirits menu shows both.
 

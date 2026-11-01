@@ -543,6 +543,24 @@ function EffectsController.Start()
 			end
 		elseif e.kind == "Guard" then
 			onGuard(e)
+		elseif e.kind == "SecondBreath" or e.kind == "Revived" then
+			local model = EffectsController.ModelFor(e.targetId)
+			local part = model and anchorPart(model)
+			if model and part then
+				local c = Color3.fromRGB(255, 235, 180)
+				if e.kind == "SecondBreath" then
+					AnimationController.Play(model, "Stagger", nil, { windup = 0.1, active = (tonumber(e.seconds) or 1.5) - 0.3, recovery = 0.2 })
+					floatText(part, "SECOND BREATH", c, 30)
+					if isLocal(model) then
+						Fx.ColorPulse(-1, 0.2, Color3.fromRGB(255, 230, 230), (tonumber(e.seconds) or 1.5) + 0.3)
+						Fx.CenterText("SECOND BREATH", c, 60, 1.2)
+						AnimationController.HitStop(0.4, 0.05)
+					end
+				else
+					Fx.Pillar(part.Position - Vector3.new(0, 2.5, 0), c, 22)
+					Fx.Shockwave(part.Position - Vector3.new(0, 2.6, 0), c, 12, 0.5)
+				end
+			end
 		elseif e.kind == "Heal" then
 			local model = EffectsController.ModelFor(e.targetId)
 			local part = model and anchorPart(model)

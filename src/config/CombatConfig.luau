@@ -78,6 +78,10 @@ CombatConfig.Counter = {
 	stagger = 1.2, -- seconds the countered attacker reels
 }
 
+-- Second Breath: once per life, a killing blow leaves you at 1 HP; you rise again after
+-- `seconds` (invulnerable meanwhile) with `heal` of max health. Recharges at healing areas.
+CombatConfig.SecondBreath = { seconds = 1.6, heal = 0.5 }
+
 -- Spring Flask (Q): limited heals. Refills on respawn and at healing areas (hot springs).
 CombatConfig.Flask = { charges = 3, heal = 0.45, drinkSeconds = 0.75 }
 

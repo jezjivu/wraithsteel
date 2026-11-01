@@ -130,6 +130,9 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Body animation now plays as REAL AnimationTracks: poses are baked into KeyframeSequences at runtime (UI/AnimBuilder, KeyframeSequenceProvider) and played by each character's Animator (stances at Idle priority, moves at Action, NPC walk cycle at Movement). Joint posing stays as fallback. Output prints `[AnimBuilder] generated body animations active` when it works.
 - [x] New enemies: Ashen Duelist (deflects, Pierce thrust), Mire Brute (Sweep + Grasp); spawns at the pagoda, village, pond and gorge
 - [x] Spring Flask (Q): 3 heals of 45%, slows you while drinking, refills at the hot springs and on respawn; HUD counter
+- [x] Sable Crane: optional duel boss in Ashen Village (deflect-heavy, all three perilous kinds, 2 phases)
+- [x] Sparring Master in the hub training yard (practice deflects and every perilous answer; no rewards)
+- [x] Second Breath: once per life a killing blow leaves you at 1 HP and you rise with 50% (recharges at the springs; ✦ on the HUD)
 
 ## Phase 2 - Chapter 1 + depth
 - [x] BossConfig entries for the 4 Chapter 1 bosses (Hollow Abbot, Twin Cinder Sisters, Rustwood Matriarch, Gatekeeper of Rust - 3 phases)

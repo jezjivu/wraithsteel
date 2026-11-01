@@ -91,6 +91,35 @@ BossConfig.Bosses = {
 		modelId = 0, -- TODO(Studio/Agent C): Rust Tiger rig
 		look = { skin = { 220, 130, 50 }, body = { 200, 110, 40 }, legs = { 60, 40, 30 }, headwear = "Horns", accent = { 40, 30, 25 }, weapon = "dao_rustcutter", scale = 2.2 },
 	},
+	-- Optional duel (Ashen Village): a pure posture fight. Deflects everything you mash.
+	sable_crane = {
+		name = "Sable Crane",
+		title = "Duelist of the Ashen Gate",
+		chapter = 0,
+		kind = "Story",
+		maxHealth = 900,
+		healthPerExtraPlayer = 0.5,
+		maxPosture = 140,
+		postureRegen = 9,
+		postureBrokenSeconds = 3,
+		walkSpeed = 20,
+		deflectChance = 0.6,
+		moves = {
+			quick_cut = { name = "Ash Feather Cut", damage = 12, postureDamage = 18, windup = 0.35, active = 0.12, recovery = 0.4, range = 9, arcDegrees = 100, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
+			crane_flurry = { name = "Crane Flurry", damage = 8, postureDamage = 14, windup = 0.45, active = 0.8, recovery = 0.6, range = 9, arcDegrees = 100, weight = 2, cooldown = 5, hits = 5, animationId = PLACEHOLDER_ANIM },
+			gate_thrust = { name = "Gate-Piercing Thrust", damage = 30, postureDamage = 30, windup = 0.7, active = 0.25, recovery = 0.8, range = 22, minRange = 6, arcDegrees = 30, weight = 2, cooldown = 6, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
+			low_reap = { name = "Low Reaping Arc", damage = 24, postureDamage = 12, windup = 0.6, active = 0.2, recovery = 0.7, range = 11, arcDegrees = 220, weight = 1, cooldown = 7, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
+			ash_throw = { name = "Ash-Choked Throw", damage = 36, postureDamage = 0, windup = 0.8, active = 0.25, recovery = 1.0, range = 8, arcDegrees = 60, weight = 1, cooldown = 9, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
+		},
+		phases = {
+			{ hpThreshold = 1.0, moves = { "quick_cut", "crane_flurry", "gate_thrust", "low_reap" }, speedMultiplier = 1, transitionSeconds = 0 },
+			{ hpThreshold = 0.5, moves = { "quick_cut", "crane_flurry", "gate_thrust", "low_reap", "ash_throw" }, speedMultiplier = 1.25, enrage = true, transitionSeconds = 2 },
+		},
+		idleBetweenMoves = 0.45,
+		rewards = { ember = 450, xp = 500, jadeFirstClear = 20 },
+		modelId = 0, -- TODO(Studio/Agent C): Sable Crane rig
+		look = { skin = { 225, 200, 180 }, body = { 30, 28, 34 }, legs = { 25, 22, 28 }, headwear = "Hair", accent = { 230, 60, 50 }, glow = { 255, 120, 90 }, weapon = "jian_ninth_bell", scale = 1.15 },
+	},
 	-- Chapter 1: Rustwood Pass
 	hollow_abbot = {
 		name = "Hollow Abbot",

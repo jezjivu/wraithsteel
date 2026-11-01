@@ -66,6 +66,7 @@ export type Combatant = {
 	dodgeAt: number?, -- players: last dash (for Needle Counters against Pierce attacks)
 	dodgeDir: Vector3?,
 	flask: number?, -- players: Spring Flask charges left
+	breath: boolean?, -- players: Second Breath still available this life
 	deflectChance: number?, -- enemies/bosses: chance to deflect a strike while canDeflect()
 	canDeflect: (() -> boolean)?,
 }
@@ -306,6 +307,24 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		end
 	end
 
+	-- Second Breath: the killing blow leaves a player at 1 HP, then they rise again.
+	if target.player and target.breath and damage >= target.humanoid.Health and damage > 0 then
+		target.breath = false
+		target.model:SetAttribute("Breath", false)
+		damage = math.max(0, target.humanoid.Health - 1)
+		target.invulnerable = true
+		if target.rules then
+			target.rules.stunnedUntil = now + CombatConfig.SecondBreath.seconds
+		end
+		broadcast({ kind = "SecondBreath", targetId = target.id, seconds = CombatConfig.SecondBreath.seconds })
+		task.delay(CombatConfig.SecondBreath.seconds, function()
+			if not target.dead then
+				target.invulnerable = false
+				CombatService.Heal(target, target.humanoid.MaxHealth * CombatConfig.SecondBreath.heal)
+				broadcast({ kind = "Revived", targetId = target.id })
+			end
+		end)
+	end
 	-- Shields soak health damage first.
 	if damage > 0 and target.shield and target.shield > 0 then
 		if target.shieldUntil and now < target.shieldUntil then
@@ -622,6 +641,8 @@ local function onCharacterAdded(player: Player, character: Model)
 	}
 	c.flask = CombatConfig.Flask.charges
 	character:SetAttribute("Flask", c.flask)
+	c.breath = true
+	character:SetAttribute("Breath", true)
 	CombatService.Register(c)
 	humanoid.Died:Connect(function()
 		c.dead = true
@@ -685,6 +706,19 @@ function CombatService.Start()
 			-- Players heal quickly once they have been out of combat for a moment.
 			if c.player and not c.dead then
 				local hum = c.humanoid
+				-- Healing areas also refill the Spring Flask and Second Breath.
+				if (c.flask or 0) < CombatConfig.Flask.charges or not c.breath then
+					local p = c.root.Position
+					for _, h in healAreas do
+						if (Vector3.new(p.X, 0, p.Z) - h.center).Magnitude <= h.radius then
+							c.flask = CombatConfig.Flask.charges
+							c.model:SetAttribute("Flask", c.flask)
+							c.breath = true
+							c.model:SetAttribute("Breath", true)
+							break
+						end
+					end
+				end
 				if hum.Health > 0 and hum.Health < hum.MaxHealth then
 					local rate = if now - (lastHurtAt[c] or 0) >= CombatConfig.OutOfCombatRegenDelay then CombatConfig.OutOfCombatRegenPerSecond else 0
 					-- Healing areas (hot springs) work even mid-fight.
@@ -692,10 +726,6 @@ function CombatService.Start()
 					for _, h in healAreas do
 						if (Vector3.new(pos.X, 0, pos.Z) - h.center).Magnitude <= h.radius then
 							rate = math.max(rate, h.rate)
-							if (c.flask or 0) < CombatConfig.Flask.charges then
-								c.flask = CombatConfig.Flask.charges
-								c.model:SetAttribute("Flask", c.flask)
-							end
 						end
 					end
 					if rate > 0 then
