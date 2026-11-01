@@ -943,7 +943,7 @@ local function settle(m: Model, sink: number)
 end
 
 local function groundEverything()
-	if world == nil then
+	if not world then
 		return
 	end
 	-- Whole areas first (by the terrain height at their center), then single props.
