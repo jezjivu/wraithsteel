@@ -31,7 +31,12 @@ local CombatRules = require(Logic:WaitForChild("CombatRules"))
 local Posture = require(Logic:WaitForChild("Posture"))
 
 local DataService = require(script.Parent.DataService)
-local RigBuilder = require(script.Parent.Parent:WaitForChild("World"):WaitForChild("RigBuilder"))
+local World = script.Parent.Parent:WaitForChild("World")
+local RigBuilder = require(World:WaitForChild("RigBuilder"))
+local CreatureBuilder = require(World:WaitForChild("CreatureBuilder"))
+local ArenaBuilder = require(World:WaitForChild("ArenaBuilder"))
+local ArenaConfig = require(Config:WaitForChild("ArenaConfig"))
+local HazardService = require(script.Parent.HazardService)
 local CombatService = require(script.Parent.CombatService)
 local ProgressionService = require(script.Parent.ProgressionService)
 local QuestService = require(script.Parent.QuestService)
@@ -57,6 +62,9 @@ type Encounter = {
 	ended: boolean,
 	openWorld: EncounterOpts?, -- set for world bosses: players join by proximity
 	endsAt: number, -- os.clock() deadline (math.huge for story bosses)
+	slot: number?, -- instanced arena slot (story bosses)
+	arenaCenter: Vector3?,
+	returnTo: CFrame?, -- where participants go back to after the fight
 }
 
 -- Options for open-world (world boss) encounters.
@@ -100,8 +108,14 @@ local function getRig(bossId: string): Model
 	if template and template:IsA("Model") then
 		return template:Clone()
 	end
-	-- No Studio rig yet: build a code-made R15 humanoid from the config look.
+	-- No Studio rig yet: a part-built creature, or a code-made R15 humanoid from the look.
 	local def = BossConfig.Bosses[bossId]
+	if def and (def :: any).creature then
+		local creature = CreatureBuilder.Build((def :: any).creature, def.look)
+		if creature then
+			return creature
+		end
+	end
 	if def and def.look then
 		local rig = RigBuilder.Build(def.look, def.name)
 		if rig then
@@ -111,15 +125,97 @@ local function getRig(bossId: string): Model
 	return placeholderBoss(bossId)
 end
 
+local function inArena(e: Encounter, pos: Vector3): boolean
+	local c = e.arenaCenter
+	if c == nil then
+		return true
+	end
+	local d = pos - c
+	return Vector3.new(d.X, 0, d.Z).Magnitude <= ArenaConfig.Radius + 20 and math.abs(d.Y) < 80
+end
+
 local function aliveParticipants(e: Encounter): { Combatant }
 	local out = {}
 	for _, p in e.participants do
 		local pc = CombatService.GetByPlayer(p)
-		if p.Parent == Players and pc and not pc.dead then
+		-- In an instanced arena only players actually inside count (respawned players are out).
+		if p.Parent == Players and pc and not pc.dead and inArena(e, pc.root.Position) then
 			table.insert(out, pc)
 		end
 	end
 	return out
+end
+
+-- Instanced arenas -----------------------------------------------------------------------------
+local slotsUsed: { [number]: boolean } = {}
+local arenaModels: { [number]: Model } = {}
+
+local function slotCenter(i: number): Vector3
+	local o = ArenaConfig.Origin
+	return Vector3.new(o[1] + (i - 1) * ArenaConfig.Spacing, o[2], o[3])
+end
+
+local function claimSlot(bossId: string): (number?, Vector3?)
+	for i = 1, ArenaConfig.Slots do
+		if not slotsUsed[i] then
+			slotsUsed[i] = true
+			local center = slotCenter(i)
+			if arenaModels[i] then
+				arenaModels[i]:Destroy()
+			end
+			local folder = workspace:FindFirstChild("BossArenaInstances")
+			if folder == nil then
+				local f = Instance.new("Folder")
+				f.Name = "BossArenaInstances"
+				f.Parent = workspace
+				folder = f
+			end
+			local theme = ArenaConfig.Themes[bossId] or ArenaConfig.Themes.Default
+			local m = ArenaBuilder.Build(center, theme)
+			m.Name = "Arena" .. i .. "_" .. bossId
+			m.Parent = folder
+			arenaModels[i] = m
+			return i, center
+		end
+	end
+	return nil, nil
+end
+
+local function releaseSlot(i: number)
+	slotsUsed[i] = nil
+	local m = arenaModels[i]
+	if m then
+		arenaModels[i] = nil
+		m:Destroy()
+	end
+end
+
+local function teleport(player: Player, cf: CFrame)
+	pcall(function()
+		player:RequestStreamAroundAsync(cf.Position, 5)
+	end)
+	local ch = player.Character
+	if ch and ch.Parent then
+		ch:PivotTo(cf)
+		local root = ch:FindFirstChild("HumanoidRootPart")
+		if root and root:IsA("BasePart") then
+			root.AssemblyLinearVelocity = Vector3.zero
+		end
+	end
+end
+
+-- Sends everyone still inside the arena back to the shrine.
+local function sendBack(e: Encounter)
+	local back = e.returnTo
+	if back == nil then
+		return
+	end
+	for i, p in e.participants do
+		local pc = CombatService.GetByPlayer(p)
+		if p.Parent == Players and pc and inArena(e, pc.root.Position) then
+			task.spawn(teleport, p, back * CFrame.new((i - 1) * 3, 0, 0))
+		end
+	end
 end
 
 local function broadcastState(e: Encounter)
@@ -141,9 +237,81 @@ local function face(e: Encounter, pos: Vector3)
 	end
 end
 
+local function rgbOr(c: { number }?): { number }
+	return c or { 255, 140, 60 }
+end
+
+-- Ranged / ground moves through HazardService. Returns true if the move was one of those.
+local function doHazard(e: Encounter, moveId: string, m: BossConfig.BossMove): boolean
+	local kind = m.kind or "Melee"
+	if kind == "Melee" then
+		return false
+	end
+	local root = e.c.root
+	local mouth = root.Position + root.CFrame.LookVector * (root.Size.Z * 0.5 + 2) + Vector3.new(0, 2, 0)
+	local target = e.target
+	local aimAt = if target then target.root.Position else root.Position + root.CFrame.LookVector * 20
+	local color = rgbOr(m.color)
+	if kind == "Projectile" or kind == "Volley" then
+		local count = if kind == "Volley" then m.count or 5 else 1
+		local spread = if kind == "Volley" then m.spread or 50 else 0
+		local base = aimAt - mouth
+		for i = 1, count do
+			local angle = if count > 1 then -spread / 2 + spread * (i - 1) / (count - 1) else 0
+			local dir = CFrame.Angles(0, math.rad(angle), 0):VectorToWorldSpace(base)
+			HazardService.Projectile(e.c, mouth, dir, {
+				speed = m.speed or 50,
+				radius = m.radius or 1.5,
+				range = m.range + 20,
+				damage = m.damage,
+				posture = m.postureDamage,
+				color = color,
+				size = if m.deflectable then 3.2 else 1.6,
+				deflectable = m.deflectable,
+				reflectDamage = m.reflectDamage,
+				reflectPosture = m.reflectPosture,
+				moveId = moveId,
+			})
+		end
+	elseif kind == "Wave" then
+		HazardService.Wave(e.c, root.Position - Vector3.new(0, root.Size.Y / 2 + e.c.humanoid.HipHeight - 0.5, 0), {
+			speed = m.speed or 40,
+			maxRadius = m.radius or m.range,
+			band = 3,
+			damage = m.damage,
+			posture = m.postureDamage,
+			color = color,
+			moveId = moveId,
+		})
+	elseif kind == "Rain" then
+		local points = {}
+		local alive = aliveParticipants(e)
+		local count = m.count or 6
+		for i = 1, count do
+			local pc = alive[((i - 1) % math.max(1, #alive)) + 1]
+			local center = if pc then pc.root.Position else root.Position
+			-- First eruption right under each player, the rest scattered around them.
+			local off = if i <= #alive then Vector3.zero else Vector3.new(rng:NextNumber(-14, 14), 0, rng:NextNumber(-14, 14))
+			table.insert(points, center + off - Vector3.new(0, 2.5, 0))
+		end
+		HazardService.Rain(e.c, points, {
+			radius = m.radius or 7,
+			delay = m.delay or 1.1,
+			damage = m.damage,
+			posture = m.postureDamage,
+			color = color,
+			moveId = moveId,
+		})
+	end
+	return true
+end
+
 local function doHits(e: Encounter, moveId: string)
 	local def = BossConfig.Bosses[e.bossId]
 	local m = def.moves[moveId]
+	if doHazard(e, moveId, m) then
+		return
+	end
 	local hits = m.hits or 1
 	if not m.minRange and e.target then
 		-- Regular strikes step the boss's body into the swing.
@@ -238,6 +406,13 @@ local function finish(e: Encounter, victory: boolean)
 	encounters[e.id] = nil
 	if e.arena then
 		busyArenas[e.arena] = nil
+	end
+	local slot = e.slot
+	if slot then
+		task.delay(if victory then ArenaConfig.ReturnDelay else 2, function()
+			sendBack(e)
+			task.delay(1, releaseSlot, slot)
+		end)
 	end
 	broadcastState(e)
 	if victory then
@@ -349,6 +524,8 @@ function BossService.StartEncounter(bossId: string, cframe: CFrame, participants
 				moveId = args[1],
 				perilous = args[2],
 				perilousKind = m.perilousKind,
+				pose = m.pose,
+				hazard = m.kind,
 				windup = m.windup / def.phases[e.sm.phase].speedMultiplier,
 				active = m.active,
 				recovery = m.recovery / def.phases[e.sm.phase].speedMultiplier,
@@ -419,6 +596,19 @@ local function tick(now: number)
 			finish(e, true)
 			continue
 		end
+		local center = e.arenaCenter
+		if center then
+			-- Nobody falls out of the arena: anyone below the floor is put back on it.
+			for _, pc in alive do
+				if pc.root.Position.Y < center.Y - ArenaConfig.FallLimit then
+					pc.model:PivotTo(CFrame.new(center + Vector3.new(0, 5, ArenaConfig.Radius * 0.5)))
+				end
+			end
+			local bp = e.c.root.Position - center
+			if Vector3.new(bp.X, 0, bp.Z).Magnitude > ArenaConfig.Radius or bp.Y < -ArenaConfig.FallLimit then
+				e.c.model:PivotTo(CFrame.new(center + Vector3.new(0, 8, 0)))
+			end
+		end
 		if e.sm.state == "Chase" and best then
 			local speedMult = BossConfig.Bosses[e.bossId].phases[e.sm.phase].speedMultiplier
 			e.c.humanoid.WalkSpeed = BossConfig.Bosses[e.bossId].walkSpeed * speedMult
@@ -463,7 +653,39 @@ local function setupArena(arena: BasePart)
 		if table.find(participants, player) == nil then
 			table.insert(participants, player)
 		end
-		BossService.StartEncounter(bossId, arena.CFrame + Vector3.new(0, 5, 0), participants, arena)
+		local def = BossConfig.Bosses[bossId]
+		local slot, center = nil, nil
+		if def.kind == "Story" then
+			slot, center = claimSlot(bossId)
+		end
+		if slot == nil or center == nil then
+			-- No free arena: fight at the shrine (old behaviour).
+			BossService.StartEncounter(bossId, arena.CFrame + Vector3.new(0, 5, 0), participants, arena)
+			return
+		end
+		busyArenas[arena] = true
+		local R = ArenaConfig.Radius
+		local arenaCenter: Vector3 = center
+		task.spawn(function()
+			-- Into the arena: players on the south side facing the boss.
+			for i, p in participants do
+				local x = (i - (#participants + 1) / 2) * 5
+				local pos = arenaCenter + Vector3.new(x, 4, R * 0.55)
+				task.spawn(teleport, p, CFrame.lookAt(pos, arenaCenter + Vector3.new(0, 4, 0)))
+			end
+			task.wait(1.2)
+			local bossPos = arenaCenter + Vector3.new(0, 0, -R * 0.45)
+			local id = BossService.StartEncounter(bossId, CFrame.lookAt(bossPos, arenaCenter), participants, arena)
+			local e = id and encounters[id]
+			if e then
+				e.slot = slot
+				e.arenaCenter = arenaCenter
+				e.returnTo = arena.CFrame + Vector3.new(0, 4, 8)
+			else
+				busyArenas[arena] = nil
+				releaseSlot(slot :: number)
+			end
+		end)
 	end)
 end
 

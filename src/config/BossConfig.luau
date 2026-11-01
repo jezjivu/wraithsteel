@@ -21,6 +21,22 @@ export type BossMove = {
 	perilousKind: ("Pierce" | "Sweep" | "Grasp")?, -- answer: dash in / jump / dodge (CombatConfig)
 	minRange: number?, -- only chosen when target is at least this far (gap closers)
 	hits: number?, -- multi-hit flurries
+	-- Non-melee moves (HazardService). Default "Melee" = sword/claw swing in an arc.
+	--   Projectile: one orb at the target (deflectable = perfect deflect sends it back)
+	--   Volley: `count` projectiles fanned over `spread` degrees
+	--   Wave: shockwave ring from the boss along the ground (jump it)
+	--   Rain: `count` eruptions marked around players, after `delay` (get out)
+	kind: ("Melee" | "Projectile" | "Volley" | "Wave" | "Rain")?,
+	speed: number?, -- projectile / wave speed (studs/s)
+	count: number?,
+	spread: number?,
+	radius: number?, -- projectile hit radius / eruption radius / wave max radius
+	delay: number?,
+	deflectable: boolean?,
+	reflectDamage: number?,
+	reflectPosture: number?,
+	color: { number }?,
+	pose: string?, -- creature pose for the windup (CreatureAnimator): Swipe, Pounce, Rear, Roar, Spit, Spin
 	animationId: string,
 }
 
@@ -50,6 +66,7 @@ export type BossDef = {
 	rewards: { ember: number, xp: number, jadeFirstClear: number },
 	modelId: number,
 	look: EnemyConfig.RigLook?,
+	creature: string?, -- part-built beast instead of a humanoid rig (World/CreatureBuilder): "Tiger"
 }
 
 local BossConfig = {}
@@ -63,33 +80,39 @@ BossConfig.Knockback = { normal = 16, wide = 30, perilous = 45, perilousLaunch =
 local PLACEHOLDER_ANIM = "rbxassetid://0"
 
 BossConfig.Bosses = {
+	-- A rust-plated beast: claws and pounces up close, but mostly ranged and ground attacks.
+	-- Deflect its Rust Orb back into its face to crush its posture.
 	rust_tiger = {
 		name = "Rust Tiger",
 		title = "Warden of the Cracked Bell",
 		chapter = 0,
 		kind = "Story",
-		maxHealth = 650,
+		creature = "Tiger",
+		maxHealth = 900,
 		healthPerExtraPlayer = 0.6,
-		maxPosture = 160,
+		maxPosture = 180,
 		postureRegen = 6,
 		postureBrokenSeconds = 3.5,
 		walkSpeed = 18,
+		deflectChance = 0.15,
 		moves = {
-			claw_swipe = { name = "Corroded Swipe", damage = 14, postureDamage = 16, windup = 0.5, active = 0.15, recovery = 0.55, range = 10, arcDegrees = 110, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
-			pounce = { name = "Iron Pounce", damage = 22, postureDamage = 26, windup = 0.75, active = 0.25, recovery = 0.9, range = 28, minRange = 12, arcDegrees = 50, weight = 2, cooldown = 6, animationId = PLACEHOLDER_ANIM },
-			flurry = { name = "Rattling Flurry", damage = 9, postureDamage = 12, windup = 0.4, active = 0.9, recovery = 0.7, range = 10, arcDegrees = 100, weight = 2, cooldown = 7, hits = 4, animationId = PLACEHOLDER_ANIM },
-			tail_sweep = { name = "Chain-Tail Sweep", damage = 16, postureDamage = 10, windup = 0.65, active = 0.2, recovery = 0.6, range = 12, arcDegrees = 360, weight = 1, cooldown = 9, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
-			rust_roar = { name = "Rust Roar", damage = 10, postureDamage = 30, windup = 1.0, active = 0.4, recovery = 1.0, range = 18, arcDegrees = 360, weight = 1, cooldown = 14, animationId = PLACEHOLDER_ANIM },
-			corroded_charge = { name = "Corroded Charge", damage = 28, postureDamage = 20, windup = 0.9, active = 0.6, recovery = 1.2, range = 40, minRange = 15, arcDegrees = 30, weight = 2, cooldown = 10, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
+			claw_swipe = { name = "Corroded Swipe", damage = 14, postureDamage = 16, windup = 0.5, active = 0.15, recovery = 0.55, range = 14, arcDegrees = 120, weight = 3, cooldown = 0, pose = "Swipe", animationId = PLACEHOLDER_ANIM },
+			pounce = { name = "Iron Pounce", damage = 24, postureDamage = 26, windup = 0.75, active = 0.35, recovery = 0.9, range = 34, minRange = 14, arcDegrees = 50, weight = 2, cooldown = 6, perilous = true, perilousKind = "Pierce", pose = "Pounce", animationId = PLACEHOLDER_ANIM },
+			tail_sweep = { name = "Chain-Tail Sweep", damage = 18, postureDamage = 10, windup = 0.65, active = 0.25, recovery = 0.6, range = 15, arcDegrees = 360, weight = 2, cooldown = 7, perilous = true, perilousKind = "Sweep", pose = "Spin", animationId = PLACEHOLDER_ANIM },
+			rust_orb = { name = "Rust Orb", kind = "Projectile", damage = 22, postureDamage = 24, windup = 0.9, active = 0.2, recovery = 0.8, range = 70, arcDegrees = 360, weight = 3, cooldown = 5, speed = 42, radius = 2.2, deflectable = true, reflectDamage = 90, reflectPosture = 80, color = { 255, 120, 40 }, pose = "Spit", animationId = PLACEHOLDER_ANIM },
+			shard_volley = { name = "Shard Volley", kind = "Volley", damage = 12, postureDamage = 10, windup = 0.7, active = 0.2, recovery = 0.8, range = 60, minRange = 10, arcDegrees = 360, weight = 2, cooldown = 8, speed = 75, count = 5, spread = 60, radius = 1.2, color = { 230, 170, 110 }, pose = "Spit", animationId = PLACEHOLDER_ANIM },
+			quake_ring = { name = "Rusting Quake", kind = "Wave", damage = 20, postureDamage = 14, windup = 1.0, active = 0.3, recovery = 1.0, range = 50, arcDegrees = 360, weight = 2, cooldown = 9, speed = 34, radius = 60, color = { 255, 140, 60 }, pose = "Rear", animationId = PLACEHOLDER_ANIM },
+			rust_rain = { name = "Rust Rain", kind = "Rain", damage = 26, postureDamage = 10, windup = 0.9, active = 0.3, recovery = 0.9, range = 70, arcDegrees = 360, weight = 2, cooldown = 11, count = 7, radius = 7, delay = 1.2, color = { 255, 90, 40 }, pose = "Roar", animationId = PLACEHOLDER_ANIM },
+			rust_roar = { name = "Rust Roar", damage = 10, postureDamage = 30, windup = 1.0, active = 0.4, recovery = 1.0, range = 18, arcDegrees = 360, weight = 1, cooldown = 14, pose = "Roar", animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
-			{ hpThreshold = 1.0, moves = { "claw_swipe", "pounce", "flurry", "tail_sweep" }, speedMultiplier = 1, transitionSeconds = 0 },
-			{ hpThreshold = 0.5, moves = { "claw_swipe", "pounce", "flurry", "tail_sweep", "rust_roar", "corroded_charge" }, speedMultiplier = 1.2, enrage = true, transitionSeconds = 2.5 },
+			{ hpThreshold = 1.0, moves = { "claw_swipe", "pounce", "tail_sweep", "rust_orb", "quake_ring" }, speedMultiplier = 1, transitionSeconds = 0 },
+			{ hpThreshold = 0.5, moves = { "claw_swipe", "pounce", "tail_sweep", "rust_orb", "quake_ring", "shard_volley", "rust_rain", "rust_roar" }, speedMultiplier = 1.2, enrage = true, transitionSeconds = 2.5 },
 		},
-		idleBetweenMoves = 0.8,
+		idleBetweenMoves = 0.7,
 		rewards = { ember = 300, xp = 400, jadeFirstClear = 25 },
-		modelId = 0, -- TODO(Studio/Agent C): Rust Tiger rig
-		look = { skin = { 220, 130, 50 }, body = { 200, 110, 40 }, legs = { 60, 40, 30 }, headwear = "Horns", accent = { 40, 30, 25 }, weapon = "dao_rustcutter", scale = 2.2 },
+		modelId = 0, -- TODO(Studio/Agent C): sculpted Rust Tiger model
+		look = { skin = { 235, 215, 180 }, body = { 205, 110, 45 }, legs = { 60, 40, 30 }, accent = { 30, 22, 20 }, glow = { 255, 120, 40 }, scale = 1.5 },
 	},
 	-- Optional duel (Ashen Village): a pure posture fight. Deflects everything you mash.
 	sable_crane = {

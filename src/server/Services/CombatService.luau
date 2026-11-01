@@ -84,6 +84,7 @@ export type Hit = {
 	color: { number }?, -- damage number tint
 	perilousKind: string?, -- "Pierce" | "Sweep" | "Grasp" (see CombatConfig)
 	severing: boolean?, -- Severing Blow on a posture-broken enemy
+	ranged: boolean?, -- projectile / wave / eruption: a parry does not stagger the attacker
 }
 
 local MAX_TARGETS_PER_SWING = 4
@@ -376,7 +377,7 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	end
 
 	-- Parry / Needle Counter reflect posture damage back to the attacker, and stagger it.
-	if (res.outcome == "Parried" or res.outcome == "Countered") and attacker then
+	if (res.outcome == "Parried" or res.outcome == "Countered") and attacker and not hit.ranged then
 		CombatService.Staggered:Fire(attacker, if res.outcome == "Countered" then CombatConfig.Counter.stagger else CombatConfig.ParriedStaggerSeconds)
 		if Posture.Add(attacker.posture, res.reflectPosture, now, attacker.brokenSeconds) then
 			if attacker.rules then
