@@ -200,6 +200,7 @@ local function strike(b: Brain, attackId: string, token: number)
 		moveId = attackId,
 		perilous = a.perilous == true,
 		perilousKind = a.perilousKind,
+		style = a.style,
 		windup = a.windup,
 		active = a.active,
 		recovery = a.recovery,

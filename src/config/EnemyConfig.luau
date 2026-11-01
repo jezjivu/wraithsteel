@@ -15,6 +15,7 @@ export type EnemyAttack = {
 	perilous: boolean?,
 	perilousKind: ("Pierce" | "Sweep" | "Grasp")?, -- answer: dash in / jump / dodge (CombatConfig)
 	lunge: number?, -- studs the enemy surges forward during the active frames
+	style: string?, -- AnimationConfig style for the body (default: alternating slashes)
 	animationId: string,
 }
 
@@ -114,8 +115,8 @@ EnemyConfig.Enemies = {
 		preferredRange = 7,
 		attackCooldown = 1.8,
 		attacks = {
-			tap = { name = "Lesson: Deflect", damage = 1, postureDamage = 12, windup = 0.6, active = 0.12, recovery = 0.5, range = 8, arcDegrees = 90, weight = 4, animationId = PLACEHOLDER_ANIM },
-			thrust = { name = "Lesson: Pierce", damage = 2, postureDamage = 10, windup = 0.9, active = 0.2, recovery = 0.8, range = 11, arcDegrees = 30, weight = 1, lunge = 4, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
+			tap = { name = "Lesson: Deflect", style = "SlashRight", damage = 1, postureDamage = 12, windup = 0.6, active = 0.12, recovery = 0.5, range = 8, arcDegrees = 90, weight = 4, animationId = PLACEHOLDER_ANIM },
+			thrust = { name = "Lesson: Pierce", style = "Thrust", damage = 2, postureDamage = 10, windup = 0.9, active = 0.2, recovery = 0.8, range = 11, arcDegrees = 30, weight = 1, lunge = 4, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
 			sweep = { name = "Lesson: Sweep", damage = 2, postureDamage = 6, windup = 0.9, active = 0.2, recovery = 0.8, range = 10, arcDegrees = 220, weight = 1, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
 			grab = { name = "Lesson: Grasp", damage = 2, postureDamage = 0, windup = 0.9, active = 0.2, recovery = 0.8, range = 7, arcDegrees = 60, weight = 1, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
 		},
@@ -141,8 +142,8 @@ EnemyConfig.Enemies = {
 		preferredRange = 10,
 		attackCooldown = 1.6,
 		attacks = {
-			slash = { name = "Rusted Slash", damage = 8, postureDamage = 10, windup = 0.45, active = 0.15, recovery = 0.5, range = 7, arcDegrees = 90, weight = 3, animationId = PLACEHOLDER_ANIM },
-			lunge = { name = "Desperate Lunge", damage = 12, postureDamage = 14, windup = 0.7, active = 0.2, recovery = 0.8, range = 12, arcDegrees = 40, weight = 1, lunge = 7, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
+			slash = { name = "Rusted Slash", style = "SlashRight", damage = 8, postureDamage = 10, windup = 0.45, active = 0.15, recovery = 0.5, range = 7, arcDegrees = 90, weight = 3, animationId = PLACEHOLDER_ANIM },
+			lunge = { name = "Desperate Lunge", style = "Thrust", damage = 12, postureDamage = 14, windup = 0.7, active = 0.2, recovery = 0.8, range = 12, arcDegrees = 40, weight = 1, lunge = 7, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
 		},
 		emberReward = 6,
 		xpReward = 10,
@@ -166,7 +167,7 @@ EnemyConfig.Enemies = {
 		preferredRange = 6,
 		attackCooldown = 2.2,
 		attacks = {
-			claw = { name = "Wick Claw", damage = 10, postureDamage = 8, windup = 0.55, active = 0.15, recovery = 0.6, range = 6, arcDegrees = 100, weight = 3, animationId = PLACEHOLDER_ANIM },
+			claw = { name = "Wick Claw", style = "SlashLeft", damage = 10, postureDamage = 8, windup = 0.55, active = 0.15, recovery = 0.6, range = 6, arcDegrees = 100, weight = 3, animationId = PLACEHOLDER_ANIM },
 			grasp = { name = "Smothering Grasp", damage = 18, postureDamage = 0, windup = 0.9, active = 0.25, recovery = 1.0, range = 6, arcDegrees = 60, weight = 1, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
 		},
 		emberReward = 9,
@@ -188,8 +189,8 @@ EnemyConfig.Enemies = {
 		preferredRange = 12,
 		attackCooldown = 1.3,
 		attacks = {
-			hook = { name = "Bark-Hook Slash", damage = 22, postureDamage = 16, windup = 0.35, active = 0.12, recovery = 0.45, range = 8, arcDegrees = 100, weight = 3, animationId = PLACEHOLDER_ANIM },
-			leap = { name = "Canopy Drop", damage = 30, postureDamage = 22, windup = 0.6, active = 0.2, recovery = 0.7, range = 16, arcDegrees = 45, weight = 1, lunge = 10, animationId = PLACEHOLDER_ANIM },
+			hook = { name = "Bark-Hook Slash", style = "SlashLeft", damage = 22, postureDamage = 16, windup = 0.35, active = 0.12, recovery = 0.45, range = 8, arcDegrees = 100, weight = 3, animationId = PLACEHOLDER_ANIM },
+			leap = { name = "Canopy Drop", style = "AirSlam", damage = 30, postureDamage = 22, windup = 0.6, active = 0.2, recovery = 0.7, range = 16, arcDegrees = 45, weight = 1, lunge = 10, animationId = PLACEHOLDER_ANIM },
 		},
 		emberReward = 30,
 		xpReward = 45,
@@ -213,7 +214,7 @@ EnemyConfig.Enemies = {
 		preferredRange = 7,
 		attackCooldown = 2.4,
 		attacks = {
-			hammer = { name = "Seized Hammer", damage = 34, postureDamage = 30, windup = 0.8, active = 0.2, recovery = 0.9, range = 8, arcDegrees = 80, weight = 3, animationId = PLACEHOLDER_ANIM },
+			hammer = { name = "Seized Hammer", style = "Overhead", damage = 34, postureDamage = 30, windup = 0.8, active = 0.2, recovery = 0.9, range = 8, arcDegrees = 80, weight = 3, animationId = PLACEHOLDER_ANIM },
 			quake = { name = "Groaning Quake", damage = 26, postureDamage = 10, windup = 1.1, active = 0.3, recovery = 1.1, range = 11, arcDegrees = 360, weight = 1, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
 		},
 		emberReward = 55,
@@ -238,9 +239,9 @@ EnemyConfig.Enemies = {
 		preferredRange = 9,
 		attackCooldown = 1.1,
 		attacks = {
-			cut = { name = "Cinder Cut", damage = 12, postureDamage = 14, windup = 0.32, active = 0.12, recovery = 0.4, range = 7, arcDegrees = 90, weight = 3, animationId = PLACEHOLDER_ANIM },
-			rising = { name = "Rising Ash", damage = 14, postureDamage = 18, windup = 0.45, active = 0.15, recovery = 0.5, range = 7, arcDegrees = 70, weight = 2, animationId = PLACEHOLDER_ANIM },
-			needle = { name = "Ash Needle", damage = 22, postureDamage = 20, windup = 0.75, active = 0.2, recovery = 0.7, range = 13, arcDegrees = 30, weight = 1, lunge = 8, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
+			cut = { name = "Cinder Cut", style = "SlashRight", damage = 12, postureDamage = 14, windup = 0.32, active = 0.12, recovery = 0.4, range = 7, arcDegrees = 90, weight = 3, animationId = PLACEHOLDER_ANIM },
+			rising = { name = "Rising Ash", style = "SlashLeft", damage = 14, postureDamage = 18, windup = 0.45, active = 0.15, recovery = 0.5, range = 7, arcDegrees = 70, weight = 2, animationId = PLACEHOLDER_ANIM },
+			needle = { name = "Ash Needle", style = "Thrust", damage = 22, postureDamage = 20, windup = 0.75, active = 0.2, recovery = 0.7, range = 13, arcDegrees = 30, weight = 1, lunge = 8, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
 		},
 		emberReward = 18,
 		xpReward = 26,
@@ -264,7 +265,7 @@ EnemyConfig.Enemies = {
 		preferredRange = 8,
 		attackCooldown = 2.2,
 		attacks = {
-			smash = { name = "Mire Smash", damage = 28, postureDamage = 30, windup = 0.85, active = 0.2, recovery = 0.9, range = 9, arcDegrees = 80, weight = 3, animationId = PLACEHOLDER_ANIM },
+			smash = { name = "Mire Smash", style = "Overhead", damage = 28, postureDamage = 30, windup = 0.85, active = 0.2, recovery = 0.9, range = 9, arcDegrees = 80, weight = 3, animationId = PLACEHOLDER_ANIM },
 			sweep = { name = "Root Sweep", damage = 24, postureDamage = 10, windup = 0.8, active = 0.25, recovery = 0.9, range = 11, arcDegrees = 200, weight = 2, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
 			grab = { name = "Bog Grip", damage = 34, postureDamage = 0, windup = 0.9, active = 0.25, recovery = 1.1, range = 7, arcDegrees = 60, weight = 1, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
 		},

@@ -525,6 +525,7 @@ function BossService.StartEncounter(bossId: string, cframe: CFrame, participants
 				perilous = args[2],
 				perilousKind = m.perilousKind,
 				pose = m.pose,
+				style = m.style,
 				hazard = m.kind,
 				windup = m.windup / def.phases[e.sm.phase].speedMultiplier,
 				active = m.active,

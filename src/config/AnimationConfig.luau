@@ -120,6 +120,50 @@ AnimationConfig.Styles = {
 		weaponWindup = { -150, 0, 0 },
 		weaponStrike = { 40, 0, 0 },
 	},
+	-- Reactions (EffectsController): getting hit, guarding a hit, deflecting, posture broken.
+	HitReact = {
+		windup = { root = { 14, 0, 6 }, waist = { 18, -12, 0 }, shoulder = { 20, 0, 30 }, leftShoulder = { 25, 0, -30 }, leftHip = { -10, 0, 0 }, rightKnee = { -25, 0, 0 } },
+		strike = { root = { 8, 0, 3 }, waist = { 10, -6, 0 }, shoulder = { 30, 0, 20 }, leftShoulder = { 20, 0, -20 } },
+		weaponWindup = { -30, 0, -20 },
+		weaponStrike = { -10, 0, 0 },
+	},
+	HitHeavy = {
+		windup = { root = { 26, 0, 10 }, waist = { 28, -20, 0 }, shoulder = { -10, 0, 60 }, leftShoulder = { 10, 0, -60 }, leftHip = { -25, 0, 0 }, rightHip = { 20, 0, 0 }, leftKnee = { -40, 0, 0 }, rightKnee = { -40, 0, 0 } },
+		strike = { root = { 14, 0, 5 }, waist = { 12, -10, 0 }, shoulder = { 20, 0, 30 }, leftShoulder = { 20, 0, -30 }, leftKnee = { -30, 0, 0 }, rightKnee = { -30, 0, 0 } },
+		weaponWindup = { -60, 0, -30 },
+		weaponStrike = { -20, 0, 0 },
+	},
+	BlockRecoil = {
+		windup = { shoulder = { 95, -55, 0 }, elbow = { 75, 0, 0 }, leftShoulder = { 50, 35, 0 }, root = { 10, 0, 0 }, waist = { 8, 0, 0 }, leftKnee = { -30, 0, 0 }, rightKnee = { -30, 0, 0 }, rightHip = { -15, 0, 0 } },
+		strike = { shoulder = { 80, -50, 0 }, elbow = { 60, 0, 0 }, leftShoulder = { 40, 30, 0 }, leftKnee = { -20, 0, 0 }, rightKnee = { -20, 0, 0 } },
+		weaponWindup = { 15, 0, 95 },
+		weaponStrike = { 0, 0, 85 },
+	},
+	-- A perfect deflect snaps the blade across the incoming strike and pushes back.
+	DeflectStrike = {
+		windup = { shoulder = { 110, -70, 0 }, elbow = { 40, 0, 0 }, waist = { 0, 35, 0 }, root = { -6, 0, 0 }, leftHip = { -20, 0, 0 }, rightHip = { 15, 0, 0 } },
+		strike = { shoulder = { 115, 40, 0 }, elbow = { 10, 0, 0 }, waist = { 0, -25, 0 }, root = { -10, 0, 0 }, leftHip = { -35, 0, 0 }, rightHip = { 25, 0, 0 }, leftKnee = { -30, 0, 0 } },
+		weaponWindup = { 20, 0, 100 },
+		weaponStrike = { -10, 0, -60 },
+	},
+	-- Posture broken: down on one knee, weapon lowered.
+	Kneel = {
+		windup = { root = { 22, 0, 0 }, waist = { 20, 0, 0 }, leftHip = { 85, 0, 0 }, leftKnee = { -95, 0, 0 }, rightHip = { -10, 0, 0 }, rightKnee = { -95, 0, 0 }, shoulder = { 15, 0, 15 }, leftShoulder = { 30, 0, -10 } },
+		strike = { root = { 18, 0, 0 }, waist = { 24, 0, 0 }, leftHip = { 80, 0, 0 }, leftKnee = { -95, 0, 0 }, rightHip = { -10, 0, 0 }, rightKnee = { -95, 0, 0 }, shoulder = { 10, 0, 15 }, leftShoulder = { 25, 0, -10 } },
+		weaponWindup = { 60, 0, 0 },
+		weaponStrike = { 70, 0, 0 },
+	},
+	-- Directional dashes (MovementController picks one from the dash direction).
+	DashForward = {
+		windup = { root = { -28, 0, 0 }, waist = { -10, 0, 0 }, shoulder = { -45, 0, 15 }, leftShoulder = { -45, 0, -15 }, leftHip = { 45, 0, 0 }, rightHip = { -35, 0, 0 }, leftKnee = { -50, 0, 0 }, rightKnee = { -30, 0, 0 } },
+		strike = { root = { -32, 0, 0 }, waist = { -12, 0, 0 }, shoulder = { -55, 0, 20 }, leftShoulder = { -55, 0, -20 }, leftHip = { 55, 0, 0 }, rightHip = { -40, 0, 0 }, leftKnee = { -60, 0, 0 }, rightKnee = { -25, 0, 0 } },
+		weaponWindup = { -40, 0, 0 },
+		weaponStrike = { -50, 0, 0 },
+	},
+	SideStep = {
+		windup = { root = { 0, 0, 22 }, waist = { 0, 0, -10 }, shoulder = { 20, 0, 50 }, leftShoulder = { 20, 0, -50 }, leftHip = { 0, 0, -30 }, rightHip = { 0, 0, 20 }, leftKnee = { -30, 0, 0 }, rightKnee = { -40, 0, 0 } },
+		strike = { root = { 0, 0, 28 }, waist = { 0, 0, -12 }, shoulder = { 25, 0, 60 }, leftShoulder = { 25, 0, -60 }, leftHip = { 0, 0, -35 }, rightHip = { 0, 0, 25 }, leftKnee = { -40, 0, 0 }, rightKnee = { -50, 0, 0 } },
+	},
 	-- Spring Flask: left hand lifts the flask to the mouth, head tips back.
 	Drink = {
 		windup = { leftShoulder = { 120, 30, 0 }, leftElbow = { 110, 0, 0 }, waist = { -8, 0, 0 } },

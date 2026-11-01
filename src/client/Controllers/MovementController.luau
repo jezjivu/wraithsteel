@@ -172,7 +172,10 @@ function MovementController.Dash()
 	end, not inAir)
 
 	local color = styleColor()
-	AnimationController.Play(character, "Dodge", nil)
+	-- Directional dash pose: forward lunge, side step, or the back-step.
+	local localDir = root.CFrame:VectorToObjectSpace(dir)
+	local dashStyle = if localDir.Z < -0.5 then "DashForward" elseif math.abs(localDir.X) > 0.5 then "SideStep" else "Dodge"
+	AnimationController.Play(character, dashStyle, nil, { windup = 0.04, active = cfg.seconds * 0.7, recovery = 0.15 })
 	Fx.Burst(root.Position - Vector3.new(0, 2.6, 0), { texture = Fx.Textures.Smoke, color = Color3.fromRGB(215, 210, 200), count = 14, speed = 10, size = 2.4, lifetime = 0.6, lightEmission = 0, acceleration = Vector3.new(0, 4, 0) })
 	Fx.Burst(root.Position, { color = color, count = 18, speed = 26, size = 0.4, lifetime = 0.3, spread = 40 })
 	Fx.Shockwave(root.Position - Vector3.new(0, 2.6, 0), color, 6, 0.25)

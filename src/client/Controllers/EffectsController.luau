@@ -308,6 +308,12 @@ local function onDamage(e: { [string]: any })
 			floatText(part, outcome.text :: string, rgb(outcome.color), 18)
 		end
 		flash(target, rgb(EffectsConfig.HitFlash.color), EffectsConfig.HitFlash.seconds)
+		-- Body reaction: recoil behind the guard, or flinch from the hit.
+		if e.outcome == "Blocked" then
+			AnimationController.React(target, "BlockRecoil", 0.32)
+		elseif (e.damage or 0) > 0 and not e.severing then
+			AnimationController.React(target, if (e.damage or 0) >= EffectsConfig.DamageNumber.bigHitThreshold or e.crit then "HitHeavy" else "HitReact", if e.crit then 0.42 else 0.3)
+		end
 		playSound(EffectsConfig.Sounds.hit, part, 0.7)
 		local sparkColor = if e.outcome == "Blocked" then rgb(EffectsConfig.Guard.color) elseif mine then Color3.fromRGB(255, 90, 70) else rgb(EffectsConfig.Sparks.color)
 		Fx.Burst(part.Position, { color = sparkColor, count = if (e.damage or 0) >= EffectsConfig.DamageNumber.bigHitThreshold then 28 else 14, speed = 22, size = 0.45, lifetime = 0.35 })
@@ -330,6 +336,7 @@ local function onDamage(e: { [string]: any })
 			shake(EffectsConfig.Shake.takenHit)
 		end
 	elseif e.outcome == "Parried" then
+		AnimationController.React(target, "DeflectStrike", 0.28)
 		floatText(part, outcome.text :: string, rgb(outcome.color), 30)
 		spark(part, rgb(outcome.color))
 		playSound(EffectsConfig.Sounds.parry, part, 1.6)
@@ -368,6 +375,7 @@ local function onDamage(e: { [string]: any })
 		end
 	elseif e.outcome == "Deflected" then
 		-- An enemy deflected YOUR strike: clash sparks, the blade bounces.
+		AnimationController.React(target, "DeflectStrike", 0.28)
 		local c = rgb(outcome.color)
 		floatText(part, outcome.text :: string, c, 24)
 		spark(part, c)
@@ -399,6 +407,8 @@ local function onDamage(e: { [string]: any })
 		end
 	end
 	if e.broken then
+		-- Down on one knee for the stun.
+		AnimationController.Play(target, "Kneel", nil, { windup = 0.15, active = 1.8, recovery = 0.35 })
 		local b = EffectsConfig.Outcome.Broken
 		floatText(part, b.text :: string, rgb(b.color), 26)
 		flash(target, rgb(b.color), 0.5, 0.2)
@@ -443,7 +453,7 @@ local function onTelegraph(e: { [string]: any })
 		playSound(EffectsConfig.Sounds.heavy, part, 0.45)
 	end
 	-- Swing the rig + weapon with the server's exact timing (the hit lands at windup end).
-	local action = if peril then peril.style elseif math.random() < 0.5 then "LightAttack" else "AltAttack"
+	local action = if type(e.style) == "string" then e.style elseif peril then peril.style elseif math.random() < 0.5 then "LightAttack" else "AltAttack"
 	AnimationController.Play(model, action, nil, { windup = windup, active = active, recovery = recovery })
 	-- Parry cue: the blade glints exactly when a press of F would land inside the parry window.
 	local glintAt = math.max(0, windup - CombatConfig.ParryWindow * 0.8)

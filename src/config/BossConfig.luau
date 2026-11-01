@@ -36,6 +36,7 @@ export type BossMove = {
 	reflectDamage: number?,
 	reflectPosture: number?,
 	color: { number }?,
+	style: string?, -- AnimationConfig style for humanoid bosses (default: alternating slashes)
 	pose: string?, -- creature pose for the windup (CreatureAnimator): Swipe, Pounce, Rear, Roar, Spit, Spin
 	animationId: string,
 }
@@ -128,13 +129,13 @@ BossConfig.Bosses = {
 		walkSpeed = 20,
 		deflectChance = 0.6,
 		moves = {
-			ash_needles = { name = "Ash Needles", kind = "Volley", damage = 10, postureDamage = 12, windup = 0.55, active = 0.15, recovery = 0.6, range = 55, minRange = 8, arcDegrees = 360, weight = 2, cooldown = 7, speed = 85, count = 5, spread = 40, radius = 1.2, color = { 255, 90, 70 }, animationId = PLACEHOLDER_ANIM },
-			cinder_orb = { name = "Cinder Pearl", kind = "Projectile", damage = 18, postureDamage = 22, windup = 0.8, active = 0.2, recovery = 0.7, range = 60, arcDegrees = 360, weight = 2, cooldown = 6, speed = 46, radius = 2, deflectable = true, reflectDamage = 120, reflectPosture = 70, color = { 255, 120, 90 }, animationId = PLACEHOLDER_ANIM },
-			quick_cut = { name = "Ash Feather Cut", damage = 12, postureDamage = 18, windup = 0.35, active = 0.12, recovery = 0.4, range = 9, arcDegrees = 100, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
-			crane_flurry = { name = "Crane Flurry", damage = 8, postureDamage = 14, windup = 0.45, active = 0.8, recovery = 0.6, range = 9, arcDegrees = 100, weight = 2, cooldown = 5, hits = 5, animationId = PLACEHOLDER_ANIM },
-			gate_thrust = { name = "Gate-Piercing Thrust", damage = 30, postureDamage = 30, windup = 0.7, active = 0.25, recovery = 0.8, range = 22, minRange = 6, arcDegrees = 30, weight = 2, cooldown = 6, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
-			low_reap = { name = "Low Reaping Arc", damage = 24, postureDamage = 12, windup = 0.6, active = 0.2, recovery = 0.7, range = 11, arcDegrees = 220, weight = 1, cooldown = 7, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
-			ash_throw = { name = "Ash-Choked Throw", damage = 36, postureDamage = 0, windup = 0.8, active = 0.25, recovery = 1.0, range = 8, arcDegrees = 60, weight = 1, cooldown = 9, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
+			ash_needles = { name = "Ash Needles", style = "CastPush", kind = "Volley", damage = 10, postureDamage = 12, windup = 0.55, active = 0.15, recovery = 0.6, range = 55, minRange = 8, arcDegrees = 360, weight = 2, cooldown = 7, speed = 85, count = 5, spread = 40, radius = 1.2, color = { 255, 90, 70 }, animationId = PLACEHOLDER_ANIM },
+			cinder_orb = { name = "Cinder Pearl", style = "CastPush", kind = "Projectile", damage = 18, postureDamage = 22, windup = 0.8, active = 0.2, recovery = 0.7, range = 60, arcDegrees = 360, weight = 2, cooldown = 6, speed = 46, radius = 2, deflectable = true, reflectDamage = 120, reflectPosture = 70, color = { 255, 120, 90 }, animationId = PLACEHOLDER_ANIM },
+			quick_cut = { name = "Ash Feather Cut", style = "SlashRight", damage = 12, postureDamage = 18, windup = 0.35, active = 0.12, recovery = 0.4, range = 9, arcDegrees = 100, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
+			crane_flurry = { name = "Crane Flurry", style = "Spin", damage = 8, postureDamage = 14, windup = 0.45, active = 0.8, recovery = 0.6, range = 9, arcDegrees = 100, weight = 2, cooldown = 5, hits = 5, animationId = PLACEHOLDER_ANIM },
+			gate_thrust = { name = "Gate-Piercing Thrust", style = "Thrust", damage = 30, postureDamage = 30, windup = 0.7, active = 0.25, recovery = 0.8, range = 22, minRange = 6, arcDegrees = 30, weight = 2, cooldown = 6, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
+			low_reap = { name = "Low Reaping Arc", style = "Sweep", damage = 24, postureDamage = 12, windup = 0.6, active = 0.2, recovery = 0.7, range = 11, arcDegrees = 220, weight = 1, cooldown = 7, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
+			ash_throw = { name = "Ash-Choked Throw", style = "Grasp", damage = 36, postureDamage = 0, windup = 0.8, active = 0.25, recovery = 1.0, range = 8, arcDegrees = 60, weight = 1, cooldown = 9, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
 			{ hpThreshold = 1.0, moves = { "quick_cut", "crane_flurry", "gate_thrust", "low_reap", "ash_needles", "cinder_orb" }, speedMultiplier = 1, transitionSeconds = 0 },
@@ -158,9 +159,9 @@ BossConfig.Bosses = {
 		postureBrokenSeconds = 4,
 		walkSpeed = 16,
 		moves = {
-			bell_orb = { name = "Tolling Orb", kind = "Projectile", damage = 30, postureDamage = 30, windup = 0.9, active = 0.2, recovery = 0.8, range = 70, arcDegrees = 360, weight = 3, cooldown = 6, speed = 40, radius = 2.4, deflectable = true, reflectDamage = 220, reflectPosture = 90, color = { 255, 210, 120 }, animationId = PLACEHOLDER_ANIM },
-			toll_wave = { name = "Silent Toll", kind = "Wave", damage = 34, postureDamage = 20, windup = 1.1, active = 0.3, recovery = 1.0, range = 50, arcDegrees = 360, weight = 2, cooldown = 9, speed = 32, radius = 55, color = { 255, 220, 150 }, animationId = PLACEHOLDER_ANIM },
-			bell_rain = { name = "Falling Bells", kind = "Rain", damage = 40, postureDamage = 15, windup = 1.0, active = 0.3, recovery = 1.0, range = 70, arcDegrees = 360, weight = 1, cooldown = 13, count = 6, radius = 8, delay = 1.2, color = { 255, 200, 110 }, animationId = PLACEHOLDER_ANIM },
+			bell_orb = { name = "Tolling Orb", style = "CastPush", kind = "Projectile", damage = 30, postureDamage = 30, windup = 0.9, active = 0.2, recovery = 0.8, range = 70, arcDegrees = 360, weight = 3, cooldown = 6, speed = 40, radius = 2.4, deflectable = true, reflectDamage = 220, reflectPosture = 90, color = { 255, 210, 120 }, animationId = PLACEHOLDER_ANIM },
+			toll_wave = { name = "Silent Toll", style = "CastSky", kind = "Wave", damage = 34, postureDamage = 20, windup = 1.1, active = 0.3, recovery = 1.0, range = 50, arcDegrees = 360, weight = 2, cooldown = 9, speed = 32, radius = 55, color = { 255, 220, 150 }, animationId = PLACEHOLDER_ANIM },
+			bell_rain = { name = "Falling Bells", style = "CastSky", kind = "Rain", damage = 40, postureDamage = 15, windup = 1.0, active = 0.3, recovery = 1.0, range = 70, arcDegrees = 360, weight = 1, cooldown = 13, count = 6, radius = 8, delay = 1.2, color = { 255, 200, 110 }, animationId = PLACEHOLDER_ANIM },
 			staff_sweep = { name = "Rattan Sweep", damage = 40, postureDamage = 30, windup = 0.45, active = 0.15, recovery = 0.5, range = 11, arcDegrees = 140, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
 			bell_palm = { name = "Silent Bell Palm", damage = 55, postureDamage = 60, windup = 0.7, active = 0.15, recovery = 0.7, range = 8, arcDegrees = 50, weight = 2, cooldown = 6, animationId = PLACEHOLDER_ANIM },
 			pilgrim_dash = { name = "Pilgrim's Dash", damage = 50, postureDamage = 35, windup = 0.6, active = 0.3, recovery = 0.8, range = 26, arcDegrees = 40, weight = 2, cooldown = 8, minRange = 12, animationId = PLACEHOLDER_ANIM },
@@ -272,7 +273,7 @@ BossConfig.Bosses = {
 			clapper_sweep = { name = "Clapper Sweep", damage = 26, postureDamage = 24, windup = 0.6, active = 0.25, recovery = 0.6, range = 14, arcDegrees = 150, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
 			chain_lash = { name = "Rusted Chain Lash", damage = 22, postureDamage = 18, windup = 0.5, active = 0.3, recovery = 0.6, range = 26, minRange = 8, arcDegrees = 50, weight = 2, cooldown = 6, animationId = PLACEHOLDER_ANIM },
 			resonance = { name = "Resonance", damage = 9, postureDamage = 14, windup = 0.6, active = 1.2, recovery = 0.8, range = 16, arcDegrees = 360, weight = 2, cooldown = 10, hits = 6, animationId = PLACEHOLDER_ANIM },
-			toll_wave = { name = "Toll Wave", damage = 18, postureDamage = 45, windup = 1.0, active = 0.4, recovery = 1.0, range = 32, arcDegrees = 360, weight = 1, cooldown = 14, animationId = PLACEHOLDER_ANIM },
+			toll_wave = { name = "Toll Wave", style = "CastSky", damage = 18, postureDamage = 45, windup = 1.0, active = 0.4, recovery = 1.0, range = 32, arcDegrees = 360, weight = 1, cooldown = 14, animationId = PLACEHOLDER_ANIM },
 			bell_slam = { name = "Falling Bell", damage = 48, postureDamage = 20, windup = 1.4, active = 0.3, recovery = 1.4, range = 18, arcDegrees = 360, weight = 1, cooldown = 16, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {

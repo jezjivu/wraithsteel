@@ -317,7 +317,7 @@ end
 
 -- A move as keyframes with anticipation, overshoot and settle (so it doesn't look stiff):
 --   rest -> 75% windup -> coiled windup -> overshot strike -> strike -> relaxed -> settle -> rest
-local NO_FOOTWORK = { Guard = true, Dodge = true, Drink = true, Flip = true, Stagger = true, Flinch = true, Grasp = true, CastGuard = true, AirSlam = true }
+local NO_FOOTWORK = { HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true, DashForward = true, SideStep = true, Sweep = true, Guard = true, Dodge = true, Drink = true, Flip = true, Stagger = true, Flinch = true, Grasp = true, CastGuard = true, AirSlam = true }
 
 local function moveFrames(styleName: string, style: AnimationConfig.Style, rest: AnimationConfig.Pose, windup: number, active: number, recovery: number): { AnimBuilder.Frame }
 	local isMove = not NO_FOOTWORK[styleName] and not style.spin
@@ -592,8 +592,45 @@ function AnimationController.Play(model: Model, action: string, moveId: string?,
 	end
 end
 
+-- True while the model is in the windup/active part of an attack (reactions must not cut
+-- an enemy's swing short: the server's timing is what counts).
+local guardHeld: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+local REACTIONS = { HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true }
+function AnimationController.IsAttacking(model: Model): boolean
+	local p = playing[model]
+	if p == nil then
+		return false
+	end
+	for name, st in AnimationConfig.Styles do
+		if st == p.style and REACTIONS[name] then
+			return false
+		end
+	end
+	return vnow < p.start + p.windup + p.active
+end
+
+-- Short reaction (hit / block / deflect) unless the model is mid-attack.
+function AnimationController.React(model: Model, styleName: string, seconds: number?)
+	if AnimationController.IsAttacking(model) then
+		return
+	end
+	local s = seconds or 0.3
+	local p = playing[model]
+	local wasGuard = p ~= nil and p.style == AnimationConfig.Styles.Guard and guardHeld[model] == true
+	AnimationController.Play(model, styleName, nil, { windup = s * 0.18, active = s * 0.3, recovery = s * 0.6 })
+	if wasGuard then
+		-- Still holding guard after the recoil: raise it again.
+		task.delay(s * 0.85, function()
+			if guardHeld[model] and model.Parent then
+				AnimationController.HoldGuard(model, true)
+			end
+		end)
+	end
+end
+
 -- Keeps a guard pose up while the guard button is held (Sekiro-style hold-to-guard).
 function AnimationController.HoldGuard(model: Model, held: boolean)
+	guardHeld[model] = held
 	local p = playing[model]
 	if held then
 		AnimationController.Play(model, "Parry", nil, { windup = 0.06, active = 30, recovery = 0.12 })
