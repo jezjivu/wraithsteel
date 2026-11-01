@@ -432,6 +432,10 @@ local function onTelegraph(e: { [string]: any })
 	flash(model, color, windup, if e.perilous then 0.15 else 0.6)
 	local part = anchorPart(model)
 	local peril = if e.perilous then EffectsConfig.Perilous[e.perilousKind or "Grasp"] or EffectsConfig.Perilous.Grasp else nil
+	local hazard = if type(e.hazard) == "string" then EffectsConfig.HazardLabels[e.hazard] else nil
+	if hazard and part then
+		floatText(part, hazard.text, rgb(hazard.color), 30)
+	end
 	if peril and part then
 		floatText(part, peril.text, color, 30)
 		-- Big red warning sigil + low tone (you cannot parry this one).

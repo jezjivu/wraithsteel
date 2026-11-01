@@ -27,6 +27,14 @@ EffectsConfig.Outcome = {
 	Severed = { text = "SEVERED", color = { 230, 30, 40 } },
 }
 
+-- Boss ranged / ground attack labels (BossConfig move kind).
+EffectsConfig.HazardLabels = {
+	Projectile = { text = "ORB - deflect it back (F)", color = { 255, 210, 110 } },
+	Volley = { text = "VOLLEY - guard or dash", color = { 240, 190, 140 } },
+	Wave = { text = "QUAKE - jump the ring!", color = { 255, 120, 60 } },
+	Rain = { text = "RUST RAIN - move!", color = { 255, 60, 50 } },
+}
+
 -- Perilous telegraph labels: what to do about each kind (CombatConfig).
 EffectsConfig.Perilous = {
 	Pierce = { text = "! PIERCE - dash into it", style = "Thrust" },

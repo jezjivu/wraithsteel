@@ -289,25 +289,57 @@ local function r2(x: number): string
 end
 
 -- A move as keyframes: rest -> windup -> strike (spins add in-between frames) -> hold -> rest.
-local function moveFrames(style: AnimationConfig.Style, rest: AnimationConfig.Pose, windup: number, active: number, recovery: number): { AnimBuilder.Frame }
+-- Footwork + torso added to every move that does not specify them itself: the hips coil
+-- into the windup and uncoil through the strike, the lead leg steps in, the body leans in.
+local AUTO_WINDUP: { [string]: { number } } = { waist = { -6, 28, 0 }, root = { 6, 10, 0 }, rightHip = { 18, 0, 0 }, leftKnee = { -22, 0, 0 }, rightKnee = { -18, 0, 0 } }
+local AUTO_STRIKE: { [string]: { number } } = { waist = { 10, -30, 0 }, root = { -10, -12, 0 }, leftHip = { -32, 0, 0 }, rightHip = { 26, 0, 0 }, leftKnee = { -30, 0, 0 }, rightKnee = { -12, 0, 0 } }
+
+local function withAuto(pose: AnimationConfig.Pose, auto: { [string]: { number } }): { [string]: { number } }
+	local out: { [string]: { number } } = {}
+	for k, v in auto do
+		out[k] = v
+	end
+	for k, v in pose :: any do
+		out[k] = v
+	end
+	return out
+end
+
+-- a + (b - a) * k for every joint (k > 1 overshoots).
+local function mix(a: { [string]: { number } }, b: { [string]: { number } }, k: number): { [string]: { number } }
+	local out: { [string]: { number } } = {}
+	for name, x in a do
+		local y = b[name] or x
+		out[name] = { x[1] + (y[1] - x[1]) * k, x[2] + (y[2] - x[2]) * k, x[3] + (y[3] - x[3]) * k }
+	end
+	return out
+end
+
+-- A move as keyframes with anticipation, overshoot and settle (so it doesn't look stiff):
+--   rest -> 75% windup -> coiled windup -> overshot strike -> strike -> relaxed -> settle -> rest
+local NO_FOOTWORK = { Guard = true, Dodge = true, Drink = true, Flip = true, Stagger = true, Flinch = true, Grasp = true, CastGuard = true, AirSlam = true }
+
+local function moveFrames(styleName: string, style: AnimationConfig.Style, rest: AnimationConfig.Pose, windup: number, active: number, recovery: number): { AnimBuilder.Frame }
+	local isMove = not NO_FOOTWORK[styleName] and not style.spin
+	local wPose = if isMove then withAuto(style.windup, AUTO_WINDUP) else (style.windup :: any)
+	local sPose = if isMove then withAuto(style.strike, AUTO_STRIKE) else (style.strike :: any)
 	local keys: { [string]: boolean } = {}
-	for _, p in { rest, style.windup, style.strike } do
-		for k in p :: any do
+	for _, p in { rest :: any, wPose, sPose } do
+		for k in p do
 			keys[k] = true
 		end
 	end
+	local R = poseOf(nil, rest, keys)
+	local W = poseOf(wPose, rest, keys)
+	local S = poseOf(sPose, rest, keys)
 	local frames: { AnimBuilder.Frame } = {}
-	table.insert(frames, { t = 0, pose = poseOf(nil, rest, keys) })
-	table.insert(frames, { t = windup, pose = poseOf(style.windup, rest, keys) })
+	table.insert(frames, { t = 0, pose = R })
+	table.insert(frames, { t = windup * 0.7, pose = mix(R, W, 0.85) })
+	table.insert(frames, { t = windup, pose = mix(R, W, 1.08) })
 	if style.spin then
-		local wp, sp = poseOf(style.windup, rest, keys), poseOf(style.strike, rest, keys)
 		for i = 1, 3 do
 			local k = i / 4
-			local mid: { [string]: { number } } = {}
-			for name in keys do
-				local a, b = wp[name], sp[name]
-				mid[name] = { a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k, a[3] + (b[3] - a[3]) * k }
-			end
+			local mid = mix(W, S, k)
 			local spin = 90 * i
 			local r = mid.root or { 0, 0, 0 }
 			if style.spinAxis == "X" then
@@ -317,11 +349,15 @@ local function moveFrames(style: AnimationConfig.Style, rest: AnimationConfig.Po
 			end
 			table.insert(frames, { t = windup + active * k, pose = mid })
 		end
+	else
+		table.insert(frames, { t = windup + active * 0.55, pose = mix(W, S, 1.15) })
 	end
 	local strikeEnd = windup + active
-	table.insert(frames, { t = strikeEnd, pose = poseOf(style.strike, rest, keys) })
-	table.insert(frames, { t = strikeEnd + recovery * 0.4, pose = poseOf(style.strike, rest, keys) })
-	table.insert(frames, { t = strikeEnd + math.max(recovery, AnimationConfig.BlendOut + 0.05), pose = poseOf(nil, rest, keys) })
+	local rec = math.max(recovery, AnimationConfig.BlendOut + 0.05)
+	table.insert(frames, { t = strikeEnd, pose = S })
+	table.insert(frames, { t = strikeEnd + rec * 0.3, pose = mix(S, R, 0.15) })
+	table.insert(frames, { t = strikeEnd + rec * 0.8, pose = mix(S, R, 1.06) })
+	table.insert(frames, { t = strikeEnd + rec, pose = R })
 	return frames
 end
 
@@ -361,10 +397,22 @@ local function updateStance(model: Model, st: TrackState, still: number)
 				end
 			end
 			local breathe = AnimationConfig.Walk.idleBreathDegrees
-			local w = upper.waist or { 0, 0, 0 }
-			local upper2 = table.clone(upper)
-			upper2.waist = { w[1] + breathe, w[2], w[3] }
-			local upId = AnimBuilder.Get("StanceUpper_" .. (name :: string), { { t = 0, pose = upper }, { t = 1.2, pose = upper2 }, { t = 2.4, pose = upper } }, { loop = true, priority = Enum.AnimationPriority.Idle }, model)
+			local function shifted(dw: number, dyaw: number, darm: number): { [string]: { number } }
+				local out = table.clone(upper)
+				local w = upper.waist or { 0, 0, 0 }
+				out.waist = { w[1] + dw, w[2] + dyaw, w[3] }
+				local sh = upper.shoulder or { 0, 0, 0 }
+				out.shoulder = { sh[1] + darm, sh[2], sh[3] }
+				local ls = upper.leftShoulder or { 0, 0, 0 }
+				out.leftShoulder = { ls[1] - darm * 0.6, ls[2], ls[3] }
+				return out
+			end
+			local upId = AnimBuilder.Get("StanceUpper_" .. (name :: string), {
+				{ t = 0, pose = shifted(0, 0, 0) },
+				{ t = 0.9, pose = shifted(breathe, 3, 3) },
+				{ t = 1.8, pose = shifted(breathe * 0.4, -2, -2) },
+				{ t = 2.7, pose = shifted(0, 0, 0) },
+			}, { loop = true, priority = Enum.AnimationPriority.Idle }, model)
 			local lowId = AnimBuilder.Get("StanceLower_" .. (name :: string), { { t = 0, pose = lower }, { t = 2, pose = lower } }, { loop = true, priority = Enum.AnimationPriority.Idle }, model)
 			if upId then
 				local t = loadTrack(st, upId)
@@ -487,6 +535,9 @@ export type Timing = { windup: number, active: number, recovery: number }
 
 -- timing overrides the move's frame data (used for enemy telegraphs, which have no moveId here).
 function AnimationController.Play(model: Model, action: string, moveId: string?, timing: Timing?, route: string?, speed: number?)
+	if model:GetAttribute("Creature") ~= nil then
+		return -- beasts are animated by CreatureAnimator
+	end
 	local styleName = AnimationController.StyleFor(action, moveId, route)
 	local style = AnimationConfig.Styles[styleName]
 	if style == nil then
@@ -528,7 +579,7 @@ function AnimationController.Play(model: Model, action: string, moveId: string?,
 	local st = trackStateOf(model)
 	if st then
 		local key = table.concat({ styleName, stanceNameFor(model) or "None", r2(windup), r2(active), r2(recovery) }, "|")
-		local id = AnimBuilder.Get(key, moveFrames(style, rest, windup, active, recovery), { priority = Enum.AnimationPriority.Action }, model)
+		local id = AnimBuilder.Get(key, moveFrames(styleName, style, rest, windup, active, recovery), { priority = Enum.AnimationPriority.Action }, model)
 		local track = id and loadTrack(st, id)
 		if track then
 			if st.action and st.action ~= track then
@@ -703,7 +754,7 @@ local lastScale = 1
 local npcSet: { [Model]: boolean } = {}
 
 local function trackNpc(model: Instance)
-	if model:IsA("Model") and not isPlayerCharacter(model) then
+	if model:IsA("Model") and not isPlayerCharacter(model) and model:GetAttribute("Creature") == nil then
 		npcSet[model] = true
 	end
 end
