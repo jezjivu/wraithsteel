@@ -9,6 +9,7 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = ReplicatedStorage:WaitForChild("Config")
 local FormatNumber = require(Shared:WaitForChild("FormatNumber"))
+local Net = require(Shared:WaitForChild("Net"))
 local GuideConfig = require(Config:WaitForChild("GuideConfig"))
 local WeaponConfig = require(Config:WaitForChild("WeaponConfig"))
 local ChapterConfig = require(Config:WaitForChild("ChapterConfig"))
@@ -176,6 +177,8 @@ local function buildWaypoint(gui: ScreenGui)
 	edgeArrow = arrow
 end
 
+local bossFightUntil = 0
+
 local function updateWaypoint()
 	local p, label, arrow = beacon, beaconLabel, edgeArrow
 	if p == nil or label == nil or arrow == nil then
@@ -193,7 +196,8 @@ local function updateWaypoint()
 		return
 	end
 	local dist = (Vector3.new(target.X, 0, target.Z) - Vector3.new(root.Position.X, 0, root.Position.Z)).Magnitude
-	local near = dist < cfg.hideWithin
+	-- Hidden near the target and during boss fights (the beam stood right where the boss is).
+	local near = dist < cfg.hideWithin or os.clock() < bossFightUntil
 	local pulse = 0.5 + math.sin(os.clock() * 3) * 0.12
 	p.Transparency = if near then 1 else pulse
 	p.CFrame = CFrame.new(target + Vector3.new(0, cfg.beamHeight / 2, 0)) * CFrame.Angles(0, 0, math.rad(90))
@@ -307,6 +311,13 @@ function GuideController.Start()
 	DataController.Changed:Connect(refresh)
 	refresh()
 	game:GetService("RunService").RenderStepped:Connect(updateWaypoint)
+	Net.Client.On("BossState", function(st)
+		if st.state ~= "Dead" and (tonumber(st.hpFrac) or 0) > 0 then
+			bossFightUntil = os.clock() + 3
+		else
+			bossFightUntil = 0
+		end
+	end)
 	task.delay(GuideConfig.ControlsCardSeconds, function()
 		if controlsCard then
 			controlsCard.Visible = false

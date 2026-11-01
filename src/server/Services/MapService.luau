@@ -905,6 +905,64 @@ local function build()
 	e.Parent = sky
 end
 
+-- Grounding pass ------------------------------------------------------------------------------
+-- Everything is built around y = 0, but hills/mountains/area terrain can rise above that.
+-- After building, every prop is lifted so it stands ON the terrain instead of inside it.
+local function terrainY(x: number, z: number): number?
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { workspace.Terrain }
+	params.IgnoreWater = true
+	local hit = workspace:Raycast(Vector3.new(x, 400, z), Vector3.new(0, -800, 0), params)
+	return if hit then hit.Position.Y else nil
+end
+
+local SETTLE_PROPS = { Torii = true, StoneLantern = true, Tree = true, BurnedHouse = true, ShrineDeck = true, Pagoda = true, BellTower = true }
+local SKIP_AREAS = { Stairs = true, Gorge = true, Pond = true, Springs = true }
+
+local function settle(m: Model, sink: number)
+	local ok, cf, size = pcall(function()
+		return m:GetBoundingBox()
+	end)
+	if not ok then
+		return
+	end
+	local bottom = cf.Position.Y - size.Y / 2
+	local hx, hz = size.X * 0.35, size.Z * 0.35
+	local high: number? = nil
+	for _, o in { { 0, 0 }, { hx, hz }, { -hx, hz }, { hx, -hz }, { -hx, -hz } } do
+		local p = cf * Vector3.new(o[1], 0, o[2])
+		local y = terrainY(p.X, p.Z)
+		if y and (high == nil or y > high) then
+			high = y
+		end
+	end
+	if high and high > bottom + sink + 0.1 then
+		m:PivotTo(m:GetPivot() + Vector3.new(0, high - bottom - sink, 0))
+	end
+end
+
+local function groundEverything()
+	if world == nil then
+		return
+	end
+	-- Whole areas first (by the terrain height at their center), then single props.
+	for _, a in MapConfig.Areas do
+		if not SKIP_AREAS[a.theme] then
+			local m = world:FindFirstChild(a.name)
+			local y = terrainY(a.center[1], a.center[2])
+			if m and m:IsA("Model") and y and y > 0.3 then
+				m:PivotTo(m:GetPivot() + Vector3.new(0, y, 0))
+			end
+		end
+	end
+	for _, d in world:GetDescendants() do
+		if d:IsA("Model") and SETTLE_PROPS[d.Name] and d:FindFirstAncestor("ThousandStepStair") == nil then
+			settle(d, if d.Name == "Tree" then 0.6 else 0.15)
+		end
+	end
+end
+
 function MapService.Init() end
 
 -- Generates the world (also callable in edit mode through ServerScriptService.EditTools, so
@@ -916,6 +974,10 @@ function MapService.Build()
 	local ok, err = pcall(build :: any)
 	if not ok then
 		warn("[MapService] map generation failed:", err)
+	end
+	local ok2, err2 = pcall(groundEverything :: any)
+	if not ok2 then
+		warn("[MapService] grounding pass failed:", err2)
 	end
 	if world then
 		world:SetAttribute("Generated", true)
