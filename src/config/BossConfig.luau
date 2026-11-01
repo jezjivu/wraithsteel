@@ -128,6 +128,8 @@ BossConfig.Bosses = {
 		walkSpeed = 20,
 		deflectChance = 0.6,
 		moves = {
+			ash_needles = { name = "Ash Needles", kind = "Volley", damage = 10, postureDamage = 12, windup = 0.55, active = 0.15, recovery = 0.6, range = 55, minRange = 8, arcDegrees = 360, weight = 2, cooldown = 7, speed = 85, count = 5, spread = 40, radius = 1.2, color = { 255, 90, 70 }, animationId = PLACEHOLDER_ANIM },
+			cinder_orb = { name = "Cinder Pearl", kind = "Projectile", damage = 18, postureDamage = 22, windup = 0.8, active = 0.2, recovery = 0.7, range = 60, arcDegrees = 360, weight = 2, cooldown = 6, speed = 46, radius = 2, deflectable = true, reflectDamage = 120, reflectPosture = 70, color = { 255, 120, 90 }, animationId = PLACEHOLDER_ANIM },
 			quick_cut = { name = "Ash Feather Cut", damage = 12, postureDamage = 18, windup = 0.35, active = 0.12, recovery = 0.4, range = 9, arcDegrees = 100, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
 			crane_flurry = { name = "Crane Flurry", damage = 8, postureDamage = 14, windup = 0.45, active = 0.8, recovery = 0.6, range = 9, arcDegrees = 100, weight = 2, cooldown = 5, hits = 5, animationId = PLACEHOLDER_ANIM },
 			gate_thrust = { name = "Gate-Piercing Thrust", damage = 30, postureDamage = 30, windup = 0.7, active = 0.25, recovery = 0.8, range = 22, minRange = 6, arcDegrees = 30, weight = 2, cooldown = 6, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
@@ -135,8 +137,8 @@ BossConfig.Bosses = {
 			ash_throw = { name = "Ash-Choked Throw", damage = 36, postureDamage = 0, windup = 0.8, active = 0.25, recovery = 1.0, range = 8, arcDegrees = 60, weight = 1, cooldown = 9, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
-			{ hpThreshold = 1.0, moves = { "quick_cut", "crane_flurry", "gate_thrust", "low_reap" }, speedMultiplier = 1, transitionSeconds = 0 },
-			{ hpThreshold = 0.5, moves = { "quick_cut", "crane_flurry", "gate_thrust", "low_reap", "ash_throw" }, speedMultiplier = 1.25, enrage = true, transitionSeconds = 2 },
+			{ hpThreshold = 1.0, moves = { "quick_cut", "crane_flurry", "gate_thrust", "low_reap", "ash_needles", "cinder_orb" }, speedMultiplier = 1, transitionSeconds = 0 },
+			{ hpThreshold = 0.5, moves = { "quick_cut", "crane_flurry", "gate_thrust", "low_reap", "ash_throw", "ash_needles", "cinder_orb" }, speedMultiplier = 1.25, enrage = true, transitionSeconds = 2 },
 		},
 		idleBetweenMoves = 0.45,
 		rewards = { ember = 450, xp = 500, jadeFirstClear = 20 },
@@ -156,6 +158,9 @@ BossConfig.Bosses = {
 		postureBrokenSeconds = 4,
 		walkSpeed = 16,
 		moves = {
+			bell_orb = { name = "Tolling Orb", kind = "Projectile", damage = 30, postureDamage = 30, windup = 0.9, active = 0.2, recovery = 0.8, range = 70, arcDegrees = 360, weight = 3, cooldown = 6, speed = 40, radius = 2.4, deflectable = true, reflectDamage = 220, reflectPosture = 90, color = { 255, 210, 120 }, animationId = PLACEHOLDER_ANIM },
+			toll_wave = { name = "Silent Toll", kind = "Wave", damage = 34, postureDamage = 20, windup = 1.1, active = 0.3, recovery = 1.0, range = 50, arcDegrees = 360, weight = 2, cooldown = 9, speed = 32, radius = 55, color = { 255, 220, 150 }, animationId = PLACEHOLDER_ANIM },
+			bell_rain = { name = "Falling Bells", kind = "Rain", damage = 40, postureDamage = 15, windup = 1.0, active = 0.3, recovery = 1.0, range = 70, arcDegrees = 360, weight = 1, cooldown = 13, count = 6, radius = 8, delay = 1.2, color = { 255, 200, 110 }, animationId = PLACEHOLDER_ANIM },
 			staff_sweep = { name = "Rattan Sweep", damage = 40, postureDamage = 30, windup = 0.45, active = 0.15, recovery = 0.5, range = 11, arcDegrees = 140, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
 			bell_palm = { name = "Silent Bell Palm", damage = 55, postureDamage = 60, windup = 0.7, active = 0.15, recovery = 0.7, range = 8, arcDegrees = 50, weight = 2, cooldown = 6, animationId = PLACEHOLDER_ANIM },
 			pilgrim_dash = { name = "Pilgrim's Dash", damage = 50, postureDamage = 35, windup = 0.6, active = 0.3, recovery = 0.8, range = 26, arcDegrees = 40, weight = 2, cooldown = 8, minRange = 12, animationId = PLACEHOLDER_ANIM },
@@ -163,8 +168,8 @@ BossConfig.Bosses = {
 			prayer_beads = { name = "Hundred Prayer Beads", damage = 14, postureDamage = 10, windup = 0.5, active = 1.0, recovery = 0.6, range = 12, arcDegrees = 90, weight = 2, cooldown = 10, hits = 5, animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
-			{ hpThreshold = 1.0, moves = { "staff_sweep", "bell_palm", "pilgrim_dash", "prayer_beads" }, speedMultiplier = 1, transitionSeconds = 0 },
-			{ hpThreshold = 0.45, moves = { "staff_sweep", "bell_palm", "pilgrim_dash", "prayer_beads", "hollow_chant" }, speedMultiplier = 1.15, enrage = true, transitionSeconds = 2.5 },
+			{ hpThreshold = 1.0, moves = { "staff_sweep", "bell_palm", "pilgrim_dash", "prayer_beads", "bell_orb", "toll_wave" }, speedMultiplier = 1, transitionSeconds = 0 },
+			{ hpThreshold = 0.45, moves = { "staff_sweep", "bell_palm", "pilgrim_dash", "prayer_beads", "hollow_chant", "bell_orb", "toll_wave", "bell_rain" }, speedMultiplier = 1.15, enrage = true, transitionSeconds = 2.5 },
 		},
 		idleBetweenMoves = 0.7,
 		rewards = { ember = 1200, xp = 1500, jadeFirstClear = 30 },

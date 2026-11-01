@@ -23,7 +23,7 @@ SPEC = """
 return {
 	dump = function()
 		local SSS = game:GetService("ServerScriptService")
-		require(SSS.Services.MapService).Start()
+		require(SSS.Services.MapService).Build()
 		require(SSS.Services.HubService).Start()
 		__dumpTerrain()
 		__dumpParts(workspace)

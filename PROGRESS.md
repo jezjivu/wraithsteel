@@ -132,6 +132,12 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Spring Flask (Q): 3 heals of 45%, slows you while drinking, refills at the hot springs and on respawn; HUD counter
 - [x] Sable Crane: optional duel boss in Ashen Village (deflect-heavy, all three perilous kinds, 2 phases)
 - [x] Sparring Master in the hub training yard (practice deflects and every perilous answer; no rewards)
+- [x] Grounding pass: every generated prop/area is lifted onto the terrain surface (trees/props were buried in hills and mountain slopes)
+- [x] Instanced boss arenas (ArenaConfig/ArenaBuilder): story bosses fight in a walled arena far from the open world; group teleported in and back
+- [x] HazardService: boss projectiles (deflectable orbs fly back for huge posture damage), volleys, quake rings (jump), rust rain eruptions (move)
+- [x] Rust Tiger rebuilt as a part-built armored beast (CreatureBuilder + client CreatureAnimator); ranged/ground-heavy moveset; Hollow Abbot and Sable Crane gained orbs/waves/volleys
+- [x] Objective beam hidden during boss fights (was the "giant cylinder" on the boss)
+- [x] Fight animations: anticipation, overshoot, automatic footwork + torso coil, idle sway
 - [x] Second Breath: once per life a killing blow leaves you at 1 HP and you rise with 50% (recharges at the springs; ✦ on the HUD)
 
 ## Phase 2 - Chapter 1 + depth
