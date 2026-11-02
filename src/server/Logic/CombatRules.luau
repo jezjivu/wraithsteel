@@ -277,19 +277,23 @@ function CombatRules.ResolveIncoming(state: State, hit: Incoming, now: number, c
 	if now < state.iframeUntil then
 		return { outcome = "Dodged", damage = 0, postureDamage = 0, reflectPosture = 0 }
 	end
+	-- A perfectly timed deflect stops EVERYTHING - perilous attacks, projectiles, shockwaves -
+	-- and perilous ones hurt the attacker's posture even more. Holding guard (block) only works
+	-- against normal attacks.
+	if now < state.parryUntil or now < state.counterUntil then
+		state.whiffStreak = 0
+		state.riposteUntil = now + CombatConfig.RiposteWindow
+		state.parryReadyAt = now -- successful parry refunds the cooldown
+		state.ultimateCharge = math.min(WeaponConfig.UltimateChargeMax, state.ultimateCharge + WeaponConfig.UltimateChargePerParry)
+		local bonus = if hit.perilous then CombatConfig.PerilousParryBonus else 1
+		return {
+			outcome = "Parried",
+			damage = 0,
+			postureDamage = hit.postureDamage * CombatConfig.ParryPostureTaken,
+			reflectPosture = hit.postureDamage * CombatConfig.ParryPostureReflect * bonus,
+		}
+	end
 	if not hit.perilous then
-		if now < state.parryUntil or now < state.counterUntil then
-			state.whiffStreak = 0
-			state.riposteUntil = now + CombatConfig.RiposteWindow
-			state.parryReadyAt = now -- successful parry refunds the cooldown
-			state.ultimateCharge = math.min(WeaponConfig.UltimateChargeMax, state.ultimateCharge + WeaponConfig.UltimateChargePerParry)
-			return {
-				outcome = "Parried",
-				damage = 0,
-				postureDamage = hit.postureDamage * 0.25,
-				reflectPosture = hit.postureDamage * CombatConfig.ParryPostureReflect,
-			}
-		end
 		if now < state.blockUntil then
 			return {
 				outcome = "Blocked",

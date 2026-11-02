@@ -155,8 +155,8 @@ local function stepProjectiles(dt: number)
 				ranged = true,
 				color = p.spec.color,
 			})
-			if res and res.outcome == "Parried" and p.spec.deflectable then
-				-- Perfect deflect: the orb goes back where it came from.
+			if res and res.outcome == "Parried" then
+				-- Perfect deflect: ANY projectile goes back where it came from (orbs hit hardest).
 				endProjectile(p, p.pos, "Reflected")
 				spawnProjectile(p.owner, hit.root.Position + Vector3.new(0, 1, 0), p.owner.root.Position - hit.root.Position, {
 					speed = p.spec.speed * 1.7,
@@ -166,8 +166,8 @@ local function stepProjectiles(dt: number)
 					posture = p.spec.posture,
 					color = { 255, 240, 200 },
 					size = p.spec.size,
-					reflectDamage = p.spec.reflectDamage,
-					reflectPosture = p.spec.reflectPosture,
+					reflectDamage = p.spec.reflectDamage or p.spec.damage * 2.5,
+					reflectPosture = p.spec.reflectPosture or p.spec.posture * 3,
 					moveId = p.spec.moveId,
 				}, true, hit)
 				fire({ kind = "Returned", targetId = hit.id })

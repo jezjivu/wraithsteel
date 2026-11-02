@@ -77,6 +77,8 @@ local BossConfig = {}
 BossConfig.StrikeStep = 5 -- studs a boss steps into regular strikes
 BossConfig.StrikeStepSpeed = 2.5 -- walk speed multiplier while stepping
 BossConfig.DefaultDeflect = 0.35
+BossConfig.DamageMultiplier = 1.25 -- bosses hit harder than their listed numbers
+BossConfig.PostureMultiplier = 1.2
 BossConfig.Knockback = { normal = 16, wide = 30, perilous = 45, perilousLaunch = 18 }
 
 local PLACEHOLDER_ANIM = "rbxassetid://0"

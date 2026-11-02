@@ -59,6 +59,7 @@ type Brain = {
 	activeFrom: number, -- current strike's active window (flinch can't interrupt it)
 	activeTo: number,
 	flinchReadyAt: number,
+	recentHits: { number }, -- times of player hits (string deflects)
 }
 
 local EnemyService = {
@@ -297,7 +298,7 @@ local function startAttack(b: Brain, attackId: string, now: number)
 	task.delay(t, function()
 		director:Release(b.c.id, os.clock())
 	end)
-	b.nextAttackAt = now + t + b.def.attackCooldown
+	b.nextAttackAt = now + t + b.def.attackCooldown * EnemyConfig.CooldownMultiplier
 end
 
 -- Called when this enemy takes a hit: light enemies flinch (outside their active frames),
@@ -306,6 +307,19 @@ local function onHurt(b: Brain)
 	local now = os.clock()
 	if b.c.dead then
 		return
+	end
+	-- Strings of hits make the next deflect likelier.
+	local kept = {}
+	for _, t in b.recentHits do
+		if now - t <= EnemyConfig.StringWindow then
+			table.insert(kept, t)
+		end
+	end
+	table.insert(kept, now)
+	b.recentHits = kept
+	if b.c.deflectChance ~= nil then
+		local base = b.def.deflectChance or EnemyConfig.BaseDeflect
+		b.c.deflectChance = math.min(EnemyConfig.MaxDeflect, base + (#kept - 1) * EnemyConfig.StringDeflectStep)
 	end
 	local inActive = now >= b.activeFrom and now <= b.activeTo
 	if b.def.flinch and not inActive and now >= b.flinchReadyAt then
@@ -324,6 +338,14 @@ local function onHurt(b: Brain)
 end
 
 local function think(b: Brain, _dt: number, now: number)
+	-- String deflect chance cools back down once you stop hitting.
+	local last = b.recentHits[#b.recentHits]
+	if last and now - last > EnemyConfig.StringWindow then
+		table.clear(b.recentHits)
+		if b.c.deflectChance ~= nil then
+			b.c.deflectChance = b.def.deflectChance or EnemyConfig.BaseDeflect
+		end
+	end
 	if b.c.dead or now < b.busyUntil or now < b.stunnedUntil then
 		return
 	end
@@ -401,7 +423,7 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 		invulnerable = false,
 		dead = false,
 		contributions = {},
-		deflectChance = def.deflectChance,
+		deflectChance = if def.training then nil else (def.deflectChance or EnemyConfig.BaseDeflect),
 		unaware = true,
 	}
 	CombatService.Register(c)
@@ -418,8 +440,14 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 		activeFrom = 0,
 		activeTo = 0,
 		flinchReadyAt = 0,
+		recentHits = {},
 	}
 	brains[id] = brain
+	-- Sekiro-style: an aware enemy that isn't swinging or stunned can deflect your strikes.
+	c.canDeflect = function()
+		local now = os.clock()
+		return not c.unaware and now >= brain.busyUntil and now >= brain.stunnedUntil
+	end
 	scheduler:Add(id, function(dt, now)
 		think(brain, dt, now)
 	end, os.clock())

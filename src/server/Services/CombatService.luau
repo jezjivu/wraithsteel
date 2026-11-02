@@ -30,6 +30,7 @@ local Signal = require(Shared:WaitForChild("Signal"))
 local CombatConfig = require(Config:WaitForChild("CombatConfig"))
 local WeaponConfig = require(Config:WaitForChild("WeaponConfig"))
 local EnemyConfig = require(Config:WaitForChild("EnemyConfig"))
+local BossConfig = require(Config:WaitForChild("BossConfig"))
 local StyleConfig = require(Config:WaitForChild("StyleConfig"))
 local MapConfig = require(Config:WaitForChild("MapConfig"))
 
@@ -269,6 +270,14 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		return nil
 	end
 	local now = os.clock()
+	-- Challenge scaling: enemies and bosses hit players harder than their listed numbers.
+	if target.player and attacker and attacker.kind ~= "Player" then
+		local dm = if attacker.kind == "Boss" then BossConfig.DamageMultiplier else EnemyConfig.DamageMultiplier
+		local pm = if attacker.kind == "Boss" then BossConfig.PostureMultiplier else EnemyConfig.PostureMultiplier
+		hit = table.clone(hit)
+		hit.damage *= dm
+		hit.postureDamage *= pm
+	end
 	local res: CombatRules.Resolution
 	if target.rules then
 		local ctx: CombatRules.Context = {}

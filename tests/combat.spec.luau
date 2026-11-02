@@ -85,7 +85,7 @@ cases["Combat: parry window, block, perilous and iframes"] = function()
 	expectEq(CombatRules.ResolveIncoming(s, hit, 2).outcome, "Blocked") -- still holding guard
 	CombatRules.Commit(s, CombatRules.Validate(s, W, "GuardRelease", 2, 2), 2)
 	expectEq(CombatRules.ResolveIncoming(s, hit, 3).outcome, "Hit")
-	expectEq(CombatRules.ResolveIncoming(s, { damage = 10, postureDamage = 20, perilous = true }, 0.1).outcome, "Hit")
+	expectEq(CombatRules.ResolveIncoming(s, { damage = 10, postureDamage = 20, perilous = true }, 0.5).outcome, "Hit") -- guard can't block perilous
 	local s2 = CombatRules.NewState()
 	CombatRules.Commit(s2, CombatRules.Validate(s2, W, "Dodge", 1, 0), 0)
 	expectEq(CombatRules.ResolveIncoming(s2, { damage = 10, postureDamage = 20, perilous = true }, 0.1).outcome, "Dodged")
@@ -116,10 +116,14 @@ cases["Combat: perilous answers - Needle Counter, Crane Leap, Grasp needs a dodg
 	expectEq(CombatRules.ResolveIncoming(CombatRules.NewState(), sweep, 1, { airborne = false }).outcome, "Hit")
 	local grasp = { damage = 30, postureDamage = 20, perilous = true, perilousKind = "Grasp" }
 	expectEq(CombatRules.ResolveIncoming(CombatRules.NewState(), grasp, 1, { airborne = true, dashedToward = true }).outcome, "Hit")
-	-- A parry never stops a perilous attack.
+	-- A perfect deflect stops even perilous attacks (and reflects extra posture)...
 	local p = CombatRules.NewState()
 	CombatRules.Commit(p, CombatRules.Validate(p, W, "Parry", 1, 0), 0)
-	expectEq(CombatRules.ResolveIncoming(p, grasp, 0.05, {}).outcome, "Hit")
+	local pr = CombatRules.ResolveIncoming(p, grasp, 0.05, {})
+	expectEq(pr.outcome, "Parried")
+	expectTrue(pr.reflectPosture > 20 * 0.6, "perilous deflect reflects extra posture")
+	-- ...but holding guard does not block them.
+	expectEq(CombatRules.ResolveIncoming(p, grasp, 0.5, {}).outcome, "Hit")
 end
 
 cases["Combat: parry spam increases cooldown"] = function()

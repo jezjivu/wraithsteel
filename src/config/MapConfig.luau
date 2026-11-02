@@ -66,6 +66,12 @@ MapConfig.EnemySpawns = {
 	{ name = "TempleStalkers", enemyId = "rustwood_stalker", count = 3, respawn = 25, at = { -320, -1900 } },
 	{ name = "TempleSentinel", enemyId = "rust_eaten_sentinel", count = 1, respawn = 35, at = { -350, -2010 } },
 	{ name = "PassDuelists", enemyId = "ashen_duelist", count = 2, respawn = 25, at = { -160, -2120 } },
+	-- Lone ambushers on the road between zones (spread the fights out).
+	{ name = "RoadBandit1", enemyId = "rustbound_bandit", count = 1, respawn = 25, at = { 15, -270 } },
+	{ name = "RoadStalker1", enemyId = "rustwood_stalker", count = 1, respawn = 30, at = { 312, -880 } },
+	{ name = "RoadBandits2", enemyId = "rustbound_bandit", count = 2, respawn = 25, at = { 175, -1230 } },
+	{ name = "RoadDuelist1", enemyId = "ashen_duelist", count = 1, respawn = 30, at = { -140, -1470 } },
+	{ name = "PlateauGhouls", enemyId = "lantern_ghoul", count = 2, respawn = 25, at = { -315, -1870 } },
 }
 
 -- Boss shrines (pads; the fight itself happens in an instanced arena).

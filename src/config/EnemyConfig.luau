@@ -69,17 +69,27 @@ local EnemyConfig = {}
 -- AI scheduler / director ------------------------------------------------------------------
 EnemyConfig.AITickRate = 10 -- Hz, batched across all enemies
 EnemyConfig.MaxEnemiesPerTickSlice = 40 -- spread work over frames if more are alive
-EnemyConfig.AttackTokensPerPlayer = 2 -- at most N enemies attack the same player at once
+EnemyConfig.AttackTokensPerPlayer = 3 -- at most N enemies attack the same player at once
 EnemyConfig.AttackTokenDuration = 2.5 -- seconds a token is held before it must be returned
 EnemyConfig.AttackTokenCooldown = 0.6 -- seconds before a returned token can be re-granted
 EnemyConfig.StateReplicationRate = 10 -- Hz, batched EnemyState remote
 EnemyConfig.DespawnAfterDeath = 4
 EnemyConfig.DefaultRespawnSeconds = 20
-EnemyConfig.DefaultSpawnScatter = 6 -- studs; spawn Parts can override with attribute Scatter
+EnemyConfig.DefaultSpawnScatter = 22 -- studs; enemies spread out around their spawn (attribute Scatter overrides)
 EnemyConfig.PostureBrokenSeconds = 2.5
 EnemyConfig.DefaultStep = 2.5 -- studs every enemy strike steps forward
 EnemyConfig.HitKnockback = 10 -- studs/s pushback when an enemy hit lands
 EnemyConfig.PerilousKnockback = 38
+-- Challenge: enemies hit harder than their listed numbers, attack sooner, and deflect you.
+EnemyConfig.DamageMultiplier = 1.35 -- applied to every enemy hit on a player
+EnemyConfig.PostureMultiplier = 1.25
+EnemyConfig.CooldownMultiplier = 0.8 -- shorter pauses between attacks
+-- Sekiro-style deflects: any aware enemy that isn't mid-swing may deflect your strike. Every
+-- hit you land in a quick string makes the next deflect likelier - stop mashing, read them.
+EnemyConfig.BaseDeflect = 0.18
+EnemyConfig.StringDeflectStep = 0.22 -- added per recent hit
+EnemyConfig.StringWindow = 1.6 -- seconds
+EnemyConfig.MaxDeflect = 0.85
 EnemyConfig.ComboGap = 0.12 -- seconds between strikes in a combo (instead of full recovery)
 EnemyConfig.FlinchSeconds = 0.35
 EnemyConfig.FlinchCooldown = 1.4 -- an enemy cannot be flinch-locked

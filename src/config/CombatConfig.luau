@@ -22,6 +22,8 @@ CombatConfig.BlockAfterParry = true -- holding past the window becomes a block
 CombatConfig.BlockDamageMultiplier = 0.2 -- health damage taken while blocking
 CombatConfig.BlockPostureMultiplier = 1.0 -- posture damage taken while blocking
 CombatConfig.ParryPostureReflect = 0.6 -- fraction of the attack's posture damage dealt back to attacker
+CombatConfig.ParryPostureTaken = 0.25 -- even a perfect deflect costs a little of YOUR posture
+CombatConfig.PerilousParryBonus = 1.5 -- deflecting a perilous attack reflects this much more posture
 CombatConfig.ParryCooldown = 0.35 -- after a whiffed parry
 CombatConfig.ParrySpamPenalty = 0.15 -- extra cooldown per consecutive whiff (anti-mash)
 
@@ -99,7 +101,7 @@ CombatConfig.Severing = { bossFraction = 0.3, hitStop = 0.35 }
 -- Enemy deflects: guarding enemies may deflect your strike outright (no damage).
 CombatConfig.Deflect = {
 	targetPosture = 0.35, -- x the strike's posture damage, still added to the deflecting enemy
-	attackerPosture = 0.3, -- x the strike's posture damage, added to YOU
+	attackerPosture = 0.55, -- x the strike's posture damage, added to YOU
 	counterDelay = 0.15, -- the enemy counterattacks this soon after a deflect
 }
 
