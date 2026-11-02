@@ -14,7 +14,7 @@ ArenaConfig.FallLimit = 40 -- studs below the floor: you are put back on the flo
 -- Per-boss look (floor/wall/accent RGB); anything missing uses Default.
 ArenaConfig.Themes = {
 	Default = { floor = { 90, 86, 82 }, wall = { 60, 56, 58 }, accent = { 255, 140, 60 } },
-	bell_engine = { floor = { 70, 66, 64 }, wall = { 45, 40, 40 }, accent = { 255, 120, 40 }, layout = "Foundry" },
+	kagehisa = { floor = { 120, 90, 70 }, wall = { 40, 30, 32 }, accent = { 230, 40, 50 }, layout = "Courtyard" },
 	sable_crane = { floor = { 70, 66, 72 }, wall = { 40, 36, 44 }, accent = { 230, 60, 50 } },
 	kagura_9 = { floor = { 30, 30, 40 }, wall = { 20, 20, 28 }, accent = { 255, 60, 200 } },
 	archon_helion = { floor = { 230, 225, 215 }, wall = { 200, 192, 180 }, accent = { 255, 205, 90 } },

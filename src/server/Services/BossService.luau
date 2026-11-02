@@ -4,7 +4,7 @@
 -- (PartyService will supply parties in Phase 3). Bosses ignore attack tokens.
 --
 -- Studio setup (TODO(Studio/Agent D + C)):
---   Workspace.BossArenas/<Part> with attribute BossId = "bell_engine"; BossService adds a
+--   Workspace.BossArenas/<Part> with attribute BossId = "kagehisa"; BossService adds a
 --   ProximityPrompt "Challenge" to it. Boss rig: ServerStorage.Bosses/<bossId> (placeholder block
 --   otherwise). Animations: BossConfig move animationId (all placeholders today).
 --
@@ -513,8 +513,8 @@ local function finish(e: Encounter, victory: boolean)
 					firstClear = first,
 				})
 				QuestService.Increment(p, "Boss:" .. e.bossId, 1)
-				if e.bossId == "bell_engine" then
-					AnalyticsService.Onboarding(p, "BellEngineDefeated")
+				if e.bossId == "kagehisa" then
+					AnalyticsService.Onboarding(p, "KagehisaDefeated")
 				end
 			end
 		end
@@ -598,6 +598,8 @@ function BossService.StartEncounter(bossId: string, cframe: CFrame, participants
 				perilousKind = m.perilousKind,
 				pose = m.pose,
 				style = m.style,
+				special = m.special,
+				moveName = m.name,
 				hazard = m.kind,
 				windup = m.windup / def.phases[e.sm.phase].speedMultiplier,
 				active = m.active,

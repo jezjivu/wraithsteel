@@ -500,6 +500,21 @@ local function onTelegraph(e: { [string]: any })
 	flash(model, color, windup, if e.perilous then 0.15 else 0.6)
 	local part = anchorPart(model)
 	local peril = if e.perilous then EffectsConfig.Perilous[e.perilousKind or "Grasp"] or EffectsConfig.Perilous.Grasp else nil
+	-- Signature moves: gold name callout, flare, and a screen banner when it's close.
+	if e.special and part then
+		local gold = Color3.fromRGB(255, 205, 90)
+		floatText(part, "★ " .. string.upper(tostring(e.moveName or "")), gold, 34)
+		flash(model, gold, windup, 0.3)
+		Fx.Burst(part.Position, { texture = Fx.Textures.Fire, color = gold, count = 30, speed = 16, size = 1.4, lifetime = 0.6, acceleration = Vector3.new(0, 10, 0) })
+		Fx.Shockwave(part.Position - Vector3.new(0, 2.5, 0), gold, 10, 0.4)
+		Fx.LightFlash(part.Position, gold, 30, windup)
+		local ch = localPlayer.Character
+		local root = ch and ch:FindFirstChild("HumanoidRootPart")
+		if root and root:IsA("BasePart") and (root.Position - part.Position).Magnitude < 70 then
+			Fx.CenterText(string.upper(tostring(e.moveName or "")), gold, 34, math.min(1, windup + 0.3))
+		end
+		playSound(EffectsConfig.Sounds.heavy, part, 0.6)
+	end
 	local hazard = if type(e.hazard) == "string" then EffectsConfig.HazardLabels[e.hazard] else nil
 	if hazard and part then
 		floatText(part, hazard.text, rgb(hazard.color), 30)

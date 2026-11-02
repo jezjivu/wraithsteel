@@ -221,6 +221,8 @@ local function strike(b: Brain, attackId: string, token: number)
 		style = a.style,
 		hazard = if a.kind and a.kind ~= "Melee" then a.kind else nil,
 		pose = a.pose,
+		special = a.special,
+		moveName = a.name,
 		windup = a.windup,
 		active = a.active,
 		recovery = a.recovery,
@@ -257,6 +259,7 @@ local function strike(b: Brain, attackId: string, token: number)
 				for i = 1, count do
 					local ang = if count > 1 then -spread / 2 + spread * (i - 1) / (count - 1) else 0
 					HazardService.Projectile(b.c, from, CFrame.Angles(0, math.rad(ang), 0):VectorToWorldSpace(aim - from), {
+						visual = a.visual,
 						speed = a.speed or 60, radius = 1.3, range = a.range + 15, damage = a.damage, posture = a.postureDamage,
 						color = color, size = if a.deflectable then 2.4 else 1.2, deflectable = a.deflectable,
 						reflectDamage = a.damage * 4, reflectPosture = a.postureDamage * 4, moveId = attackId,
@@ -267,23 +270,34 @@ local function strike(b: Brain, attackId: string, token: number)
 		end
 		-- Every strike steps the body into the swing; lunge attacks surge much further.
 		lunge(b, a.lunge or EnemyConfig.DefaultStep, a.active)
-		local pos = b.c.root.Position
-		local look = b.c.root.CFrame.LookVector
-		for _, player in Players:GetPlayers() do
-			local pc = CombatService.GetByPlayer(player)
-			if pc and not pc.dead then
-				local tp = pc.root.Position
-				if CombatRules.InArc(pos.X, pos.Z, look.X, look.Z, tp.X, tp.Z, a.range + (a.lunge or 0), a.arcDegrees) then
-					CombatService.ApplyHit(b.c, pc, {
-						damage = a.damage,
-						postureDamage = a.postureDamage,
-						perilous = a.perilous,
-						perilousKind = a.perilousKind,
-						moveId = attackId,
-						knockback = if a.perilous then EnemyConfig.PerilousKnockback else EnemyConfig.HitKnockback,
-					})
+		local function swing()
+			if b.c.dead or b.token ~= token then
+				return
+			end
+			local pos = b.c.root.Position
+			local look = b.c.root.CFrame.LookVector
+			for _, player in Players:GetPlayers() do
+				local pc = CombatService.GetByPlayer(player)
+				if pc and not pc.dead then
+					local tp = pc.root.Position
+					if CombatRules.InArc(pos.X, pos.Z, look.X, look.Z, tp.X, tp.Z, a.range + (a.lunge or 0), a.arcDegrees) then
+						CombatService.ApplyHit(b.c, pc, {
+							damage = a.damage,
+							postureDamage = a.postureDamage,
+							perilous = a.perilous,
+							perilousKind = a.perilousKind,
+							moveId = attackId,
+							knockback = if a.perilous then EnemyConfig.PerilousKnockback else EnemyConfig.HitKnockback,
+						})
+					end
 				end
 			end
+		end
+		swing()
+		-- Flurries: more slashes spread over the active window (each one can be deflected).
+		local extra = a.lingerHits or 0
+		for i = 1, extra do
+			task.delay(a.active * i / (extra + 1), swing)
 		end
 	end)
 end

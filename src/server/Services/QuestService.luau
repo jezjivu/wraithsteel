@@ -2,7 +2,7 @@
 -- QuestService: daily + story quests driven by stat increments from other services.
 --
 -- API:
---   QuestService.Increment(player, stat, amount?)   e.g. "EnemiesDefeated", "Boss:bell_engine"
+--   QuestService.Increment(player, stat, amount?)   e.g. "EnemiesDefeated", "Boss:kagehisa"
 --   QuestService.Claim(player, questId) -> (ok, message)
 --   QuestService.StatIncremented: Signal(player, stat, amount)
 

@@ -40,7 +40,8 @@ export type BossMove = {
 	reflectPosture: number?,
 	color: { number }?,
 	style: string?, -- AnimationConfig style for humanoid bosses (default: alternating slashes)
-	visual: string?, -- projectile look: "Rocket" (default: glowing orb)
+	visual: string?, -- projectile look: "Rocket" | "Crescent" (default: glowing orb)
+	special: boolean?, -- signature move: big gold name callout + flash when it starts
 	pose: string?, -- creature pose (CreatureAnimator): Tiger Swipe/Pounce/Rear/Roar/Spit/Spin; Oni Swing/Slam/Throw/Grab/Leap/Spin/Roar
 	animationId: string,
 }
@@ -87,45 +88,45 @@ BossConfig.Knockback = { normal = 16, wide = 30, perilous = 45, perilousLaunch =
 local PLACEHOLDER_ANIM = "rbxassetid://0"
 
 BossConfig.Bosses = {
-	-- The Thunderbell Engine: the first gate's warden, an iron war machine. EVERYTHING it does
-	-- can be deflected with perfect timing (rockets fly back at it!), or dodged:
-	--   rockets / rocket fist -> dash sideways or deflect   lasers -> step out of the red line
-	--   seismic slam ring -> jump or deflect                  thruster drop -> leave the circle
-	bell_engine = {
-		name = "Thunderbell Engine",
-		title = "Iron Warden of the Cracked Bell",
+	-- Kagehisa, the Crimson Ink Blade: the first gate's warden, a swordmaster duel. Every move can
+	-- be deflected. Specials (gold callouts on screen) are flashy and hit hard:
+	--   Ink Crescent (flying slash - deflect it back), Severing Line (a red line cuts the ground -
+	--   step out or deflect), Moonfall Draw (red: dash INTO it), Falling Petal (sky dive - leave
+	--   the circle), Thousand Cuts (slashes appear around you - move!).
+	kagehisa = {
+		name = "Kagehisa",
+		title = "The Crimson Ink Blade",
 		chapter = 0,
 		kind = "Story",
-		creature = "Mech",
-		maxHealth = 1400,
+		maxHealth = 1500,
 		healthPerExtraPlayer = 0.6,
-		maxPosture = 210,
-		postureRegen = 8,
-		postureBrokenSeconds = 3.5,
-		walkSpeed = 15,
-		deflectChance = 0.3,
+		maxPosture = 220,
+		postureRegen = 11,
+		postureBrokenSeconds = 3.2,
+		walkSpeed = 20,
+		deflectChance = 0.5,
 		moves = {
-			piston_punch = { name = "Piston Jab", pose = "Punch", damage = 18, postureDamage = 22, windup = 0.55, active = 0.15, recovery = 0.55, range = 16, arcDegrees = 110, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
-			one_two = { name = "Piston One-Two", pose = "Punch", damage = 14, postureDamage = 18, windup = 0.45, active = 0.6, recovery = 0.6, range = 16, arcDegrees = 110, weight = 2, cooldown = 3, hits = 2, animationId = PLACEHOLDER_ANIM },
-			hammer_slam = { name = "Hammer-Fist Slam", pose = "Slam", damage = 30, postureDamage = 34, windup = 0.85, active = 0.2, recovery = 0.9, range = 15, arcDegrees = 60, weight = 2, cooldown = 4, animationId = PLACEHOLDER_ANIM },
-			rocket_fist = { name = "Rocket Fist", kind = "Projectile", pose = "Punch", damage = 28, postureDamage = 30, windup = 0.8, active = 0.2, recovery = 0.9, range = 80, minRange = 10, arcDegrees = 360, weight = 3, cooldown = 5, speed = 55, radius = 2.4, deflectable = true, reflectDamage = 120, reflectPosture = 90, color = { 255, 150, 60 }, visual = "Rocket", animationId = PLACEHOLDER_ANIM },
-			rocket_barrage = { name = "Rocket Barrage", kind = "Volley", pose = "Aim", damage = 13, postureDamage = 12, windup = 0.9, active = 0.4, recovery = 0.8, range = 75, minRange = 8, arcDegrees = 360, weight = 3, cooldown = 6, speed = 62, count = 6, spread = 70, radius = 1.4, color = { 255, 120, 50 }, visual = "Rocket", animationId = PLACEHOLDER_ANIM },
-			laser_lance = { name = "Lightning Lance", kind = "Laser", pose = "Laser", damage = 32, postureDamage = 26, windup = 0.6, active = 0.4, recovery = 0.9, range = 90, arcDegrees = 360, weight = 3, cooldown = 6, delay = 0.85, radius = 3.2, color = { 255, 60, 60 }, animationId = PLACEHOLDER_ANIM },
-			seismic_slam = { name = "Seismic Slam", kind = "Wave", pose = "Slam", damage = 22, postureDamage = 16, windup = 0.95, active = 0.3, recovery = 1.0, range = 55, arcDegrees = 360, weight = 2, cooldown = 7, speed = 36, radius = 60, color = { 255, 170, 70 }, animationId = PLACEHOLDER_ANIM },
-			thruster_drop = { name = "Thruster Drop", kind = "Leap", pose = "Leap", damage = 34, postureDamage = 24, windup = 0.6, active = 1.1, recovery = 1.0, range = 75, minRange = 14, arcDegrees = 360, weight = 3, cooldown = 7, radius = 13, delay = 1.1, color = { 120, 180, 255 }, animationId = PLACEHOLDER_ANIM },
-			laser_sweep = { name = "Thunder Sweep", kind = "LaserSweep", pose = "Laser", damage = 26, postureDamage = 20, windup = 0.8, active = 1.2, recovery = 1.0, range = 85, arcDegrees = 360, weight = 2, cooldown = 9, count = 6, spread = 110, delay = 0.7, radius = 3, color = { 255, 60, 60 }, animationId = PLACEHOLDER_ANIM },
-			missile_rain = { name = "Missile Rain", kind = "Rain", pose = "Aim", damage = 28, postureDamage = 12, windup = 1.0, active = 0.3, recovery = 1.0, range = 80, arcDegrees = 360, weight = 2, cooldown = 11, count = 10, radius = 8, delay = 1.25, color = { 255, 110, 40 }, animationId = PLACEHOLDER_ANIM },
-			turbine_spin = { name = "Turbine Spin", pose = "Spin", damage = 12, postureDamage = 12, windup = 0.7, active = 1.4, recovery = 1.0, range = 16, arcDegrees = 360, weight = 2, cooldown = 9, hits = 5, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
+			crimson_cut = { name = "Crimson Cut", style = "SlashRight", damage = 20, postureDamage = 22, windup = 0.38, active = 0.12, recovery = 0.4, range = 11, arcDegrees = 120, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
+			returning_cut = { name = "Returning Cut", style = "SlashLeft", damage = 20, postureDamage = 22, windup = 0.34, active = 0.12, recovery = 0.4, range = 11, arcDegrees = 120, weight = 3, cooldown = 0, animationId = PLACEHOLDER_ANIM },
+			ink_flurry = { name = "Ink Flurry", style = "Spin", special = true, damage = 11, postureDamage = 14, windup = 0.5, active = 1.0, recovery = 0.6, range = 12, arcDegrees = 140, weight = 2, cooldown = 5, hits = 6, animationId = PLACEHOLDER_ANIM },
+			moonfall_draw = { name = "Moonfall Draw", style = "Thrust", special = true, damage = 38, postureDamage = 36, windup = 0.85, active = 0.3, recovery = 0.9, range = 30, minRange = 8, arcDegrees = 30, weight = 2, cooldown = 6, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
+			ink_crescent = { name = "Ink Crescent", style = "SlashRight", special = true, kind = "Projectile", damage = 26, postureDamage = 28, windup = 0.6, active = 0.2, recovery = 0.6, range = 70, arcDegrees = 360, weight = 3, cooldown = 5, speed = 70, radius = 2.6, deflectable = true, reflectDamage = 130, reflectPosture = 90, color = { 230, 40, 50 }, visual = "Crescent", animationId = PLACEHOLDER_ANIM },
+			crossing_ink = { name = "Crossing Ink", style = "SlashLeft", special = true, kind = "Volley", damage = 16, postureDamage = 18, windup = 0.7, active = 0.2, recovery = 0.7, range = 65, minRange = 10, arcDegrees = 360, weight = 2, cooldown = 7, speed = 75, count = 3, spread = 40, radius = 2.2, color = { 230, 40, 50 }, visual = "Crescent", animationId = PLACEHOLDER_ANIM },
+			severing_line = { name = "Severing Line", style = "Overhead", special = true, kind = "Laser", damage = 32, postureDamage = 28, windup = 0.55, active = 0.3, recovery = 0.8, range = 70, arcDegrees = 360, weight = 2, cooldown = 6, delay = 0.6, radius = 3, color = { 230, 30, 40 }, animationId = PLACEHOLDER_ANIM },
+			ink_tide = { name = "Ink Tide", style = "Sweep", special = true, kind = "Wave", damage = 22, postureDamage = 16, windup = 0.8, active = 0.3, recovery = 0.8, range = 50, arcDegrees = 360, weight = 2, cooldown = 8, speed = 40, radius = 55, color = { 200, 30, 50 }, animationId = PLACEHOLDER_ANIM },
+			falling_petal = { name = "Falling Petal", style = "AirSlam", special = true, kind = "Leap", damage = 34, postureDamage = 26, windup = 0.5, active = 0.9, recovery = 0.9, range = 70, minRange = 14, arcDegrees = 360, weight = 2, cooldown = 7, radius = 11, delay = 0.9, color = { 255, 150, 180 }, animationId = PLACEHOLDER_ANIM },
+			thousand_cuts = { name = "Thousand Cuts", style = "CastSky", special = true, kind = "Rain", damage = 26, postureDamage = 14, windup = 0.8, active = 0.3, recovery = 1.0, range = 70, arcDegrees = 360, weight = 2, cooldown = 10, count = 9, radius = 7, delay = 0.9, color = { 230, 40, 50 }, animationId = PLACEHOLDER_ANIM },
+			low_reap = { name = "Low Reap", style = "Sweep", damage = 24, postureDamage = 14, windup = 0.55, active = 0.2, recovery = 0.6, range = 12, arcDegrees = 220, weight = 1, cooldown = 5, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
-			{ hpThreshold = 1.0, moves = { "piston_punch", "hammer_slam", "rocket_fist", "rocket_barrage", "laser_lance" }, speedMultiplier = 1, transitionSeconds = 0 },
-			{ hpThreshold = 0.6, moves = { "piston_punch", "one_two", "hammer_slam", "rocket_fist", "rocket_barrage", "laser_lance", "seismic_slam", "thruster_drop", "laser_sweep" }, speedMultiplier = 1.15, transitionSeconds = 2.5 },
-			{ hpThreshold = 0.3, moves = { "piston_punch", "one_two", "rocket_fist", "rocket_barrage", "laser_sweep", "seismic_slam", "thruster_drop", "missile_rain", "turbine_spin" }, speedMultiplier = 1.3, enrage = true, transitionSeconds = 2.5 },
+			{ hpThreshold = 1.0, moves = { "crimson_cut", "returning_cut", "moonfall_draw", "ink_crescent", "low_reap" }, speedMultiplier = 1, transitionSeconds = 0 },
+			{ hpThreshold = 0.6, moves = { "crimson_cut", "returning_cut", "moonfall_draw", "ink_crescent", "low_reap", "ink_flurry", "crossing_ink", "severing_line", "falling_petal" }, speedMultiplier = 1.15, transitionSeconds = 2.5 },
+			{ hpThreshold = 0.3, moves = { "crimson_cut", "returning_cut", "moonfall_draw", "ink_flurry", "crossing_ink", "severing_line", "falling_petal", "ink_tide", "thousand_cuts" }, speedMultiplier = 1.3, enrage = true, transitionSeconds = 2.5 },
 		},
-		idleBetweenMoves = 0.55,
+		idleBetweenMoves = 0.45,
 		rewards = { ember = 400, xp = 500, jadeFirstClear = 25 },
 		modelId = 0,
-		look = { skin = { 120, 200, 255 }, body = { 150, 152, 160 }, legs = { 55, 56, 64 }, accent = { 230, 180, 60 }, glow = { 255, 60, 50 }, scale = 2.4 },
+		look = { skin = { 230, 215, 205 }, body = { 150, 25, 35 }, legs = { 25, 20, 25 }, headwear = "Hair", accent = { 230, 40, 50 }, glow = { 255, 60, 70 }, weapon = "jian_ninth_bell", scale = 1.45 },
 	},
 	-- Optional duel (Ashen Village): a pure posture fight. Deflects everything you mash.
 	sable_crane = {

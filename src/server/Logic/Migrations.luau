@@ -42,31 +42,45 @@ Migrations.Steps = {
 			data.saga = { quest = 1, step = 1, progress = 0, started = false }
 		end
 	end,
-	-- v4 -> v5: the first boss was remade (rust_tiger -> bell_engine); keep earned unlocks.
+	-- v4 -> v5: the first boss was remade (rust_tiger -> kagehisa); keep earned unlocks.
 	[5] = function(data: { [string]: any })
 		local d = data.bossesDefeated
 		if type(d) == "table" and d.rust_tiger then
-			d.bell_engine = (d.bell_engine or 0) + d.rust_tiger
+			d.kagehisa = (d.kagehisa or 0) + d.rust_tiger
 			d.rust_tiger = nil
 		end
 		local q = data.quests
 		if type(q) == "table" and q.s_prologue_tiger then
-			q.s_prologue_engine = q.s_prologue_tiger
+			q.s_prologue_kagehisa = q.s_prologue_tiger
 			q.s_prologue_tiger = nil
 		end
 	end,
-	-- v5 -> v6: the first boss was remade again (bell_oni -> bell_engine).
+	-- v5 -> v6: the first boss was remade again (bell_oni -> kagehisa).
 	[6] = function(data: { [string]: any })
 		local d = data.bossesDefeated
 		if type(d) == "table" and d.bell_oni then
-			d.bell_engine = (d.bell_engine or 0) + d.bell_oni
+			d.kagehisa = (d.kagehisa or 0) + d.bell_oni
 			d.bell_oni = nil
 		end
 		local q = data.quests
 		if type(q) == "table" and q.s_prologue_oni then
-			q.s_prologue_engine = q.s_prologue_oni
+			q.s_prologue_kagehisa = q.s_prologue_oni
 			q.s_prologue_oni = nil
 		end
+	end,
+	-- v6 -> v7: the first boss is Kagehisa now (bell_engine -> kagehisa); arts were reworked.
+	[7] = function(data: { [string]: any })
+		local d = data.bossesDefeated
+		if type(d) == "table" and d.bell_engine then
+			d.kagehisa = (d.kagehisa or 0) + d.bell_engine
+			d.bell_engine = nil
+		end
+		local q = data.quests
+		if type(q) == "table" and q.s_prologue_engine then
+			q.s_prologue_kagehisa = q.s_prologue_engine
+			q.s_prologue_engine = nil
+		end
+		data.spellLoadout = { "thousand_cuts", "ghost_step", "crescent_wave" }
 	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 

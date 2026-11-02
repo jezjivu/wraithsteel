@@ -46,7 +46,7 @@ local function fire(p: BasePart, color: Color3)
 	l.Parent = p
 end
 
--- The Thunderbell Engine's arena: a ruined bell foundry. Cover pillars to hide from rockets and
+-- The Kagehisa's arena: a ruined bell foundry. Cover pillars to hide from rockets and
 -- lasers, molten channels in the floor, steam vents, pipes on the walls, the cracked bell.
 local function foundry(m: Model, center: Vector3, R: number, accent: Color3)
 	local steel = Color3.fromRGB(70, 68, 72)
@@ -96,6 +96,61 @@ local function foundry(m: Model, center: Vector3, R: number, accent: Color3)
 	l.Range = 50
 	l.Brightness = 2
 	l.Parent = crack
+end
+
+-- Kagehisa's arena: a moonlit courtyard. Sakura ring, stone lanterns, a broken torii, a moon.
+local function courtyard(m: Model, center: Vector3, R: number, accent: Color3)
+	local wood = Color3.fromRGB(60, 40, 32)
+	local pink = Color3.fromRGB(255, 180, 205)
+	for i = 0, 9 do
+		local a = i / 10 * math.pi * 2 + 0.3
+		local p = center + Vector3.new(math.cos(a) * R * 0.85, 0, math.sin(a) * R * 0.85)
+		part(m, "Trunk", Vector3.new(11, 1.6, 1.6), CFrame.new(p + Vector3.new(0, 5.5, 0)) * CFrame.Angles(0, a, math.rad(90)), wood, Enum.Material.Wood, Enum.PartType.Cylinder)
+		for k = 1, 4 do
+			local off = Vector3.new(math.cos(k * 1.7) * 3, 11 + (k % 2) * 2, math.sin(k * 1.7) * 3)
+			local c = part(m, "Blossom", Vector3.new(7, 5.5, 7), CFrame.new(p + off), pink, Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+			c.CanCollide = false
+		end
+	end
+	for i = 0, 7 do
+		local a = i / 8 * math.pi * 2
+		local p = center + Vector3.new(math.cos(a) * R * 0.6, 0, math.sin(a) * R * 0.6)
+		part(m, "LanternBase", Vector3.new(2.4, 4, 2.4), CFrame.new(p + Vector3.new(0, 2, 0)), Color3.fromRGB(150, 146, 138), Enum.Material.Slate)
+		local box = part(m, "LanternLight", Vector3.new(1.6, 1.6, 1.6), CFrame.new(p + Vector3.new(0, 4.8, 0)), Color3.fromRGB(255, 190, 110), Enum.Material.Neon)
+		box.CanCollide = false
+		local l = Instance.new("PointLight")
+		l.Color = Color3.fromRGB(255, 180, 100)
+		l.Range = 20
+		l.Brightness = 1.2
+		l.Parent = box
+		part(m, "LanternRoof", Vector3.new(3.2, 0.6, 3.2), CFrame.new(p + Vector3.new(0, 5.9, 0)), Color3.fromRGB(150, 146, 138), Enum.Material.Slate)
+	end
+	-- Broken torii behind Kagehisa.
+	local back = center + Vector3.new(0, 0, -R * 0.78)
+	for _, x in { -11, 11 } do
+		local h = if x < 0 then 20 else 12
+		part(m, "ToriiPillar", Vector3.new(h, 2, 2), CFrame.new(back + Vector3.new(x, h / 2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(190, 40, 30), Enum.Material.Wood, Enum.PartType.Cylinder)
+	end
+	part(m, "ToriiBeam", Vector3.new(30, 1.6, 2.2), CFrame.new(back + Vector3.new(-2, 19, 0)) * CFrame.Angles(0, 0, math.rad(-14)), Color3.fromRGB(30, 25, 25), Enum.Material.Wood)
+	-- A huge moon in the sky.
+	local moon = part(m, "Moon", Vector3.new(1, 60, 60), CFrame.new(center + Vector3.new(0, 120, -260)) * CFrame.Angles(0, math.rad(90), 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 235, 225), Enum.Material.Neon, Enum.PartType.Cylinder)
+	moon.CanCollide = false
+	-- Falling petals over the whole courtyard.
+	local sky = part(m, "PetalSky", Vector3.new(R * 2, 1, R * 2), CFrame.new(center + Vector3.new(0, 30, 0)), pink, Enum.Material.SmoothPlastic)
+	sky.Transparency = 1
+	sky.CanCollide = false
+	local e = Instance.new("ParticleEmitter")
+	e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	e.Color = ColorSequence.new(pink)
+	e.Size = NumberSequence.new(0.5, 0.3)
+	e.Lifetime = NumberRange.new(8, 12)
+	e.Rate = 30
+	e.Speed = NumberRange.new(1, 2)
+	e.Acceleration = Vector3.new(1.5, -2.5, 0.5)
+	e.Shape = Enum.ParticleEmitterShape.Box
+	e.EmissionDirection = Enum.NormalId.Bottom
+	e.Parent = sky
+	local _ = accent
 end
 
 function ArenaBuilder.Build(center: Vector3, theme: { floor: { number }, wall: { number }, accent: { number }, layout: string? }): Model
@@ -176,6 +231,8 @@ function ArenaBuilder.Build(center: Vector3, theme: { floor: { number }, wall: {
 	e.Parent = sky
 	if theme.layout == "Foundry" then
 		foundry(m, center, R, accent)
+	elseif theme.layout == "Courtyard" then
+		courtyard(m, center, R, accent)
 	end
 	m:SetAttribute("Radius", R)
 	return m

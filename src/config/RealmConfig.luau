@@ -48,7 +48,7 @@ RealmConfig.Realms = {
 		order = 2,
 		origin = { -4000, 0, 0 },
 		half = 360,
-		unlockBoss = "bell_engine",
+		unlockBoss = "kagehisa",
 		color = { 60, 230, 255 },
 		areas = {
 			{ id = "neon_square", name = "Circuit Square", subtitle = "Holograms where the stars should be", center = { 0, 0 }, radius = 50 },

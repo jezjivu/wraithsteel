@@ -38,7 +38,7 @@ not touched by Rojo - save the place file as usual.
 
 - `Workspace.EnemySpawns` folder with Parts; give each Part attributes `EnemyId`
   (`rustbound_bandit` or `lantern_ghoul`), `Count` (number) and `RespawnSeconds` (number).
-- `Workspace.BossArenas` folder with a Part that has attribute `BossId = "bell_engine"`.
+- `Workspace.BossArenas` folder with a Part that has attribute `BossId = "kagehisa"`.
   Walk up to it and hold the "Challenge" prompt.
 - Without rigs, enemies and the boss appear as plain blocks. Put real rigs in
   `ServerStorage.Enemies/<enemyId>` and `ServerStorage.Bosses/<bossId>`.
@@ -59,7 +59,7 @@ Red (perilous) attacks can't be guarded: dash INTO a Pierce, jump over a Sweep, 
 Grasp. Guarding enemies and bosses deflect your strings and counter - don't just mash.
 
 The world has three realms joined by portals: **Ashen Valley** (feudal Japan, where you start),
-**Neon Verge** (a rainy cyberpunk city; its portal by the hub opens after the Thunderbell Engine) and
+**Neon Verge** (a rainy cyberpunk city; its portal by the hub opens after Kagehisa) and
 **Aeloria** (an ancient Greek island; opens after Kagura-9). Follow the story: talk to NPCs with a
 gold **!** over their heads; the objective (top right) and the waypoint beam lead the way.
 Rest at **Waystones** to heal, refill your flask and set your respawn; the Travel menu warps
@@ -100,7 +100,7 @@ The hub town (Ninefold Crossing) is generated automatically if `Workspace.Hub` d
 
 A long, linear journey north from the hub: Torii Road -> Whispering Bamboo -> Lantern
 Graveyard -> Red Maple Gorge -> Ashen Village -> Thousand-Step Stair -> Temple of the Silent
-Bell -> Gate of the Cracked Bell, where the **Thunderbell Engine** waits. Mountains wall the road; rest at
+Bell -> Gate of the Cracked Bell, where the **Kagehisa** waits. Mountains wall the road; rest at
 the waystones (hub, graveyard, village, temple). If you built the world into your place
 before, rebuild it: Command Bar ->
 `require(game.ServerScriptService.EditTools).ClearWorld()` then `...BuildWorld()`.

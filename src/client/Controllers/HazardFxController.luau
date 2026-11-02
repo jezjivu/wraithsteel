@@ -48,7 +48,7 @@ local function neon(size: Vector3, cf: CFrame, color: Color3, shape: Enum.PartTy
 	return p
 end
 
-type Orb = { part: Part, core: Part, from: Vector3, vel: Vector3, start: number, range: number, deflectable: boolean, rocket: boolean }
+type Orb = { part: Part, core: Part, from: Vector3, vel: Vector3, start: number, range: number, deflectable: boolean, rocket: boolean, crescent: boolean }
 local orbs: { [number]: Orb } = {}
 
 local function onProjectile(e: { [string]: any })
@@ -57,10 +57,25 @@ local function onProjectile(e: { [string]: any })
 	local color = rgb(e.color)
 	local size = tonumber(e.size) or 2
 	local rocket = e.visual == "Rocket" and not e.reflected
-	local orb = if rocket
+	local crescent = e.visual == "Crescent"
+	local orb = if crescent
+		then neon(Vector3.new(size * 3.6, 0.3, size * 0.9), CFrame.lookAt(from, from + vel), color)
+		elseif rocket
 		then neon(Vector3.new(size * 2.4, size * 0.7, size * 0.7), CFrame.lookAt(from, from + vel) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(70, 70, 78), Enum.PartType.Cylinder)
 		else neon(Vector3.new(size, size, size), CFrame.new(from), color, Enum.PartType.Ball)
-	if rocket then
+	if crescent then
+		orb.Transparency = 0.05
+		local glowTrail = Instance.new("ParticleEmitter")
+		glowTrail.Texture = Fx.Textures.Sparkle
+		glowTrail.Color = ColorSequence.new(color)
+		glowTrail.LightEmission = 1
+		glowTrail.Size = NumberSequence.new(size * 0.8, 0)
+		glowTrail.Lifetime = NumberRange.new(0.2, 0.35)
+		glowTrail.Rate = 120
+		glowTrail.Speed = NumberRange.new(0, 0.5)
+		glowTrail.Shape = Enum.ParticleEmitterShape.Box
+		glowTrail.Parent = orb
+	elseif rocket then
 		orb.Material = Enum.Material.Metal
 		-- Smoke trail behind the rocket.
 		local smoke = Instance.new("ParticleEmitter")
@@ -102,7 +117,7 @@ local function onProjectile(e: { [string]: any })
 		ring.Transparency = 0
 		ring.Parent = orb
 	end
-	orbs[e.id] = { part = orb, core = core, from = from, vel = vel, start = os.clock(), range = tonumber(e.range) or 80, deflectable = e.deflectable == true, rocket = rocket }
+	orbs[e.id] = { part = orb, core = core, from = from, vel = vel, start = os.clock(), range = tonumber(e.range) or 80, deflectable = e.deflectable == true, rocket = rocket, crescent = crescent }
 	Fx.Burst(from, { texture = Fx.Textures.Fire, color = color, count = 14, speed = 14, size = 1.2, lifetime = 0.3 })
 	SpellFx.Sound(EffectsConfig.Sounds.cast, from, if e.reflected then 1.6 else 0.7, 0.6)
 end
@@ -274,7 +289,12 @@ function HazardFxController.Start()
 				orbs[id] = nil
 				continue
 			end
-			if o.rocket then
+			if o.crescent then
+				-- A spinning-free, tilted slash of light flying flat.
+				o.part.CFrame = CFrame.lookAt(pos, pos + o.vel) * CFrame.Angles(0, 0, math.rad(25))
+				o.core.CFrame = o.part.CFrame
+				o.core.Size = Vector3.new(o.part.Size.X * 0.7, 0.15, 0.3)
+			elseif o.rocket then
 				local look = CFrame.lookAt(pos, pos + o.vel)
 				o.part.CFrame = look * CFrame.Angles(0, math.rad(90), 0)
 				o.core.CFrame = look * CFrame.new(0, 0, o.part.Size.X * 0.55) -- exhaust flame
