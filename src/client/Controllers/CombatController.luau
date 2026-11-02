@@ -280,7 +280,7 @@ local function send(action: string)
 	if action == "Flask" then
 		if character then
 			if (tonumber(character:GetAttribute("Flask")) or 0) <= 0 then
-				Fx.CenterText("FLASK EMPTY - rest at the hot springs", Color3.fromRGB(150, 200, 255), 26, 0.6)
+				Fx.CenterText("FLASK EMPTY - rest at a waystone", Color3.fromRGB(150, 200, 255), 26, 0.6)
 				return
 			end
 			AnimationController.Play(character, "Drink", nil, { windup = 0.2, active = 0.35, recovery = 0.25 })

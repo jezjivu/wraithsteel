@@ -192,9 +192,9 @@ cases["AIScheduler runs each agent at tick rate, capped per step"] = function()
 	expectTrue(s:Step(5) >= 1)
 end
 
-cases["Rust Tiger: chase -> move -> recovery -> chase, phase 2 at 50%"] = function()
+cases["Bell Oni: chase -> move -> recovery -> chase, phase 2 at 50%"] = function()
 	local events = {}
-	local m = BossStateMachine.new("rust_tiger", function()
+	local m = BossStateMachine.new("bell_oni", function()
 		return 0
 	end, function(e, ...)
 		table.insert(events, e)
@@ -204,7 +204,7 @@ cases["Rust Tiger: chase -> move -> recovery -> chase, phase 2 at 50%"] = functi
 	expectEq(m.state, "Chase")
 	m:Update(0.1, ctx)
 	expectEq(m.state, "Windup")
-	expectEq(m.move, "claw_swipe") -- only in-range move at distance 5 with rng 0
+	expectEq(m.move, "hammer_sweep") -- first in-range move at distance 5 with rng 0
 	m:Update(1, ctx)
 	expectEq(m.state, "Active")
 	m:Update(1.2, ctx)
@@ -224,21 +224,21 @@ cases["Rust Tiger: chase -> move -> recovery -> chase, phase 2 at 50%"] = functi
 	expectTrue(table.find(events, "Died") ~= nil)
 end
 
-cases["Rust Tiger: gap closer only at range, break interrupts"] = function()
-	local m = BossStateMachine.new("rust_tiger", function()
+cases["Bell Oni: ranged move at range, break interrupts"] = function()
+	local m = BossStateMachine.new("bell_oni", function()
 		return 0
 	end, function() end)
 	m:Update(0, { hasTarget = true, targetDistance = 20, hpFraction = 1 })
 	m:Update(0.1, { hasTarget = true, targetDistance = 20, hpFraction = 1 })
-	expectEq(m.move, "pounce")
+	expectEq(m.move, "bell_orb") -- melee is out of reach at 20 studs; the orb is not
 	m:Break(0.2)
 	expectEq(m.state, "Broken")
 	expectEq(m.move, nil)
-	m:Update(0.3 + BossConfig.Bosses.rust_tiger.postureBrokenSeconds, { hasTarget = true, targetDistance = 20, hpFraction = 1 })
+	m:Update(0.3 + BossConfig.Bosses.bell_oni.postureBrokenSeconds, { hasTarget = true, targetDistance = 20, hpFraction = 1 })
 	expectEq(m.state, "Chase")
-	local def = BossConfig.Bosses.rust_tiger
-	expectEq(BossStateMachine.ScaledHealth("rust_tiger", 1), def.maxHealth)
-	expectEq(BossStateMachine.ScaledHealth("rust_tiger", 4), math.floor(def.maxHealth * (1 + 3 * def.healthPerExtraPlayer) + 0.5))
+	local def = BossConfig.Bosses.bell_oni
+	expectEq(BossStateMachine.ScaledHealth("bell_oni", 1), def.maxHealth)
+	expectEq(BossStateMachine.ScaledHealth("bell_oni", 4), math.floor(def.maxHealth * (1 + 3 * def.healthPerExtraPlayer) + 0.5))
 end
 
 cases["Combat routes: air attack once per jump, dash strike, combo finisher"] = function()

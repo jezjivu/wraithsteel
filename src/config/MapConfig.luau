@@ -1,99 +1,88 @@
 --!strict
--- MapConfig: the generated Japanese-inspired world ("The Wilds of the Nine Gates") that
--- MapService builds when the place has no Studio map (Workspace.World missing and no existing
--- terrain). Layout (studs, x/z): the hub town sits south at z=150; the stone path runs north
--- through torii gates past every area. Owner: Agent D (replace with a hand-built map later;
--- keep the EnemySpawns / BossArenas folders and attributes).
+-- MapConfig: Ashen Valley, the first realm (feudal Japan), rebuilt as one long LINEAR journey.
+-- World/ValleyBuilder builds it (MapService calls it) when the place has no Workspace.World.
+--
+-- The route runs from the hub's north gate (z = 80) far north through a chain of zones, each a
+-- wide clearing joined to the next by a mountain-walled road. Steep rock ridges on both sides
+-- keep you on the road; the last third climbs a long stair to a high plateau (y = 50).
+--   Ninefold Crossing (hub) -> Torii Road -> Whispering Bamboo -> Lantern Graveyard ->
+--   Red Maple Gorge (river + bridge) -> Ashen Village -> Thousand-Step Stair ->
+--   Temple of the Silent Bell (plateau) -> Gate of the Cracked Bell (first boss)
+-- Everything is placed by raycasting the finished terrain, so nothing ends up in the ground.
 
 export type XZ = { number } -- {x, z}
+export type RoutePoint = { at: XZ, half: number, y: number } -- corridor half-width, ground height
+export type AreaDef = { id: string, name: string, subtitle: string, center: XZ, radius: number, theme: string, y: number }
 
 local MapConfig = {}
 
-MapConfig.Seed = 9 -- deterministic prop scatter
-MapConfig.GroundSize = { 640, 700 } -- terrain grass area (x, z), centered on GroundCenter
-MapConfig.GroundCenter = { 0, -40 }
+MapConfig.Seed = 9
 
--- Main stone path from the hub gate north to the world-boss clearing.
-MapConfig.Path = { from = { 0, 88 }, to = { 0, -205 }, width = 12 }
--- Side paths to each area (start, end).
-MapConfig.SidePaths = {
-	{ { 0, 40 }, { -45, 40 } },
-	{ { 0, 50 }, { 55, 50 } },
-	{ { 0, -10 }, { 45, -10 } },
-	{ { 0, -60 }, { -60, -60 } },
-	{ { 0, -80 }, { 80, -80 } },
-	{ { 0, 15 }, { 116, 15 } },
-	{ { -60, -60 }, { -122, -68 } },
-	{ { 80, -80 }, { 118, -152 } },
-	{ { 0, -165 }, { -88, -188 } },
-}
-MapConfig.SidePathWidth = 8
+-- The road, as a polyline. Ground height is linear between points (the stair segment rises).
+MapConfig.Route = {
+	{ at = { 0, 80 }, half = 26, y = 0 }, -- hub north gate
+	{ at = { 0, -120 }, half = 24, y = 0 }, -- Torii Road
+	{ at = { 30, -420 }, half = 30, y = 0 }, -- Whispering Bamboo
+	{ at = { 300, -700 }, half = 28, y = 0 }, -- Lantern Graveyard
+	{ at = { 330, -1080 }, half = 32, y = 0 }, -- Red Maple Gorge
+	{ at = { 20, -1380 }, half = 30, y = 0 }, -- Ashen Village
+	{ at = { -300, -1560 }, half = 26, y = 0 }, -- stair foot
+	{ at = { -300, -1780 }, half = 26, y = 50 }, -- stair top (the stair segment)
+	{ at = { -330, -1960 }, half = 34, y = 50 }, -- Temple of the Silent Bell
+	{ at = { -40, -2240 }, half = 30, y = 50 }, -- Bell Pass
+	{ at = { 0, -2420 }, half = 40, y = 50 }, -- Gate of the Cracked Bell
+} :: { RoutePoint }
 
--- Single torii gates along the path, plus a dense tunnel of gates (senbon-style) further north.
-MapConfig.Torii = { 70, 20, -30 } -- z positions on the main path
-MapConfig.ToriiTunnel = { from = -95, to = -124, spacing = 6 }
-MapConfig.LanternSpacing = 22 -- stone lanterns along both sides of the main path
+MapConfig.StairSegment = 7 -- route segment index (7 -> 8) built as a stone stair
+MapConfig.PlateauY = 50
 
--- Areas: name for the zone banner, center, radius, decoration theme.
+-- Zones (clearings along the road). `y` = ground height there.
 MapConfig.Areas = {
-	{ id = "bamboo", name = "Whispering Bamboo Path", subtitle = "Bandits lurk between the stalks", center = { 0, -45 }, radius = 40, theme = "Bamboo" },
-	{ id = "graves", name = "Lantern Graveyard", subtitle = "The dead still carry their lights", center = { 45, -10 }, radius = 26, theme = "Graves" },
-	{ id = "maples", name = "Red Maple Grove", subtitle = "Leaves like falling embers", center = { -45, 40 }, radius = 28, theme = "Maples" },
-	{ id = "garden", name = "Garden of Still Stones", subtitle = "Raked sand, patient guardians", center = { 55, 50 }, radius = 24, theme = "Garden" },
-	{ id = "tiger_shrine", name = "Shrine of the Rust Tiger", subtitle = "A warden that never sleeps", center = { -60, -60 }, radius = 26, theme = "Shrine" },
-	{ id = "temple", name = "Temple of the Silent Bell", subtitle = "The abbot keeps his vow", center = { 80, -80 }, radius = 28, theme = "Temple" },
-	{ id = "pond", name = "Koi Moon Pond", subtitle = "Still water, quiet bridge", center = { -85, -5 }, radius = 22, theme = "Pond" },
-	{ id = "pagoda", name = "Five-Roof Pagoda", subtitle = "It watches the whole valley", center = { -40, -115 }, radius = 18, theme = "Pagoda" },
-	{ id = "hollow", name = "Carillon Hollow", subtitle = "Something huge rings here", center = { 0, -165 }, radius = 34, theme = "Hollow" },
-	{ id = "springs", name = "Steaming Springs", subtitle = "Rest here: wounds close fast", center = { 140, 15 }, radius = 26, theme = "Springs" },
-	{ id = "village", name = "Ashen Village", subtitle = "Burned the night the bell cracked", center = { -150, -70 }, radius = 32, theme = "Village" },
-	{ id = "gorge", name = "Falling Petal Gorge", subtitle = "A river born from the mountain", center = { 125, -180 }, radius = 30, theme = "Gorge" },
-	{ id = "stairs", name = "Thousand-Step Stair", subtitle = "Every step a prayer", center = { -130, -190 }, radius = 30, theme = "Stairs" },
-}
+	{ id = "torii_road", name = "Torii Road", subtitle = "A hundred gates, one way forward", center = { 0, -60 }, radius = 40, theme = "ToriiRoad", y = 0 },
+	{ id = "bamboo", name = "Whispering Bamboo", subtitle = "Bandits lurk between the stalks", center = { 30, -420 }, radius = 85, theme = "Bamboo", y = 0 },
+	{ id = "graves", name = "Lantern Graveyard", subtitle = "The dead still carry their lights", center = { 300, -700 }, radius = 85, theme = "Graves", y = 0 },
+	{ id = "springs", name = "Steaming Springs", subtitle = "Rest here: wounds close fast", center = { 360, -860 }, radius = 30, theme = "Springs", y = 0 },
+	{ id = "gorge", name = "Red Maple Gorge", subtitle = "A river born from the mountain", center = { 330, -1080 }, radius = 100, theme = "Gorge", y = 0 },
+	{ id = "village", name = "Ashen Village", subtitle = "Burned the night the bell cracked", center = { 20, -1380 }, radius = 100, theme = "Village", y = 0 },
+	{ id = "stairs", name = "Thousand-Step Stair", subtitle = "Every step a prayer", center = { -300, -1660 }, radius = 40, theme = "Stairs", y = 25 },
+	{ id = "temple", name = "Temple of the Silent Bell", subtitle = "The abbot keeps his vow", center = { -330, -1960 }, radius = 110, theme = "Temple", y = 50 },
+	{ id = "bell_gate", name = "Gate of the Cracked Bell", subtitle = "The Oni waits where the bell fell", center = { 0, -2420 }, radius = 110, theme = "BellGate", y = 50 },
+} :: { AreaDef }
 
--- Areas where players heal quickly even in combat (fraction of max health per second).
 MapConfig.HealAreas = { springs = 0.15 }
 
--- Enemy spawn points (created in Workspace.EnemySpawns if that folder does not exist).
+-- Enemy spawn points, spread along the journey (difficulty rises as you go).
 MapConfig.EnemySpawns = {
-	{ name = "BambooBandits", enemyId = "rustbound_bandit", count = 3, respawn = 15, at = { 0, -45 } },
-	{ name = "BambooBandits2", enemyId = "rustbound_bandit", count = 2, respawn = 18, at = { -18, -70 } },
-	{ name = "GraveGhouls", enemyId = "lantern_ghoul", count = 3, respawn = 20, at = { 45, -10 } },
-	{ name = "MapleStalkers", enemyId = "rustwood_stalker", count = 2, respawn = 25, at = { -45, 40 } },
-	{ name = "GardenSentinel", enemyId = "rust_eaten_sentinel", count = 1, respawn = 30, at = { 55, 50 } },
-	{ name = "VillageGhouls", enemyId = "lantern_ghoul", count = 3, respawn = 20, at = { -150, -70 } },
-	{ name = "VillageBandits", enemyId = "rustbound_bandit", count = 2, respawn = 18, at = { -138, -52 } },
-	{ name = "GorgeStalkers", enemyId = "rustwood_stalker", count = 2, respawn = 25, at = { 120, -160 } },
-	{ name = "StairSentinel", enemyId = "rust_eaten_sentinel", count = 1, respawn = 35, at = { -86, -188 } },
-	{ name = "PagodaDuelists", enemyId = "ashen_duelist", count = 2, respawn = 25, at = { -40, -100 } },
-	{ name = "VillageDuelist", enemyId = "ashen_duelist", count = 1, respawn = 25, at = { -160, -85 } },
-	{ name = "PondBrute", enemyId = "mire_brute", count = 1, respawn = 35, at = { -95, 10 } },
-	{ name = "GorgeBrute", enemyId = "mire_brute", count = 1, respawn = 35, at = { 135, -190 } },
+	{ name = "ToriiBandits", enemyId = "rustbound_bandit", count = 2, respawn = 18, at = { 10, -200 } },
+	{ name = "BambooBandits", enemyId = "rustbound_bandit", count = 3, respawn = 18, at = { 40, -400 } },
+	{ name = "BambooBandits2", enemyId = "rustbound_bandit", count = 2, respawn = 18, at = { -10, -460 } },
+	{ name = "RoadGhouls", enemyId = "lantern_ghoul", count = 2, respawn = 20, at = { 170, -570 } },
+	{ name = "GraveGhouls", enemyId = "lantern_ghoul", count = 4, respawn = 20, at = { 300, -720 } },
+	{ name = "GorgeStalkers", enemyId = "rustwood_stalker", count = 3, respawn = 25, at = { 330, -1040 } },
+	{ name = "GorgeBrute", enemyId = "mire_brute", count = 1, respawn = 35, at = { 300, -1130 } },
+	{ name = "VillageDuelists", enemyId = "ashen_duelist", count = 3, respawn = 25, at = { 30, -1360 } },
+	{ name = "VillageBandits", enemyId = "rustbound_bandit", count = 3, respawn = 18, at = { -20, -1420 } },
+	{ name = "StairSentinel", enemyId = "rust_eaten_sentinel", count = 1, respawn = 35, at = { -300, -1540 } },
+	{ name = "TempleStalkers", enemyId = "rustwood_stalker", count = 3, respawn = 25, at = { -320, -1900 } },
+	{ name = "TempleSentinel", enemyId = "rust_eaten_sentinel", count = 1, respawn = 35, at = { -350, -2010 } },
+	{ name = "PassDuelists", enemyId = "ashen_duelist", count = 2, respawn = 25, at = { -160, -2120 } },
 }
 
--- Boss shrines (pad + prompt, created in Workspace.BossArenas if that folder does not exist).
+-- Boss shrines (pads; the fight itself happens in an instanced arena).
 MapConfig.BossArenas = {
-	{ name = "RustTigerArena", bossId = "rust_tiger", at = { -60, -66 } },
-	{ name = "HollowAbbotArena", bossId = "hollow_abbot", at = { 80, -88 } },
-	{ name = "SableCraneArena", bossId = "sable_crane", at = { -165, -58 } },
+	{ name = "SableCraneArena", bossId = "sable_crane", at = { 70, -1440 } },
+	{ name = "HollowAbbotArena", bossId = "hollow_abbot", at = { -330, -2030 } },
+	{ name = "BellOniArena", bossId = "bell_oni", at = { 0, -2470 } },
 }
 
--- Mountains ringing the valley (terrain balls: x, z, radius); snow caps on the tallest.
-MapConfig.Mountains = {
-	{ -220, -300, 110 }, { -60, -330, 120 }, { 120, -320, 115 }, { 260, -230, 100 },
-	{ -290, -120, 90 }, { 290, -40, 85 }, { -300, 80, 90 }, { 300, 140, 95 },
-	{ -240, 260, 80 }, { 240, 300, 85 },
-}
-MapConfig.SnowAbove = 70 -- mountain radius above which a snow cap is added
+-- World boss spawn (open-world encounter in the gorge clearing).
+MapConfig.WorldBossSpawn = { 360, -1100 }
 
--- Scattered trees outside the areas (count, ring of radii around the path).
-MapConfig.SakuraCount = 55
-MapConfig.MapleCount = 20
-MapConfig.ScatterBounds = { -210, 210, -250, 110 } -- minX, maxX, minZ, maxZ for scattered trees/hills
-MapConfig.HillCount = 14 -- low grassy mounds between areas
-MapConfig.PetalRate = 25 -- ambient falling petals per second over the valley
+-- Ridges: rock mountains lining the road (radius range, spacing along the road).
+MapConfig.Ridge = { minRadius = 55, maxRadius = 95, spacing = 55, snowAbove = 85 }
 
--- Performance knobs (lower counts / fewer lights for weak devices).
+MapConfig.PetalRate = 25
+
 -- Terrain material colors (Japanese palette: moss, earth, white gravel).
 MapConfig.MaterialColors = {
 	Grass = { 74, 104, 52 }, -- deep moss
@@ -109,10 +98,9 @@ MapConfig.MaterialColors = {
 } :: { [string]: { number } }
 
 MapConfig.Perf = {
-	FlagstoneSpacing = 3.6, -- studs between flagstones along paths
-	ShadowMinSize = 3, -- parts smaller than this (largest side) cast no shadow
-	LanternLightEvery = 2, -- every Nth stone lantern has a PointLight (the rest just glow)
-	BambooNodeSpacing = 4.5, -- studs between bamboo node rings
+	FlagstoneSpacing = 4.2, -- studs between flagstones along the road
+	ShadowMinSize = 3,
+	LanternLightEvery = 3,
 }
 
 MapConfig.Colors = {
@@ -136,5 +124,24 @@ MapConfig.Colors = {
 	Steam = { 240, 240, 240 },
 	WaterFall = { 170, 215, 235 },
 }
+
+-- Ground height of the road at a point (nearest route segment, linear between points).
+function MapConfig.RoadY(x: number, z: number): number
+	local best, bestY = math.huge, 0
+	local R = MapConfig.Route
+	for i = 1, #R - 1 do
+		local a, b = R[i], R[i + 1]
+		local ax, az, bx, bz = a.at[1], a.at[2], b.at[1], b.at[2]
+		local dx, dz = bx - ax, bz - az
+		local len2 = dx * dx + dz * dz
+		local t = if len2 > 0 then math.clamp(((x - ax) * dx + (z - az) * dz) / len2, 0, 1) else 0
+		local px, pz = ax + dx * t, az + dz * t
+		local d = math.sqrt((x - px) ^ 2 + (z - pz) ^ 2)
+		if d < best then
+			best, bestY = d, a.y + (b.y - a.y) * t
+		end
+	end
+	return bestY
+end
 
 return MapConfig

@@ -59,12 +59,12 @@ SagaConfig.Npcs = {
 		chatter = { "The bell still hums at night. Listen, and you will hear it counting.", "Nine gates. One bell. And you, carrying its echo." },
 	},
 	{
-		id = "oto", name = "Gravekeeper Oto", title = "Lantern-tender", realm = "japan", at = { 30, -2 }, facing = 90,
+		id = "oto", name = "Gravekeeper Oto", title = "Lantern-tender", realm = "japan", at = { 262, -672 }, facing = 120,
 		look = { skin = { 200, 175, 150 }, body = { 60, 60, 55 }, legs = { 45, 45, 40 }, headwear = "Hood", accent = { 80, 75, 65 }, glow = { 255, 190, 90 }, scale = 1 },
 		chatter = { "The dead keep their lanterns lit. I just make sure they stay where they are." },
 	},
 	{
-		id = "sabaki", name = "Sabaki", title = "Ronin of the Ashen Village", realm = "japan", at = { -140, -48 }, facing = 0,
+		id = "sabaki", name = "Sabaki", title = "Ronin of the Ashen Village", realm = "japan", at = { 48, -1340 }, facing = 200,
 		look = { skin = { 210, 180, 150 }, body = { 50, 40, 40 }, legs = { 35, 30, 30 }, headwear = "Hair", accent = { 160, 40, 40 }, weapon = "dao_rustcutter", scale = 1 },
 		chatter = { "I owe a debt to a woman with a crane on her sleeve. One day I'll pay it in steel." },
 	},
@@ -131,7 +131,7 @@ SagaConfig.Quests = {
 		},
 		steps = {
 			{ kind = "Kill", enemies = { "lantern_ghoul" }, count = 4, text = "Lay Lantern Ghouls to rest" },
-			{ kind = "Reach", realm = "japan", at = { 80, -80 }, radius = 22, text = "Visit the Temple of the Silent Bell" },
+			{ kind = "Reach", realm = "japan", at = { 330, -1080 }, radius = 45, text = "Cross the river at Red Maple Gorge" },
 		},
 		outro = { "The temple was quiet? Good. Quiet is rare now.", "A ronin in the Ashen Village has been staring at the road for days. He might need a second blade." },
 		rewards = { ember = 180, xp = 220, jade = 5 },
@@ -152,10 +152,10 @@ SagaConfig.Quests = {
 	{
 		id = "warden", title = "Warden of the Cracked Bell", realm = "japan", giver = "shirane",
 		intro = {
-			"The Rust Tiger guards the first gate. It was made to protect the bell. Now it protects the crack.",
-			"It spits rust and shakes the earth. When it hurls an orb, deflect it straight back.",
+			"Far to the north, past the Thousand-Step Stair and the temple, the Bell Oni sits where the great bell fell.",
+			"It swings a bell for a hammer, leaps across the field and rings the earth. When it throws a bell-orb, deflect it straight back into its face.",
 		},
-		steps = { { kind = "Boss", bossId = "rust_tiger", text = "Defeat the Rust Tiger at its shrine" } },
+		steps = { { kind = "Boss", bossId = "bell_oni", text = "Defeat the Bell Oni at its shrine" } },
 		outro = {
 			"The first gate is open. Can you feel it? East of the plaza, the portal hums blue.",
 			"Beyond it lies a city that never stopped ringing. Find a fixer called Juno-7. Go.",

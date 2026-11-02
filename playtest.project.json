@@ -22,29 +22,6 @@
       "$properties": {
         "FilteringEnabled": true,
         "StreamingEnabled": true
-      },
-      "Baseplate": {
-        "$className": "Part",
-        "$properties": {
-          "Anchored": true,
-          "Size": [
-            512,
-            20,
-            512
-          ],
-          "Position": [
-            0,
-            -40,
-            0
-          ],
-          "Material": "Slate",
-          "Color": [
-            0.27,
-            0.25,
-            0.23
-          ],
-          "Locked": true
-        }
       }
     },
     "ReplicatedFirst": {

@@ -39,15 +39,15 @@ cases["Saga: reach and boss steps"] = function()
 		SagaLogic.Kill(s, "lantern_ghoul")
 	end
 	expectEq(SagaLogic.Reach(s, "japan", 0, 0), false) -- too far
-	expectEq(SagaLogic.Reach(s, "neon", 80, -80), false) -- wrong realm
-	expectEq(SagaLogic.Reach(s, "japan", 85, -75), true)
+	expectEq(SagaLogic.Reach(s, "neon", 330, -1080), false) -- wrong realm
+	expectEq(SagaLogic.Reach(s, "japan", 335, -1075), true)
 	SagaLogic.Talk(s, "oto")
 	expectEq(s.quest, 3)
 	SagaLogic.Talk(s, "sabaki")
 	for _ = 1, 3 do
 		SagaLogic.Kill(s, "ashen_duelist")
 	end
-	expectEq(SagaLogic.Boss(s, "rust_tiger"), false)
+	expectEq(SagaLogic.Boss(s, "bell_oni"), false)
 	expectEq(SagaLogic.Boss(s, "sable_crane"), true)
 end
 
@@ -90,6 +90,48 @@ cases["Saga: every quest references real NPCs, enemies, bosses and realms"] = fu
 		end
 		for _, a in r.arenas do
 			assert(BossConfig.Bosses[a.bossId], id .. " arena " .. a.bossId)
+		end
+	end
+end
+
+cases["Valley: waystones are far apart, spawns and shrines sit on the route"] = function()
+	local WaystoneConfig = require(Config.WaystoneConfig)
+	local MapConfig = require(Config.MapConfig)
+	local list = WaystoneConfig.Waystones
+	for i = 2, #list do
+		for j = i + 1, #list do
+			local a, b = list[i].at, list[j].at
+			local d = math.sqrt((a[1] - b[1]) ^ 2 + (a[2] - b[2]) ^ 2)
+			assert(d >= 450, list[i].id .. " and " .. list[j].id .. " are only " .. math.floor(d) .. " apart")
+		end
+	end
+	-- Every spawn / boss shrine is within the road corridor or a zone (reachable).
+	local function reachable(x, z)
+		for _, a in MapConfig.Areas do
+			if math.sqrt((x - a.center[1]) ^ 2 + (z - a.center[2]) ^ 2) <= a.radius then
+				return true
+			end
+		end
+		local R = MapConfig.Route
+		for i = 1, #R - 1 do
+			local ax, az, bx, bz = R[i].at[1], R[i].at[2], R[i + 1].at[1], R[i + 1].at[2]
+			local dx, dz = bx - ax, bz - az
+			local t = math.clamp(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz), 0, 1)
+			if math.sqrt((x - ax - dx * t) ^ 2 + (z - az - dz * t) ^ 2) <= R[i].half then
+				return true
+			end
+		end
+		return false
+	end
+	for _, s in MapConfig.EnemySpawns do
+		assert(reachable(s.at[1], s.at[2]), "spawn off the route: " .. s.name)
+	end
+	for _, a in MapConfig.BossArenas do
+		assert(reachable(a.at[1], a.at[2]), "shrine off the route: " .. a.name)
+	end
+	for _, w in list do
+		if w.id ~= "hub" then
+			assert(reachable(w.at[1], w.at[2]), "waystone off the route: " .. w.id)
 		end
 	end
 end

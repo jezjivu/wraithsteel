@@ -71,7 +71,7 @@ def main():
         sys.exit(1)
     terrain = terrain or []
 
-    minx, maxx, minz, maxz = (-330, 330, -400, 320) if REALM == "japan" else (-400, 400, -400, 400)
+    minx, maxx, minz, maxz = (-650, 650, -2600, 280) if REALM == "japan" else (-400, 400, -400, 400)
     size = 1400
     scale = size / max(maxx - minx, maxz - minz)
 

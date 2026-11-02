@@ -120,18 +120,37 @@ local function onWave(e: { [string]: any })
 	local speed = tonumber(e.speed) or 35
 	local maxR = tonumber(e.maxRadius) or 50
 	local color = rgb(e.color)
-	local seconds = maxR / speed
-	-- Thin bright ring on the ground + a translucent wall the height of a jump.
-	local ring = neon(Vector3.new(0.4, 2, 2), CFrame.new(origin + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)), color, Enum.PartType.Cylinder)
-	ring.Transparency = 0.1
-	local wall = neon(Vector3.new(3.5, 2, 2), CFrame.new(origin + Vector3.new(0, 1.75, 0)) * CFrame.Angles(0, 0, math.rad(90)), color, Enum.PartType.Cylinder)
-	wall.Material = Enum.Material.ForceField
-	wall.Transparency = 0.3
-	local info = TweenInfo.new(seconds, Enum.EasingStyle.Linear)
-	TweenService:Create(ring, info, { Size = Vector3.new(0.4, maxR * 2, maxR * 2) }):Play()
-	TweenService:Create(wall, info, { Size = Vector3.new(3.5, maxR * 2, maxR * 2), Transparency = 0.7 }):Play()
-	Debris:AddItem(ring, seconds + 0.05)
-	Debris:AddItem(wall, seconds + 0.05)
+	-- A HOLLOW ring of glowing segments rolling outward (jump over it). It used to be a filled
+	-- translucent disc, which read as a giant cylinder around the boss.
+	local segments = 36
+	local parts: { Part } = {}
+	for k = 1, segments do
+		local seg = neon(Vector3.new(1, 3, 0.8), CFrame.new(origin), color)
+		seg.Transparency = 0.15
+		parts[k] = seg
+	end
+	local start = os.clock()
+	local conn: RBXScriptConnection
+	conn = RunService.RenderStepped:Connect(function()
+		local t = os.clock() - start
+		local r = math.max(1, t * speed)
+		if r > maxR then
+			conn:Disconnect()
+			for _, seg in parts do
+				seg:Destroy()
+			end
+			return
+		end
+		local len = 2 * math.pi * r / segments + 0.4
+		local fade = math.clamp((r / maxR - 0.7) / 0.3, 0, 1)
+		for k, seg in parts do
+			local a = k / segments * math.pi * 2
+			local p = origin + Vector3.new(math.cos(a) * r, 1.5, math.sin(a) * r)
+			seg.Size = Vector3.new(len, 3, 0.8)
+			seg.CFrame = CFrame.lookAt(p, Vector3.new(origin.X, p.Y, origin.Z)) * CFrame.Angles(0, math.rad(90), 0)
+			seg.Transparency = 0.15 + fade * 0.85
+		end
+	end)
 	Fx.Burst(origin, { texture = Fx.Textures.Smoke, color = Color3.fromRGB(150, 120, 100), count = 30, speed = 30, size = 3, lifetime = 0.8, lightEmission = 0 })
 	Fx.CameraPunch(4)
 	SpellFx.Sound(EffectsConfig.Sounds.boom, origin, 0.6, 1)

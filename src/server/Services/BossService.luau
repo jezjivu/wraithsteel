@@ -4,7 +4,7 @@
 -- (PartyService will supply parties in Phase 3). Bosses ignore attack tokens.
 --
 -- Studio setup (TODO(Studio/Agent D + C)):
---   Workspace.BossArenas/<Part> with attribute BossId = "rust_tiger"; BossService adds a
+--   Workspace.BossArenas/<Part> with attribute BossId = "bell_oni"; BossService adds a
 --   ProximityPrompt "Challenge" to it. Boss rig: ServerStorage.Bosses/<bossId> (placeholder block
 --   otherwise). Animations: BossConfig move animationId (all placeholders today).
 --
@@ -284,6 +284,51 @@ local function doHazard(e: Encounter, moveId: string, m: BossConfig.BossMove): b
 			color = color,
 			moveId = moveId,
 		})
+	elseif kind == "Leap" then
+		-- Jump onto the target's spot: marked circle, an arcing flight, a crash + toll ring.
+		local hum = e.c.humanoid
+		local landing = aimAt
+		local flight = m.delay or 1.1
+		local hipOffset = hum.HipHeight + root.Size.Y / 2
+		HazardService.Rain(e.c, { landing - Vector3.new(0, 2.5, 0) }, {
+			radius = m.radius or 12,
+			delay = flight,
+			damage = m.damage,
+			posture = m.postureDamage,
+			color = color,
+			moveId = moveId,
+		})
+		local start = root.Position
+		local finish = Vector3.new(landing.X, landing.Y - 2.5 + hipOffset, landing.Z)
+		root.Anchored = true
+		task.spawn(function()
+			local t0 = os.clock()
+			while true do
+				local t = math.min(1, (os.clock() - t0) / flight)
+				if e.ended or e.c.dead then
+					break
+				end
+				local p = start:Lerp(finish, t) + Vector3.new(0, math.sin(t * math.pi) * 32, 0)
+				local flat = Vector3.new(finish.X, p.Y, finish.Z)
+				root.CFrame = if (flat - p).Magnitude > 0.5 then CFrame.lookAt(p, flat) else CFrame.new(p) * root.CFrame.Rotation
+				if t >= 1 then
+					break
+				end
+				task.wait()
+			end
+			root.Anchored = false
+			if not e.ended and not e.c.dead then
+				HazardService.Wave(e.c, landing - Vector3.new(0, 2.5, 0), {
+					speed = 38,
+					maxRadius = 34,
+					band = 3,
+					damage = math.floor(m.damage * 0.6),
+					posture = m.postureDamage,
+					color = color,
+					moveId = moveId,
+				})
+			end
+		end)
 	elseif kind == "Rain" then
 		local points = {}
 		local alive = aliveParticipants(e)
@@ -442,8 +487,8 @@ local function finish(e: Encounter, victory: boolean)
 					firstClear = first,
 				})
 				QuestService.Increment(p, "Boss:" .. e.bossId, 1)
-				if e.bossId == "rust_tiger" then
-					AnalyticsService.Onboarding(p, "RustTigerDefeated")
+				if e.bossId == "bell_oni" then
+					AnalyticsService.Onboarding(p, "BellOniDefeated")
 				end
 			end
 		end

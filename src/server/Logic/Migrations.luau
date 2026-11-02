@@ -42,6 +42,19 @@ Migrations.Steps = {
 			data.saga = { quest = 1, step = 1, progress = 0, started = false }
 		end
 	end,
+	-- v4 -> v5: the first boss was remade (rust_tiger -> bell_oni); keep earned unlocks.
+	[5] = function(data: { [string]: any })
+		local d = data.bossesDefeated
+		if type(d) == "table" and d.rust_tiger then
+			d.bell_oni = (d.bell_oni or 0) + d.rust_tiger
+			d.rust_tiger = nil
+		end
+		local q = data.quests
+		if type(q) == "table" and q.s_prologue_tiger then
+			q.s_prologue_oni = q.s_prologue_tiger
+			q.s_prologue_tiger = nil
+		end
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server

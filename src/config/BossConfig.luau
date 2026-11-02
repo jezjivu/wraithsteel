@@ -26,7 +26,8 @@ export type BossMove = {
 	--   Volley: `count` projectiles fanned over `spread` degrees
 	--   Wave: shockwave ring from the boss along the ground (jump it)
 	--   Rain: `count` eruptions marked around players, after `delay` (get out)
-	kind: ("Melee" | "Projectile" | "Volley" | "Wave" | "Rain")?,
+	--   Leap: jumps onto the target's spot (marked circle), crashes down with a ring
+	kind: ("Melee" | "Projectile" | "Volley" | "Wave" | "Rain" | "Leap")?,
 	speed: number?, -- projectile / wave speed (studs/s)
 	count: number?,
 	spread: number?,
@@ -37,7 +38,7 @@ export type BossMove = {
 	reflectPosture: number?,
 	color: { number }?,
 	style: string?, -- AnimationConfig style for humanoid bosses (default: alternating slashes)
-	pose: string?, -- creature pose for the windup (CreatureAnimator): Swipe, Pounce, Rear, Roar, Spit, Spin
+	pose: string?, -- creature pose (CreatureAnimator): Tiger Swipe/Pounce/Rear/Roar/Spit/Spin; Oni Swing/Slam/Throw/Grab/Leap/Spin/Roar
 	animationId: string,
 }
 
@@ -81,39 +82,44 @@ BossConfig.Knockback = { normal = 16, wide = 30, perilous = 45, perilousLaunch =
 local PLACEHOLDER_ANIM = "rbxassetid://0"
 
 BossConfig.Bosses = {
-	-- A rust-plated beast: claws and pounces up close, but mostly ranged and ground attacks.
-	-- Deflect its Rust Orb back into its face to crush its posture.
-	rust_tiger = {
-		name = "Rust Tiger",
+	-- The Bell Oni: the first gate's warden. A towering demon with a bell for a hammer.
+	-- Phase 1 teaches the basics (sweeps to deflect, a bell-orb to send back, a toll ring to
+	-- jump, a grab to dodge). Phase 2 it starts leaping across the arena and hurling orbs in
+	-- threes. Phase 3 it spins and rings the whole arena with falling bells.
+	bell_oni = {
+		name = "Bell Oni",
 		title = "Warden of the Cracked Bell",
 		chapter = 0,
 		kind = "Story",
-		creature = "Tiger",
-		maxHealth = 900,
+		creature = "Oni",
+		maxHealth = 1300,
 		healthPerExtraPlayer = 0.6,
-		maxPosture = 180,
-		postureRegen = 6,
+		maxPosture = 200,
+		postureRegen = 7,
 		postureBrokenSeconds = 3.5,
-		walkSpeed = 18,
-		deflectChance = 0.15,
+		walkSpeed = 16,
+		deflectChance = 0.2,
 		moves = {
-			claw_swipe = { name = "Corroded Swipe", damage = 14, postureDamage = 16, windup = 0.5, active = 0.15, recovery = 0.55, range = 14, arcDegrees = 120, weight = 3, cooldown = 0, pose = "Swipe", animationId = PLACEHOLDER_ANIM },
-			pounce = { name = "Iron Pounce", damage = 24, postureDamage = 26, windup = 0.75, active = 0.35, recovery = 0.9, range = 34, minRange = 14, arcDegrees = 50, weight = 2, cooldown = 6, perilous = true, perilousKind = "Pierce", pose = "Pounce", animationId = PLACEHOLDER_ANIM },
-			tail_sweep = { name = "Chain-Tail Sweep", damage = 18, postureDamage = 10, windup = 0.65, active = 0.25, recovery = 0.6, range = 15, arcDegrees = 360, weight = 2, cooldown = 7, perilous = true, perilousKind = "Sweep", pose = "Spin", animationId = PLACEHOLDER_ANIM },
-			rust_orb = { name = "Rust Orb", kind = "Projectile", damage = 22, postureDamage = 24, windup = 0.9, active = 0.2, recovery = 0.8, range = 70, arcDegrees = 360, weight = 3, cooldown = 5, speed = 42, radius = 2.2, deflectable = true, reflectDamage = 90, reflectPosture = 80, color = { 255, 120, 40 }, pose = "Spit", animationId = PLACEHOLDER_ANIM },
-			shard_volley = { name = "Shard Volley", kind = "Volley", damage = 12, postureDamage = 10, windup = 0.7, active = 0.2, recovery = 0.8, range = 60, minRange = 10, arcDegrees = 360, weight = 2, cooldown = 8, speed = 75, count = 5, spread = 60, radius = 1.2, color = { 230, 170, 110 }, pose = "Spit", animationId = PLACEHOLDER_ANIM },
-			quake_ring = { name = "Rusting Quake", kind = "Wave", damage = 20, postureDamage = 14, windup = 1.0, active = 0.3, recovery = 1.0, range = 50, arcDegrees = 360, weight = 2, cooldown = 9, speed = 34, radius = 60, color = { 255, 140, 60 }, pose = "Rear", animationId = PLACEHOLDER_ANIM },
-			rust_rain = { name = "Rust Rain", kind = "Rain", damage = 26, postureDamage = 10, windup = 0.9, active = 0.3, recovery = 0.9, range = 70, arcDegrees = 360, weight = 2, cooldown = 11, count = 7, radius = 7, delay = 1.2, color = { 255, 90, 40 }, pose = "Roar", animationId = PLACEHOLDER_ANIM },
-			rust_roar = { name = "Rust Roar", damage = 10, postureDamage = 30, windup = 1.0, active = 0.4, recovery = 1.0, range = 18, arcDegrees = 360, weight = 1, cooldown = 14, pose = "Roar", animationId = PLACEHOLDER_ANIM },
+			hammer_sweep = { name = "Bell-Hammer Sweep", pose = "Swing", damage = 18, postureDamage = 22, windup = 0.65, active = 0.2, recovery = 0.6, range = 17, arcDegrees = 150, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
+			double_sweep = { name = "Back-Swing", pose = "Swing", damage = 14, postureDamage = 18, windup = 0.5, active = 0.7, recovery = 0.7, range = 17, arcDegrees = 150, weight = 2, cooldown = 4, hits = 2, animationId = PLACEHOLDER_ANIM },
+			overhead = { name = "Temple Breaker", pose = "Slam", damage = 30, postureDamage = 34, windup = 0.9, active = 0.2, recovery = 0.9, range = 16, arcDegrees = 50, weight = 2, cooldown = 4, animationId = PLACEHOLDER_ANIM },
+			bell_orb = { name = "Bell-Orb", kind = "Projectile", pose = "Throw", damage = 24, postureDamage = 26, windup = 0.85, active = 0.2, recovery = 0.7, range = 75, arcDegrees = 360, weight = 3, cooldown = 5, speed = 40, radius = 2.4, deflectable = true, reflectDamage = 110, reflectPosture = 85, color = { 255, 170, 70 }, animationId = PLACEHOLDER_ANIM },
+			toll_ring = { name = "Toll of the Cracked Bell", kind = "Wave", pose = "Slam", damage = 22, postureDamage = 14, windup = 1.0, active = 0.3, recovery = 1.0, range = 55, arcDegrees = 360, weight = 2, cooldown = 8, speed = 34, radius = 62, color = { 255, 150, 60 }, animationId = PLACEHOLDER_ANIM },
+			oni_grab = { name = "Oni's Grasp", pose = "Grab", damage = 36, postureDamage = 0, windup = 0.85, active = 0.25, recovery = 1.0, range = 11, arcDegrees = 70, weight = 1, cooldown = 9, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
+			leap_crash = { name = "Heaven-Fall Leap", kind = "Leap", pose = "Leap", damage = 34, postureDamage = 24, windup = 0.7, active = 1.1, recovery = 1.1, range = 70, minRange = 14, arcDegrees = 360, weight = 3, cooldown = 7, radius = 13, delay = 1.1, color = { 255, 110, 50 }, animationId = PLACEHOLDER_ANIM },
+			triple_orb = { name = "Three Tolls", kind = "Volley", pose = "Throw", damage = 20, postureDamage = 22, windup = 0.9, active = 0.2, recovery = 0.8, range = 75, minRange = 12, arcDegrees = 360, weight = 2, cooldown = 9, speed = 44, count = 3, spread = 34, radius = 2.2, deflectable = true, reflectDamage = 80, reflectPosture = 60, color = { 255, 170, 70 }, animationId = PLACEHOLDER_ANIM },
+			spin_storm = { name = "Bell Cyclone", pose = "Spin", damage = 12, postureDamage = 12, windup = 0.7, active = 1.4, recovery = 1.0, range = 16, arcDegrees = 360, weight = 2, cooldown = 9, hits = 5, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
+			bell_rain = { name = "Rain of Bells", kind = "Rain", pose = "Roar", damage = 30, postureDamage = 12, windup = 1.0, active = 0.3, recovery = 1.0, range = 80, arcDegrees = 360, weight = 2, cooldown = 11, count = 10, radius = 8, delay = 1.2, color = { 255, 120, 40 }, animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
-			{ hpThreshold = 1.0, moves = { "claw_swipe", "pounce", "tail_sweep", "rust_orb", "quake_ring" }, speedMultiplier = 1, transitionSeconds = 0 },
-			{ hpThreshold = 0.5, moves = { "claw_swipe", "pounce", "tail_sweep", "rust_orb", "quake_ring", "shard_volley", "rust_rain", "rust_roar" }, speedMultiplier = 1.2, enrage = true, transitionSeconds = 2.5 },
+			{ hpThreshold = 1.0, moves = { "hammer_sweep", "overhead", "bell_orb", "toll_ring", "oni_grab" }, speedMultiplier = 1, transitionSeconds = 0 },
+			{ hpThreshold = 0.6, moves = { "hammer_sweep", "double_sweep", "overhead", "bell_orb", "toll_ring", "oni_grab", "leap_crash", "triple_orb" }, speedMultiplier = 1.15, transitionSeconds = 2.5 },
+			{ hpThreshold = 0.3, moves = { "hammer_sweep", "double_sweep", "bell_orb", "toll_ring", "leap_crash", "triple_orb", "spin_storm", "bell_rain" }, speedMultiplier = 1.3, enrage = true, transitionSeconds = 2.5 },
 		},
-		idleBetweenMoves = 0.7,
-		rewards = { ember = 300, xp = 400, jadeFirstClear = 25 },
-		modelId = 0, -- TODO(Studio/Agent C): sculpted Rust Tiger model
-		look = { skin = { 235, 215, 180 }, body = { 205, 110, 45 }, legs = { 60, 40, 30 }, accent = { 30, 22, 20 }, glow = { 255, 120, 40 }, scale = 1.5 },
+		idleBetweenMoves = 0.6,
+		rewards = { ember = 400, xp = 500, jadeFirstClear = 25 },
+		modelId = 0,
+		look = { skin = { 150, 45, 40 }, body = { 120, 75, 50 }, legs = { 60, 40, 60 }, accent = { 235, 225, 205 }, glow = { 255, 140, 50 }, scale = 2.4 },
 	},
 	-- Optional duel (Ashen Village): a pure posture fight. Deflects everything you mash.
 	sable_crane = {

@@ -164,7 +164,123 @@ local function animateDrone(model: Model, b: Beast, dt: number, now: number)
 	end
 end
 
+-- Oni (biped giant). +X on a shoulder/hip swings the limb forward, +Z on the right shoulder
+-- lifts the arm out sideways (-Z for the left), -X on the waist bends forward, +X on the neck
+-- tips the head back, -X on the jaw opens it.
+local ONI_POSES: { [string]: { windup: PoseSet, strike: PoseSet, spin: boolean? } } = {
+	Swing = {
+		windup = { Shoulder_R = { 70, 0, 75 }, Elbow_R = { 30, 0, 0 }, Waist = { 0, -45, 0 }, Shoulder_L = { 20, 0, -30 }, Hip_L = { 25, 0, 0 }, Knee_L = { -20, 0, 0 } },
+		strike = { Shoulder_R = { 85, 0, -35 }, Elbow_R = { 5, 0, 0 }, Waist = { -8, 50, 0 }, Shoulder_L = { 10, 0, -50 }, Hip_L = { -15, 0, 0 }, Hip_R = { 20, 0, 0 } },
+	},
+	Slam = {
+		windup = { Shoulder_R = { 175, 0, 15 }, Shoulder_L = { 165, 0, -15 }, Elbow_R = { 40, 0, 0 }, Elbow_L = { 40, 0, 0 }, Waist = { 18, 0, 0 }, Neck = { 15, 0, 0 } },
+		strike = { Shoulder_R = { 55, 0, 5 }, Shoulder_L = { 50, 0, -5 }, Elbow_R = { 0, 0, 0 }, Waist = { -35, 0, 0 }, Hip_L = { -35, 0, 0 }, Knee_L = { -40, 0, 0 }, Hip_R = { 25, 0, 0 }, Knee_R = { -30, 0, 0 }, Neck = { -15, 0, 0 } },
+	},
+	Throw = {
+		windup = { Shoulder_L = { 160, 0, -25 }, Elbow_L = { 50, 0, 0 }, Waist = { 12, 35, 0 }, Shoulder_R = { 30, 0, 40 }, Neck = { 10, -15, 0 } },
+		strike = { Shoulder_L = { 70, 0, 5 }, Elbow_L = { 0, 0, 0 }, Waist = { -15, -30, 0 }, Hip_R = { -25, 0, 0 }, Jaw = { -30, 0, 0 } },
+	},
+	Grab = {
+		windup = { Shoulder_L = { 95, 0, -45 }, Elbow_L = { 70, 0, 0 }, Waist = { 10, 25, 0 }, Jaw = { -25, 0, 0 } },
+		strike = { Shoulder_L = { 95, 0, 5 }, Elbow_L = { 0, 0, 0 }, Waist = { -25, -15, 0 }, Hip_L = { -40, 0, 0 }, Knee_L = { -30, 0, 0 }, Jaw = { -40, 0, 0 } },
+	},
+	Leap = {
+		windup = { Hip_L = { 70, 0, 0 }, Hip_R = { 70, 0, 0 }, Knee_L = { -100, 0, 0 }, Knee_R = { -100, 0, 0 }, Waist = { -30, 0, 0 }, Shoulder_R = { -40, 0, 30 }, Shoulder_L = { -40, 0, -30 } },
+		strike = { Hip_L = { 85, 0, 0 }, Hip_R = { 85, 0, 0 }, Knee_L = { -110, 0, 0 }, Knee_R = { -110, 0, 0 }, Waist = { -10, 0, 0 }, Shoulder_R = { 175, 0, 10 }, Shoulder_L = { 170, 0, -10 }, Neck = { 20, 0, 0 } },
+	},
+	Spin = {
+		windup = { Shoulder_R = { 90, 0, 85 }, Shoulder_L = { 60, 0, -70 }, Waist = { 0, -60, 0 } },
+		strike = { Shoulder_R = { 90, 0, 85 }, Shoulder_L = { 60, 0, -70 }, Waist = { 0, 60, 0 } },
+		spin = true,
+	},
+	Roar = {
+		windup = { Neck = { 35, 0, 0 }, Jaw = { -20, 0, 0 }, Waist = { 15, 0, 0 }, Shoulder_R = { 40, 0, 70 }, Shoulder_L = { 40, 0, -70 } },
+		strike = { Neck = { 20, 0, 0 }, Jaw = { -55, 0, 0 }, Waist = { 8, 0, 0 }, Shoulder_R = { 60, 0, 95 }, Shoulder_L = { 60, 0, -95 }, Elbow_R = { 40, 0, 0 }, Elbow_L = { 40, 0, 0 } },
+	},
+}
+
+local function animateOni(model: Model, b: Beast, dt: number, now: number)
+	local root = model.PrimaryPart
+	if root == nil then
+		return
+	end
+	local v = root.AssemblyLinearVelocity
+	local speed = Vector3.new(v.X, 0, v.Z).Magnitude
+	local amount = math.clamp(speed / 12, 0, 1)
+	b.phase += dt * (1.5 + amount * 5)
+	local sw = math.sin(b.phase)
+	local breathe = math.sin(now * 1.6) * 3
+	local offsets: { [string]: Angles } = {
+		Hip_L = { sw * 30 * amount, 0, 0 },
+		Hip_R = { -sw * 30 * amount, 0, 0 },
+		Knee_L = { -math.max(0, sw) * 40 * amount, 0, 0 },
+		Knee_R = { -math.max(0, -sw) * 40 * amount, 0, 0 },
+		Shoulder_L = { -sw * 20 * amount + 8, 0, -10 },
+		Shoulder_R = { 25 + sw * 10 * amount, 0, 12 }, -- hammer arm carried forward
+		Elbow_R = { 30, 0, 0 },
+		Elbow_L = { 15, 0, 0 },
+		Waist = { -6 + breathe * 0.4, math.sin(b.phase * 0.5) * 5 * amount, 0 },
+		Neck = { breathe * 0.6 - 4, math.sin(now * 0.6) * 10, 0 },
+		Jaw = { -math.max(0, math.sin(now * 0.8)) * 8, 0, 0 },
+		Root = { 0, 0, math.sin(b.phase) * 3 * amount },
+	}
+	local a = b.action
+	if a then
+		local def = ONI_POSES[a.pose]
+		local t = now - a.start
+		if def == nil or t > a.windup + a.active + a.recovery then
+			b.action = nil
+		else
+			local from: PoseSet, to: PoseSet, k: number
+			local spin = 0
+			if t < a.windup then
+				from, to, k = {}, def.windup, ease(t / a.windup)
+			elseif t < a.windup + a.active then
+				local f = (t - a.windup) / a.active
+				from, to, k = def.windup, def.strike, ease(math.min(1, f * 1.6))
+				if def.spin then
+					spin = f * 720
+				end
+			else
+				from, to, k = def.strike, {}, ease((t - a.windup - a.active) / a.recovery)
+			end
+			local keys: { [string]: boolean } = {}
+			for n in from do
+				keys[n] = true
+			end
+			for n in to do
+				keys[n] = true
+			end
+			for n in keys do
+				local val = lerpAng(from[n], to[n], k)
+				local cur = offsets[n] or { 0, 0, 0 }
+				offsets[n] = { cur[1] * 0.25 + val[1], cur[2] * 0.25 + val[2], cur[3] * 0.25 + val[3] }
+			end
+			if spin ~= 0 then
+				local w = offsets.Waist or { 0, 0, 0 }
+				offsets.Waist = { w[1], w[2] + spin, w[3] }
+			end
+		end
+	end
+	if now < b.wobbleUntil then
+		local w = (b.wobbleUntil - now) * 30
+		local s = offsets.Waist or { 0, 0, 0 }
+		offsets.Waist = { s[1] + w * 0.5, s[2], s[3] + math.sin(now * 40) * w * 0.3 }
+	end
+	for name, val in offsets do
+		local m = b.motors[name]
+		local base = m and b.base[m]
+		if m and base then
+			m.C0 = base * ang(val, 1)
+		end
+	end
+end
+
 local function animate(model: Model, b: Beast, dt: number, now: number)
+	if model:GetAttribute("Creature") == "Oni" then
+		animateOni(model, b, dt, now)
+		return
+	end
 	if model:GetAttribute("Creature") == "Drone" then
 		animateDrone(model, b, dt, now)
 		return

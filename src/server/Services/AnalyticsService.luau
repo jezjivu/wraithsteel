@@ -21,7 +21,7 @@ AnalyticsService.OnboardingSteps = {
 	"FirstParry",
 	"FirstLanternOpened",
 	"FirstSpiritEquipped",
-	"RustTigerDefeated",
+	"BellOniDefeated",
 	"Chapter1Entered",
 }
 

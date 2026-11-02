@@ -12,7 +12,7 @@ GuideConfig.Text = {
 	equipSpirit = "Equip your new Spirit at the Spirit Shrine or in the Spirits menu",
 	fightWilds = "Go north through the red gate and defeat enemies (reach Lv %d)",
 	buyWeapon = "Earn %s Ember and buy a new weapon at the Weapon Smith",
-	rustTiger = "Challenge the Rust Tiger: hold E on the rust-colored pad in the Wilds",
+	bellOni = "Challenge the Bell Oni: follow the road north to the Gate of the Cracked Bell and hold E on the shrine pad",
 	chapterBoss = "Defeat %s (Chapter %d)",
 	allDone = "Chapter cleared! Hunt world bosses, fuse Spirits and party up.",
 }
