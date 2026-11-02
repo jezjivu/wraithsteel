@@ -42,6 +42,11 @@ EconomyConfig.Multipliers = {
 		DoubleEmberPass = 1.0, -- +100%
 		EmberBoost = 1.0, -- +100% while boost active
 		PartyBonusPerMember = 0.05, -- +5% per extra party member
+		VIPPass = 0.25,
+	},
+	Xp = {
+		DoubleXPPass = 1.0, -- +100%
+		VIPPass = 0.25,
 	},
 	Luck = {
 		LuckyCharmPass = 0.25, -- luck x1.25

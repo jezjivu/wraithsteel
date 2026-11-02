@@ -10,6 +10,7 @@
 --   MarketService.ProcessReceipt(receiptInfo) -> Enum.ProductPurchaseDecision
 
 local MarketplaceService = game:GetService("MarketplaceService")
+local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -70,9 +71,11 @@ end
 
 local function grantPassLocally(player: Player, passKey: string)
 	local cached = passCache[player]
-	if cached and not cached[passKey] then
-		cached[passKey] = true
+	if cached == nil then
+		cached = {}
+		passCache[player] = cached
 	end
+	cached[passKey] = true
 	MarketService.PassGranted:Fire(player, passKey)
 	Net.Server.Fire("Notify", player, "Pass", MonetizationConfig.Passes[passKey].name .. " unlocked!")
 end
@@ -119,9 +122,30 @@ local function deliverGift(buyer: Player, targetUserId: number, passKey: string,
 	})
 end
 
+-- Set by ProgressionService (it requires this module, so no require cycle).
+MarketService.GrantLevels = nil :: ((player: Player, levels: number) -> ())?
+MarketService.GrantEmber = nil :: ((player: Player, amount: number, source: string) -> ())?
+
 local function grantProduct(player: Player, data: ProfileData, productKey: string, purchaseId: string): boolean
 	local def = MonetizationConfig.Products[productKey]
-	if def.kind == "Jade" then
+	if def.kind == "Levels" or def.kind == "Ember" or def.kind == "Bundle" then
+		local b: { jade: number?, ember: number?, levels: number? } = def.bundle or {}
+		local levels = if def.kind == "Levels" then def.amount or 0 else b.levels or 0
+		local ember = if def.kind == "Ember" then def.amount or 0 else b.ember or 0
+		local jade = b.jade or 0
+		if jade > 0 then
+			data.jade += jade
+			DataService.Changed(player, "jade")
+		end
+		if ember > 0 and MarketService.GrantEmber then
+			MarketService.GrantEmber(player, ember, "IAP:" .. productKey)
+		end
+		if levels > 0 and MarketService.GrantLevels then
+			MarketService.GrantLevels(player, levels)
+		end
+		AnalyticsService.Custom(player, "ProductPurchased:" .. productKey)
+		return true
+	elseif def.kind == "Jade" then
 		local amount = def.amount or 0
 		data.jade += amount
 		DataService.Changed(player, "jade")
@@ -194,10 +218,37 @@ end
 
 -- Prompts ----------------------------------------------------------------------------------
 
+-- Studio test purchases: items without a real id are granted for free in Studio only, through
+-- the exact same idempotent receipt path a real purchase uses.
+local function studioTest(): boolean
+	return RunService:IsStudio()
+end
+
+local testCounter = 0
+local function simulateProduct(player: Player, productKey: string)
+	local data = DataService.GetData(player)
+	if data == nil then
+		return
+	end
+	testCounter += 1
+	local purchaseId = "studio-test:" .. player.UserId .. ":" .. os.time() .. ":" .. testCounter
+	local decision = ReceiptLedger.Apply(data :: any, purchaseId, 0, MonetizationConfig.ReceiptHistoryLimit, function()
+		return grantProduct(player, data, productKey, purchaseId)
+	end)
+	notify(player, "Info", (if decision == "Granted" then "TEST PURCHASE (Studio, free): " else "Test purchase failed: ") .. MonetizationConfig.Products[productKey].name)
+end
+
 function MarketService.PromptProduct(player: Player, productKey: string)
 	local def = MonetizationConfig.Products[productKey]
-	if def == nil or def.id == 0 then
-		notify(player, "Error", "That item is not available yet.")
+	if def == nil then
+		return
+	end
+	if def.id == 0 then
+		if studioTest() then
+			simulateProduct(player, productKey)
+		else
+			notify(player, "Error", "That item is not available yet.")
+		end
 		return
 	end
 	MarketplaceService:PromptProductPurchase(player, def.id)
@@ -205,12 +256,21 @@ end
 
 function MarketService.PromptPass(player: Player, passKey: string)
 	local def = MonetizationConfig.Passes[passKey]
-	if def == nil or def.id == 0 then
-		notify(player, "Error", "That pass is not available yet.")
+	if def == nil then
 		return
 	end
 	if MarketService.HasPass(player, passKey) then
 		notify(player, "Info", "You already own " .. def.name .. ".")
+		return
+	end
+	if def.id == 0 then
+		if studioTest() then
+			-- Studio test: the pass is active for this session only.
+			grantPassLocally(player, passKey)
+			notify(player, "Info", "TEST PURCHASE (Studio, this session only): " .. def.name)
+		else
+			notify(player, "Error", "That pass is not available yet.")
+		end
 		return
 	end
 	MarketplaceService:PromptGamePassPurchase(player, def.id)
@@ -260,7 +320,7 @@ local function storeInfo(player: Player)
 				priceCache["pass:" .. key] = price
 			end
 		end
-		passes[key] = { name = def.name, description = def.description, available = def.id ~= 0, owned = MarketService.HasPass(player, key), price = price, giftable = def.giftProduct ~= nil }
+		passes[key] = { name = def.name, description = def.description, available = def.id ~= 0 or studioTest(), owned = MarketService.HasPass(player, key), price = price or def.price, giftable = def.giftProduct ~= nil }
 	end
 	local products = {}
 	for key, def in MonetizationConfig.Products do
@@ -272,9 +332,9 @@ local function storeInfo(player: Player)
 				priceCache["product:" .. key] = price
 			end
 		end
-		products[key] = { name = def.name, kind = def.kind, amount = def.amount, available = def.id ~= 0, price = price }
+		products[key] = { name = def.name, kind = def.kind, amount = def.amount, bundle = def.bundle, available = def.id ~= 0 or studioTest(), price = price or def.price }
 	end
-	return { passes = passes, products = products }
+	return { passes = passes, products = products, testMode = studioTest() }
 end
 
 function MarketService.Init()

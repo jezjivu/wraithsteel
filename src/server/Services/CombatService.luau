@@ -44,6 +44,8 @@ local ProgressionService = require(script.Parent.ProgressionService)
 local QuestService = require(script.Parent.QuestService)
 local AnalyticsService = require(script.Parent.AnalyticsService)
 local SpiritService = require(script.Parent.SpiritService)
+local MarketService = require(script.Parent.MarketService)
+local flaskMax: (c: any) -> number
 
 export type Combatant = {
 	id: string,
@@ -169,6 +171,35 @@ function CombatService.All(): { Combatant }
 	return out
 end
 
+-- Spring Flask charges (the Bottomless Gourd pass adds one).
+flaskMax = function(c: Combatant): number
+	local extra = if c.player and MarketService.HasPass(c.player, "ExtraFlask") then 1 else 0
+	return CombatConfig.Flask.charges + extra
+end
+
+-- VIP pass: a golden aura on the character.
+local function applyVip(player: Player, character: Model)
+	if not MarketService.HasPass(player, "VIP") then
+		return
+	end
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if root == nil or root:FindFirstChild("VIPAura") then
+		return
+	end
+	local e = Instance.new("ParticleEmitter")
+	e.Name = "VIPAura"
+	e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	e.Color = ColorSequence.new(Color3.fromRGB(255, 215, 100))
+	e.LightEmission = 1
+	e.Size = NumberSequence.new(0.3, 0)
+	e.Lifetime = NumberRange.new(0.8, 1.4)
+	e.Rate = 12
+	e.Speed = NumberRange.new(0.5, 1.5)
+	e.SpreadAngle = Vector2.new(180, 180)
+	e.Parent = root
+	character:SetAttribute("VIP", true)
+end
+
 local EMPTY_STATS: { [string]: number } = {}
 
 -- Spirit stat totals for a player (cached; cleared when their spirit party changes).
@@ -238,7 +269,7 @@ function CombatService.Rest(c: Combatant)
 		return
 	end
 	CombatService.Heal(c, c.humanoid.MaxHealth)
-	c.flask = CombatConfig.Flask.charges
+	c.flask = flaskMax(c)
 	c.model:SetAttribute("Flask", c.flask)
 	c.breath = true
 	c.model:SetAttribute("Breath", true)
@@ -674,8 +705,9 @@ local function onCharacterAdded(player: Player, character: Model)
 		dead = false,
 		contributions = {},
 	}
-	c.flask = CombatConfig.Flask.charges
+	c.flask = flaskMax(c)
 	character:SetAttribute("Flask", c.flask)
+	applyVip(player, character)
 	c.breath = true
 	character:SetAttribute("Breath", true)
 	CombatService.Register(c)
@@ -694,6 +726,18 @@ function CombatService.Start()
 		if c and not c.dead then
 			c.humanoid.MaxHealth = maxHealthFor(player, level)
 			c.humanoid.Health = c.humanoid.MaxHealth
+		end
+	end)
+	-- Passes bought mid-session apply right away (VIP aura, extra flask charge).
+	MarketService.PassGranted:Connect(function(player: Player, passKey: string)
+		local c = byPlayer[player]
+		if c and not c.dead then
+			if passKey == "VIP" then
+				applyVip(player, c.model)
+			elseif passKey == "ExtraFlask" then
+				c.flask = flaskMax(c)
+				c.model:SetAttribute("Flask", c.flask)
+			end
 		end
 	end)
 	-- Spirit party changes: new stats, new max health (keeps the same health fraction).
@@ -742,11 +786,11 @@ function CombatService.Start()
 			if c.player and not c.dead then
 				local hum = c.humanoid
 				-- Healing areas also refill the Spring Flask and Second Breath.
-				if (c.flask or 0) < CombatConfig.Flask.charges or not c.breath then
+				if (c.flask or 0) < flaskMax(c) or not c.breath then
 					local p = c.root.Position
 					for _, h in healAreas do
 						if (Vector3.new(p.X, 0, p.Z) - h.center).Magnitude <= h.radius then
-							c.flask = CombatConfig.Flask.charges
+							c.flask = flaskMax(c)
 							c.model:SetAttribute("Flask", c.flask)
 							c.breath = true
 							c.model:SetAttribute("Breath", true)

@@ -48,6 +48,10 @@ function ProgressionService.GetMultiplier(player: Player, category: string): num
 	if category == "Ember" then
 		active.DoubleEmberPass = MarketService.HasPass(player, "DoubleEmber")
 		active.EmberBoost = MarketService.BoostActive(player, "EmberBoost")
+		active.VIPPass = MarketService.HasPass(player, "VIP")
+	elseif category == "Xp" then
+		active.DoubleXPPass = MarketService.HasPass(player, "DoubleXP")
+		active.VIPPass = MarketService.HasPass(player, "VIP")
 	elseif category == "Luck" then
 		active.LuckyCharmPass = MarketService.HasPass(player, "LuckyCharm")
 		active.LuckBoost = MarketService.BoostActive(player, "LuckBoost")
@@ -145,6 +149,7 @@ function ProgressionService.AddXp(player: Player, amount: number): number
 	if data == nil or amount <= 0 then
 		return 0
 	end
+	amount = math.floor(amount * ProgressionService.GetMultiplier(player, "Xp") + 0.5)
 	local level, xp, gained = ProgressionMath.ApplyXp(data.level, data.xp, amount)
 	data.level, data.xp = level, xp
 	DataService.Changed(player, "xp", "level")
@@ -154,6 +159,26 @@ function ProgressionService.AddXp(player: Player, amount: number): number
 		Net.Server.Fire("Notify", player, "LevelUp", "Level " .. level .. "!")
 	end
 	return gained
+end
+
+-- Purchased / granted levels (no multipliers): exactly `levels` level-ups.
+function ProgressionService.GrantLevels(player: Player, levels: number)
+	local data = DataService.GetData(player)
+	if data == nil or levels <= 0 then
+		return
+	end
+	local need = 0
+	for l = data.level, data.level + levels - 1 do
+		need += EconomyConfig.XpToNext(l)
+	end
+	local level, xp, gained = ProgressionMath.ApplyXp(data.level, 0, need)
+	data.level, data.xp = level, xp
+	DataService.Changed(player, "xp", "level")
+	if gained > 0 then
+		ProgressionService.RefreshPower(player)
+		ProgressionService.LevelUp:Fire(player, level)
+		Net.Server.Fire("Notify", player, "LevelUp", "Level " .. level .. "!")
+	end
 end
 
 export type Reward = { ember: number?, jade: number?, xp: number?, lantern: string? }
@@ -178,7 +203,12 @@ function ProgressionService.GrantReward(player: Player, reward: Reward, source: 
 	end
 end
 
-function ProgressionService.Init() end
+function ProgressionService.Init()
+	MarketService.GrantLevels = ProgressionService.GrantLevels
+	MarketService.GrantEmber = function(player: Player, amount: number, source: string)
+		ProgressionService.AddEmber(player, amount, source, false)
+	end
+end
 
 function ProgressionService.Start()
 	DataService.ProfileLoaded:Connect(function(player)
