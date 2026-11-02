@@ -34,7 +34,8 @@ export type ProjectileSpec = {
 	posture: number,
 	color: { number },
 	size: number?, -- visual size
-	deflectable: boolean?, -- perfect deflect sends it back
+	deflectable: boolean?, -- bigger, gold-ringed orb (every projectile can be deflected back)
+	visual: string?, -- "Rocket" | nil (orb)
 	reflectDamage: number?,
 	reflectPosture: number?,
 	moveId: string,
@@ -86,6 +87,7 @@ local function spawnProjectile(owner: Combatant, from: Vector3, dir: Vector3, sp
 		size = spec.size or 2,
 		deflectable = spec.deflectable == true,
 		reflected = reflected,
+		visual = spec.visual,
 	})
 end
 
@@ -217,6 +219,39 @@ function HazardService.Wave(owner: Combatant, origin: Vector3, spec: WaveSpec)
 				end
 			end
 			task.wait(0.03)
+		end
+	end)
+end
+
+export type LaserSpec = { length: number, width: number, delay: number, damage: number, posture: number, color: { number }, moveId: string }
+
+-- Laser: a red warning line from `from` along `dir`, then (after `delay`) a beam that hits
+-- every player inside it. Step out of the line, or perfectly deflect as it fires.
+function HazardService.Laser(owner: Combatant, from: Vector3, dir: Vector3, spec: LaserSpec)
+	local flat = Vector3.new(dir.X, 0, dir.Z)
+	local unit = if flat.Magnitude > 1e-3 then flat.Unit else Vector3.zAxis
+	fire({ kind = "HazardLaser", from = from, dir = unit, length = spec.length, width = spec.width, delay = spec.delay, color = spec.color })
+	task.delay(spec.delay, function()
+		if owner.dead then
+			return
+		end
+		for _, player in Players:GetPlayers() do
+			local pc = CombatService.GetByPlayer(player)
+			if pc and not pc.dead then
+				local rel = pc.root.Position - from
+				local along = rel.X * unit.X + rel.Z * unit.Z
+				local perp = math.abs(rel.X * unit.Z - rel.Z * unit.X)
+				if along > -2 and along < spec.length and perp <= spec.width / 2 + BODY_RADIUS and math.abs(rel.Y) < 14 then
+					CombatService.ApplyHit(owner, pc, {
+						damage = spec.damage,
+						postureDamage = spec.posture,
+						moveId = spec.moveId,
+						knockback = 22,
+						ranged = true,
+						color = spec.color,
+					})
+				end
+			end
 		end
 	end)
 end

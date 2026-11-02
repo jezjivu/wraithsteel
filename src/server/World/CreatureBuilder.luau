@@ -270,136 +270,116 @@ local function drone(look: EnemyConfig.RigLook): Model
 	return model
 end
 
--- The Bell Oni: a towering horned demon in rusted armor, swinging a hammer whose head is a
--- cracked temple bell. Biped joints: Root, Waist, Neck, Jaw, Shoulder_L/R, Elbow_L/R,
--- Hip_L/R, Knee_L/R, Grip (hammer in the right hand).
-local function oni(look: EnemyConfig.RigLook): Model
+-- The Thunderbell Engine: a samurai-armored war machine. Its forearms are rocket pods (four
+-- tubes each, a steel fist below), its visor is a laser lance, two thrusters on its back.
+-- Biped joints: Root, Waist, Neck, Shoulder_L/R, Elbow_L/R, Hip_L/R, Knee_L/R.
+local function mech(look: EnemyConfig.RigLook): Model
 	local model = Instance.new("Model")
-	model.Name = "Oni"
+	model.Name = "Mech"
 	local ctx: Ctx = { model = model, s = look.scale }
-	local skin = rgb(look.skin)
-	local armor = rgb(look.body)
-	local cloth = rgb(look.legs)
-	local glow = rgb(look.glow or { 255, 120, 40 })
-	local bone = Color3.fromRGB(235, 225, 205)
-	local bronze = Color3.fromRGB(150, 110, 55)
+	local steel = rgb(look.body)
+	local dark = rgb(look.legs)
+	local trim = rgb(look.accent or { 220, 170, 60 })
+	local glow = rgb(look.glow or { 255, 70, 40 })
+	local core = rgb(look.skin)
 
-	local root = part(ctx, "HumanoidRootPart", Vector3.new(4, 5, 3), skin)
+	local root = part(ctx, "HumanoidRootPart", Vector3.new(4, 5, 3), steel)
 	root.Transparency = 1
 	root.CanCollide = true
 	root.Massless = false
 
-	local pelvis = part(ctx, "Pelvis", Vector3.new(2.6, 1.3, 1.6), cloth, Enum.Material.Fabric)
+	local pelvis = part(ctx, "Pelvis", Vector3.new(2.8, 1.4, 1.8), dark, Enum.Material.Metal)
 	joint(ctx, "Root", root, pelvis, Vector3.new(0, -0.8, 0), Vector3.zero)
-	-- Loincloth flaps + rope belt.
-	local flap = part(ctx, "Loincloth", Vector3.new(1.4, 2, 0.2), cloth:Lerp(Color3.new(0, 0, 0), 0.3), Enum.Material.Fabric)
-	glue(ctx, pelvis, flap, CFrame.new(0, -1.3, -0.82))
-	local belt = part(ctx, "Belt", Vector3.new(2.8, 0.4, 1.8), Color3.fromRGB(200, 180, 120), Enum.Material.Fabric)
-	glue(ctx, pelvis, belt, CFrame.new(0, 0.5, 0))
-
-	local torso = part(ctx, "Torso", Vector3.new(3.4, 2.8, 1.9), skin)
-	joint(ctx, "Waist", pelvis, torso, Vector3.new(0, 0.6, 0), Vector3.new(0, -1.4, 0))
-	-- Rusted chest plate with a glowing crack, shoulder pauldrons, prayer beads.
-	local plate = part(ctx, "ChestPlate", Vector3.new(3, 1.9, 0.4), armor, Enum.Material.CorrodedMetal)
-	glue(ctx, torso, plate, CFrame.new(0, 0.2, -0.98))
-	local crack = part(ctx, "PlateCrack", Vector3.new(0.18, 1.6, 0.1), glow, Enum.Material.Neon)
-	glue(ctx, torso, crack, CFrame.new(0.3, 0.2, -1.2) * CFrame.Angles(0, 0, math.rad(15)))
-	for i = -4, 4 do
-		local bead = part(ctx, "Bead", Vector3.new(0.5, 0.5, 0.5), Color3.fromRGB(60, 35, 25), Enum.Material.Wood, Enum.PartType.Ball)
-		local a = math.rad(i * 18)
-		glue(ctx, torso, bead, CFrame.new(math.sin(a) * 1.6, 0.9 - math.abs(i) * 0.12, -math.cos(a) * 1.05))
+	for _, side in { -1, 1 } do
+		local skirt = part(ctx, "Tasset", Vector3.new(1.3, 1.4, 0.3), steel, Enum.Material.DiamondPlate)
+		glue(ctx, pelvis, skirt, CFrame.new(side * 0.75, -0.8, -0.95) * CFrame.Angles(math.rad(-10), 0, 0))
 	end
 
-	local head = part(ctx, "Head", Vector3.new(1.8, 1.8, 1.8), skin)
-	joint(ctx, "Neck", torso, head, Vector3.new(0, 1.4, -0.1), Vector3.new(0, -0.9, 0))
-	local jaw = part(ctx, "Jaw", Vector3.new(1.5, 0.5, 1.2), skin)
-	joint(ctx, "Jaw", head, jaw, Vector3.new(0, -0.85, -0.2), Vector3.new(0, 0.1, 0.5))
+	local torso = part(ctx, "Torso", Vector3.new(3.6, 3, 2.2), steel, Enum.Material.Metal)
+	joint(ctx, "Waist", pelvis, torso, Vector3.new(0, 0.6, 0), Vector3.new(0, -1.5, 0))
+	local chest = part(ctx, "ChestArmor", Vector3.new(3.2, 1.8, 0.5), dark, Enum.Material.DiamondPlate)
+	glue(ctx, torso, chest, CFrame.new(0, 0.4, -1.1))
+	local coreBall = part(ctx, "Core", Vector3.new(1.1, 1.1, 1.1), core, Enum.Material.Neon, Enum.PartType.Ball)
+	glue(ctx, torso, coreBall, CFrame.new(0, 0.3, -1.35))
+	local coreLight = Instance.new("PointLight")
+	coreLight.Color = core
+	coreLight.Range = 22
+	coreLight.Brightness = 3
+	coreLight.Parent = coreBall
 	for _, side in { -1, 1 } do
-		local eye = part(ctx, "Eye", Vector3.new(0.4, 0.22, 0.1), glow, Enum.Material.Neon)
-		glue(ctx, head, eye, CFrame.new(side * 0.42, 0.2, -0.92) * CFrame.Angles(0, 0, math.rad(side * -12)))
-		local brow = part(ctx, "Brow", Vector3.new(0.6, 0.18, 0.2), skin:Lerp(Color3.new(0, 0, 0), 0.4))
-		glue(ctx, head, brow, CFrame.new(side * 0.42, 0.45, -0.92) * CFrame.Angles(0, 0, math.rad(side * 22)))
+		local stripe = part(ctx, "Stripe", Vector3.new(0.25, 2.6, 0.1), trim, Enum.Material.Neon)
+		glue(ctx, torso, stripe, CFrame.new(side * 1.2, 0, -1.16))
+		local vent = part(ctx, "Vent", Vector3.new(0.9, 0.5, 0.3), Color3.fromRGB(30, 30, 34), Enum.Material.Metal)
+		glue(ctx, torso, vent, CFrame.new(side * 1.2, -1.1, -1.12))
+		-- Back thrusters.
+		local thruster = part(ctx, "Thruster", Vector3.new(2.2, 1, 1), dark, Enum.Material.Metal, Enum.PartType.Cylinder)
+		glue(ctx, torso, thruster, CFrame.new(side * 0.9, 0.3, 1.4) * CFrame.Angles(0, 0, math.rad(90)))
+		local flame = part(ctx, "ThrusterFlame", Vector3.new(0.7, 0.7, 0.7), Color3.fromRGB(120, 180, 255), Enum.Material.Neon, Enum.PartType.Ball)
+		glue(ctx, torso, flame, CFrame.new(side * 0.9, -0.85, 1.4))
+		local fire = Instance.new("Fire")
+		fire.Color = Color3.fromRGB(110, 170, 255)
+		fire.SecondaryColor = Color3.fromRGB(255, 255, 255)
+		fire.Size = 2.5 * ctx.s
+		fire.Heat = -6
+		fire.Parent = flame
+	end
+
+	local head = part(ctx, "Head", Vector3.new(1.6, 1.3, 1.6), steel, Enum.Material.Metal)
+	joint(ctx, "Neck", torso, head, Vector3.new(0, 1.5, -0.1), Vector3.new(0, -0.7, 0))
+	local visor = part(ctx, "Visor", Vector3.new(1.4, 0.28, 0.2), glow, Enum.Material.Neon)
+	glue(ctx, head, visor, CFrame.new(0, 0.1, -0.82))
+	local visorLight = Instance.new("PointLight")
+	visorLight.Color = glow
+	visorLight.Range = 16
+	visorLight.Brightness = 2
+	visorLight.Parent = visor
+	local jaw = part(ctx, "Faceplate", Vector3.new(1.3, 0.5, 0.3), dark, Enum.Material.DiamondPlate)
+	glue(ctx, head, jaw, CFrame.new(0, -0.4, -0.78))
+	-- Kabuto crest: two golden crescent horns.
+	for _, side in { -1, 1 } do
 		local horn = Instance.new("WedgePart")
-		horn.Name = "Horn"
-		horn.Size = Vector3.new(0.4, 1.6, 0.6) * ctx.s
-		horn.Color = bone
+		horn.Name = "Crest"
+		horn.Size = Vector3.new(0.2, 1.8, 0.6) * ctx.s
+		horn.Color = trim
+		horn.Material = Enum.Material.Metal
 		horn.CanCollide = false
 		horn.Massless = true
 		horn.Parent = model
-		glue(ctx, head, horn, CFrame.new(side * 0.6, 1.4, 0) * CFrame.Angles(0, 0, math.rad(side * -20)))
-		local tusk = Instance.new("WedgePart")
-		tusk.Name = "Tusk"
-		tusk.Size = Vector3.new(0.18, 0.6, 0.25) * ctx.s
-		tusk.Color = bone
-		tusk.CanCollide = false
-		tusk.Massless = true
-		tusk.Parent = model
-		glue(ctx, jaw, tusk, CFrame.new(side * 0.5, 0.45, -0.45))
+		glue(ctx, head, horn, CFrame.new(side * 0.55, 1.2, -0.3) * CFrame.Angles(0, 0, math.rad(side * -32)))
 	end
-	local hair = part(ctx, "Hair", Vector3.new(2.2, 1.2, 2.2), Color3.fromRGB(235, 235, 240), Enum.Material.Fabric)
-	glue(ctx, head, hair, CFrame.new(0, 0.75, 0.35))
-	local mane = part(ctx, "Mane", Vector3.new(2.4, 2, 0.8), Color3.fromRGB(225, 225, 230), Enum.Material.Fabric)
-	glue(ctx, head, mane, CFrame.new(0, -0.2, 1))
-	local headLight = Instance.new("PointLight")
-	headLight.Color = glow
-	headLight.Range = 18
-	headLight.Brightness = 2
-	headLight.Parent = head
+	local antenna = part(ctx, "Antenna", Vector3.new(0.12, 1.4, 0.12), dark, Enum.Material.Metal)
+	glue(ctx, head, antenna, CFrame.new(0.5, 1, 0.5))
 
-	local hands: { [string]: BasePart } = {}
 	for _, side in { -1, 1 } do
 		local tag = if side < 0 then "L" else "R"
-		local upper = part(ctx, "UpperArm_" .. tag, Vector3.new(1.1, 2.3, 1.1), skin)
-		joint(ctx, "Shoulder_" .. tag, torso, upper, Vector3.new(side * 2.1, 0.9, 0), Vector3.new(0, 0.9, 0))
-		local pauldron = part(ctx, "Pauldron", Vector3.new(1.7, 0.7, 1.6), armor, Enum.Material.CorrodedMetal)
-		glue(ctx, upper, pauldron, CFrame.new(0, 1, 0) * CFrame.Angles(0, 0, math.rad(side * -15)))
-		local lower = part(ctx, "LowerArm_" .. tag, Vector3.new(1, 2.1, 1), skin)
-		joint(ctx, "Elbow_" .. tag, upper, lower, Vector3.new(0, -1.15, 0), Vector3.new(0, 0.95, 0))
-		local bracer = part(ctx, "Bracer", Vector3.new(1.15, 1, 1.15), armor, Enum.Material.CorrodedMetal)
-		glue(ctx, lower, bracer, CFrame.new(0, -0.4, 0))
-		local hand = part(ctx, "Hand_" .. tag, Vector3.new(1.2, 1, 1.2), skin)
-		glue(ctx, lower, hand, CFrame.new(0, -1.3, 0))
-		hands[tag] = hand
-		local upperLeg = part(ctx, "UpperLeg_" .. tag, Vector3.new(1.3, 2.3, 1.3), skin)
-		joint(ctx, "Hip_" .. tag, pelvis, upperLeg, Vector3.new(side * 0.75, -0.6, 0), Vector3.new(0, 1, 0))
-		local lowerLeg = part(ctx, "LowerLeg_" .. tag, Vector3.new(1.15, 2.3, 1.15), skin)
+		local upper = part(ctx, "UpperArm_" .. tag, Vector3.new(1.2, 2.3, 1.2), dark, Enum.Material.Metal)
+		joint(ctx, "Shoulder_" .. tag, torso, upper, Vector3.new(side * 2.3, 0.9, 0), Vector3.new(0, 0.9, 0))
+		local pauldron = part(ctx, "Pauldron", Vector3.new(2, 0.8, 2), steel, Enum.Material.DiamondPlate)
+		glue(ctx, upper, pauldron, CFrame.new(side * 0.15, 1.1, 0) * CFrame.Angles(0, 0, math.rad(side * -18)))
+		local pauldronTrim = part(ctx, "PauldronTrim", Vector3.new(2.05, 0.15, 2.05), trim, Enum.Material.Neon)
+		glue(ctx, upper, pauldronTrim, CFrame.new(side * 0.15, 0.7, 0) * CFrame.Angles(0, 0, math.rad(side * -18)))
+		-- Forearm = rocket pod with four tubes and a fist.
+		local pod = part(ctx, "RocketPod_" .. tag, Vector3.new(1.8, 2.4, 1.8), steel, Enum.Material.Metal)
+		joint(ctx, "Elbow_" .. tag, upper, pod, Vector3.new(0, -1.15, 0), Vector3.new(0, 1, 0))
+		for tx = -1, 1, 2 do
+			for tz = -1, 1, 2 do
+				local tube = part(ctx, "Tube", Vector3.new(2.5, 0.55, 0.55), Color3.fromRGB(30, 30, 34), Enum.Material.Metal, Enum.PartType.Cylinder)
+				glue(ctx, pod, tube, CFrame.new(tx * 0.45, -0.1, tz * 0.45) * CFrame.Angles(0, 0, math.rad(90)))
+				local tip = part(ctx, "RocketTip", Vector3.new(0.4, 0.4, 0.4), glow, Enum.Material.Neon, Enum.PartType.Ball)
+				glue(ctx, pod, tip, CFrame.new(tx * 0.45, -1.3, tz * 0.45))
+			end
+		end
+		local fist = part(ctx, "Fist_" .. tag, Vector3.new(1.5, 1.1, 1.5), dark, Enum.Material.Metal)
+		glue(ctx, pod, fist, CFrame.new(0, -1.75, 0))
+		local upperLeg = part(ctx, "UpperLeg_" .. tag, Vector3.new(1.5, 2.3, 1.5), dark, Enum.Material.Metal)
+		joint(ctx, "Hip_" .. tag, pelvis, upperLeg, Vector3.new(side * 0.85, -0.6, 0), Vector3.new(0, 1, 0))
+		local lowerLeg = part(ctx, "LowerLeg_" .. tag, Vector3.new(1.4, 2.3, 1.6), steel, Enum.Material.Metal)
 		joint(ctx, "Knee_" .. tag, upperLeg, lowerLeg, Vector3.new(0, -1.1, 0), Vector3.new(0, 1, 0))
-		local greave = part(ctx, "Greave", Vector3.new(1.25, 1.2, 1.25), armor, Enum.Material.CorrodedMetal)
-		glue(ctx, lowerLeg, greave, CFrame.new(0, 0.1, 0))
-		local foot = part(ctx, "Foot_" .. tag, Vector3.new(1.4, 0.6, 2), skin)
-		glue(ctx, lowerLeg, foot, CFrame.new(0, -1.3, -0.3))
+		local kneePad = part(ctx, "KneePad", Vector3.new(1.2, 1, 0.5), trim, Enum.Material.Metal)
+		glue(ctx, lowerLeg, kneePad, CFrame.new(0, 0.9, -0.85))
+		local foot = part(ctx, "Foot_" .. tag, Vector3.new(1.8, 0.7, 2.6), dark, Enum.Material.Metal)
+		glue(ctx, lowerLeg, foot, CFrame.new(0, -1.3, -0.4))
 	end
-
-	-- The bell-hammer: long iron-bound shaft, a cracked temple bell for a head.
-	local shaft = part(ctx, "HammerShaft", Vector3.new(0.5, 6.4, 0.5), Color3.fromRGB(70, 45, 30), Enum.Material.Wood)
-	local grip = joint(ctx, "Grip", hands.R, shaft, Vector3.new(0, -0.35, 0), Vector3.new(0, -2.4, 0))
-	grip.C0 = CFrame.new(0, -0.35 * ctx.s, 0) * CFrame.Angles(math.rad(-100), 0, 0)
-	for _, y in { -1.6, 0.4, 2.2 } do
-		local band = part(ctx, "ShaftBand", Vector3.new(0.6, 0.3, 0.6), Color3.fromRGB(90, 85, 80), Enum.Material.Metal)
-		glue(ctx, shaft, band, CFrame.new(0, y, 0))
-	end
-	local bell = part(ctx, "BellHead", Vector3.new(2.6, 2.6, 2.6), bronze, Enum.Material.CorrodedMetal, Enum.PartType.Cylinder)
-	glue(ctx, shaft, bell, CFrame.new(0, 3.6, 0))
-	local lip = part(ctx, "BellLip", Vector3.new(0.4, 3.1, 3.1), bronze:Lerp(Color3.new(0, 0, 0), 0.25), Enum.Material.Metal, Enum.PartType.Cylinder)
-	glue(ctx, shaft, lip, CFrame.new(1.25, 3.6, 0))
-	local bellCrack = part(ctx, "BellCrack", Vector3.new(2.62, 0.2, 0.25), glow, Enum.Material.Neon)
-	glue(ctx, shaft, bellCrack, CFrame.new(0, 3.6, -1.25))
-	local bellLight = Instance.new("PointLight")
-	bellLight.Color = glow
-	bellLight.Range = 20
-	bellLight.Brightness = 2.5
-	bellLight.Parent = bell
-	local embers = Instance.new("ParticleEmitter")
-	embers.Texture = "rbxasset://textures/particles/fire_main.dds"
-	embers.Color = ColorSequence.new(glow)
-	embers.LightEmission = 1
-	embers.Size = NumberSequence.new(0.6, 0)
-	embers.Lifetime = NumberRange.new(0.6, 1.2)
-	embers.Rate = 25
-	embers.Speed = NumberRange.new(1, 3)
-	embers.SpreadAngle = Vector2.new(180, 180)
-	embers.Acceleration = Vector3.new(0, 6, 0)
-	embers.Parent = bell
 
 	root.CFrame = CFrame.new()
 	for _ = 1, 2 do
@@ -414,14 +394,13 @@ local function oni(look: EnemyConfig.RigLook): Model
 	end
 	local hum = Instance.new("Humanoid")
 	hum.RigType = Enum.HumanoidRigType.R15
-	-- Root center to the soles: pelvis 0.8 + hip 0.6 + thigh 2.1 + shin 1 + foot 1.6.
-	hum.HipHeight = (6.1 - 2.5) * ctx.s
+	hum.HipHeight = (6.15 - 2.5) * ctx.s
 	hum.RequiresNeck = false
 	hum.BreakJointsOnDeath = false
 	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	hum.Parent = model
 	model.PrimaryPart = root
-	model:SetAttribute("Creature", "Oni")
+	model:SetAttribute("Creature", "Mech")
 	return model
 end
 
@@ -433,8 +412,8 @@ function CreatureBuilder.Build(kind: string, look: EnemyConfig.RigLook?): Model?
 		return tiger(look)
 	elseif kind == "Drone" then
 		return drone(look)
-	elseif kind == "Oni" then
-		return oni(look)
+	elseif kind == "Mech" then
+		return mech(look)
 	end
 	return nil
 end

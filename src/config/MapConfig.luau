@@ -46,7 +46,7 @@ MapConfig.Areas = {
 	{ id = "village", name = "Ashen Village", subtitle = "Burned the night the bell cracked", center = { 20, -1380 }, radius = 100, theme = "Village", y = 0 },
 	{ id = "stairs", name = "Thousand-Step Stair", subtitle = "Every step a prayer", center = { -300, -1660 }, radius = 40, theme = "Stairs", y = 25 },
 	{ id = "temple", name = "Temple of the Silent Bell", subtitle = "The abbot keeps his vow", center = { -330, -1960 }, radius = 110, theme = "Temple", y = 50 },
-	{ id = "bell_gate", name = "Gate of the Cracked Bell", subtitle = "The Oni waits where the bell fell", center = { 0, -2420 }, radius = 110, theme = "BellGate", y = 50 },
+	{ id = "bell_gate", name = "Gate of the Cracked Bell", subtitle = "Something iron waits where the bell fell", center = { 0, -2420 }, radius = 110, theme = "BellGate", y = 50 },
 } :: { AreaDef }
 
 MapConfig.HealAreas = { springs = 0.15 }
@@ -78,7 +78,7 @@ MapConfig.EnemySpawns = {
 MapConfig.BossArenas = {
 	{ name = "SableCraneArena", bossId = "sable_crane", at = { 70, -1440 } },
 	{ name = "HollowAbbotArena", bossId = "hollow_abbot", at = { -330, -2030 } },
-	{ name = "BellOniArena", bossId = "bell_oni", at = { 0, -2470 } },
+	{ name = "BellEngineArena", bossId = "bell_engine", at = { 0, -2470 } },
 }
 
 -- World boss spawn (open-world encounter in the gorge clearing).

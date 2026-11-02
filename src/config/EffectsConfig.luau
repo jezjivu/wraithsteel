@@ -29,10 +29,13 @@ EffectsConfig.Outcome = {
 
 -- Boss ranged / ground attack labels (BossConfig move kind).
 EffectsConfig.HazardLabels = {
-	Projectile = { text = "ORB - deflect it back (F)", color = { 255, 210, 110 } },
-	Volley = { text = "VOLLEY - guard or dash", color = { 240, 190, 140 } },
+	Projectile = { text = "INCOMING - deflect it back (F)!", color = { 255, 210, 110 } },
+	Volley = { text = "BARRAGE - deflect or dash", color = { 240, 190, 140 } },
 	Wave = { text = "QUAKE - jump the ring!", color = { 255, 120, 60 } },
-	Rain = { text = "RUST RAIN - move!", color = { 255, 60, 50 } },
+	Rain = { text = "INCOMING - leave the red circles!", color = { 255, 60, 50 } },
+	Laser = { text = "LASER - step out of the line!", color = { 255, 70, 70 } },
+	LaserSweep = { text = "LASER SWEEP - dodge or deflect!", color = { 255, 70, 70 } },
+	Leap = { text = "DROP - leave the circle!", color = { 140, 190, 255 } },
 }
 
 -- Perilous telegraph labels: what to do about each kind (CombatConfig).

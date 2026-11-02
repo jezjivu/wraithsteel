@@ -4,7 +4,7 @@
 -- (PartyService will supply parties in Phase 3). Bosses ignore attack tokens.
 --
 -- Studio setup (TODO(Studio/Agent D + C)):
---   Workspace.BossArenas/<Part> with attribute BossId = "bell_oni"; BossService adds a
+--   Workspace.BossArenas/<Part> with attribute BossId = "bell_engine"; BossService adds a
 --   ProximityPrompt "Challenge" to it. Boss rig: ServerStorage.Bosses/<bossId> (placeholder block
 --   otherwise). Animations: BossConfig move animationId (all placeholders today).
 --
@@ -271,6 +271,7 @@ local function doHazard(e: Encounter, moveId: string, m: BossConfig.BossMove): b
 				deflectable = m.deflectable,
 				reflectDamage = m.reflectDamage,
 				reflectPosture = m.reflectPosture,
+				visual = m.visual,
 				moveId = moveId,
 			})
 		end
@@ -284,6 +285,31 @@ local function doHazard(e: Encounter, moveId: string, m: BossConfig.BossMove): b
 			color = color,
 			moveId = moveId,
 		})
+	elseif kind == "Laser" or kind == "LaserSweep" then
+		-- From the visor, aimed where the target stands now; sweeps fan across the arena.
+		local eye = root.Position + Vector3.new(0, root.Size.Y * 0.5 + 2, 0) + root.CFrame.LookVector * 2
+		local base = aimAt - eye
+		local count = if kind == "LaserSweep" then m.count or 5 else 1
+		local spread = if kind == "LaserSweep" then m.spread or 90 else 0
+		local stagger = if count > 1 then (m.active or 1) / count else 0
+		for i = 1, count do
+			local ang = if count > 1 then -spread / 2 + spread * (i - 1) / (count - 1) else 0
+			local dir = CFrame.Angles(0, math.rad(ang), 0):VectorToWorldSpace(base)
+			task.delay((i - 1) * stagger, function()
+				if e.ended or e.c.dead then
+					return
+				end
+				HazardService.Laser(e.c, Vector3.new(eye.X, aimAt.Y, eye.Z), dir, {
+					length = m.range,
+					width = m.radius or 3,
+					delay = m.delay or 0.8,
+					damage = m.damage,
+					posture = m.postureDamage,
+					color = color,
+					moveId = moveId,
+				})
+			end)
+		end
 	elseif kind == "Leap" then
 		-- Jump onto the target's spot: marked circle, an arcing flight, a crash + toll ring.
 		local hum = e.c.humanoid
@@ -487,8 +513,8 @@ local function finish(e: Encounter, victory: boolean)
 					firstClear = first,
 				})
 				QuestService.Increment(p, "Boss:" .. e.bossId, 1)
-				if e.bossId == "bell_oni" then
-					AnalyticsService.Onboarding(p, "BellOniDefeated")
+				if e.bossId == "bell_engine" then
+					AnalyticsService.Onboarding(p, "BellEngineDefeated")
 				end
 			end
 		end

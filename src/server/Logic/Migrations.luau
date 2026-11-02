@@ -42,17 +42,30 @@ Migrations.Steps = {
 			data.saga = { quest = 1, step = 1, progress = 0, started = false }
 		end
 	end,
-	-- v4 -> v5: the first boss was remade (rust_tiger -> bell_oni); keep earned unlocks.
+	-- v4 -> v5: the first boss was remade (rust_tiger -> bell_engine); keep earned unlocks.
 	[5] = function(data: { [string]: any })
 		local d = data.bossesDefeated
 		if type(d) == "table" and d.rust_tiger then
-			d.bell_oni = (d.bell_oni or 0) + d.rust_tiger
+			d.bell_engine = (d.bell_engine or 0) + d.rust_tiger
 			d.rust_tiger = nil
 		end
 		local q = data.quests
 		if type(q) == "table" and q.s_prologue_tiger then
-			q.s_prologue_oni = q.s_prologue_tiger
+			q.s_prologue_engine = q.s_prologue_tiger
 			q.s_prologue_tiger = nil
+		end
+	end,
+	-- v5 -> v6: the first boss was remade again (bell_oni -> bell_engine).
+	[6] = function(data: { [string]: any })
+		local d = data.bossesDefeated
+		if type(d) == "table" and d.bell_oni then
+			d.bell_engine = (d.bell_engine or 0) + d.bell_oni
+			d.bell_oni = nil
+		end
+		local q = data.quests
+		if type(q) == "table" and q.s_prologue_oni then
+			q.s_prologue_engine = q.s_prologue_oni
+			q.s_prologue_oni = nil
 		end
 	end,
 } :: { [number]: (data: { [string]: any }) -> () }

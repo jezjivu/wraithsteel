@@ -152,10 +152,11 @@ SagaConfig.Quests = {
 	{
 		id = "warden", title = "Warden of the Cracked Bell", realm = "japan", giver = "shirane",
 		intro = {
-			"Far to the north, past the Thousand-Step Stair and the temple, the Bell Oni sits where the great bell fell.",
-			"It swings a bell for a hammer, leaps across the field and rings the earth. When it throws a bell-orb, deflect it straight back into its face.",
+			"Far to the north, past the Thousand-Step Stair and the temple, the Thunderbell Engine sits where the great bell fell.",
+			"An iron war-engine built to guard the bell. Its arms are rocket launchers, its eye a lightning lance.",
+			"Dodge or deflect its rockets - a perfect deflect sends them home. Leap its shockwaves. Step aside from the laser, or meet it with your blade at the last instant.",
 		},
-		steps = { { kind = "Boss", bossId = "bell_oni", text = "Defeat the Bell Oni at its shrine" } },
+		steps = { { kind = "Boss", bossId = "bell_engine", text = "Defeat the Thunderbell Engine at its shrine" } },
 		outro = {
 			"The first gate is open. Can you feel it? East of the plaza, the portal hums blue.",
 			"Beyond it lies a city that never stopped ringing. Find a fixer called Juno-7. Go.",

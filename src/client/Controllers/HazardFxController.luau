@@ -48,7 +48,7 @@ local function neon(size: Vector3, cf: CFrame, color: Color3, shape: Enum.PartTy
 	return p
 end
 
-type Orb = { part: Part, core: Part, from: Vector3, vel: Vector3, start: number, range: number, deflectable: boolean }
+type Orb = { part: Part, core: Part, from: Vector3, vel: Vector3, start: number, range: number, deflectable: boolean, rocket: boolean }
 local orbs: { [number]: Orb } = {}
 
 local function onProjectile(e: { [string]: any })
@@ -56,8 +56,25 @@ local function onProjectile(e: { [string]: any })
 	local vel: Vector3 = e.velocity
 	local color = rgb(e.color)
 	local size = tonumber(e.size) or 2
-	local orb = neon(Vector3.new(size, size, size), CFrame.new(from), color, Enum.PartType.Ball)
-	orb.Transparency = 0.15
+	local rocket = e.visual == "Rocket" and not e.reflected
+	local orb = if rocket
+		then neon(Vector3.new(size * 2.4, size * 0.7, size * 0.7), CFrame.lookAt(from, from + vel) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(70, 70, 78), Enum.PartType.Cylinder)
+		else neon(Vector3.new(size, size, size), CFrame.new(from), color, Enum.PartType.Ball)
+	if rocket then
+		orb.Material = Enum.Material.Metal
+		-- Smoke trail behind the rocket.
+		local smoke = Instance.new("ParticleEmitter")
+		smoke.Texture = Fx.Textures.Smoke
+		smoke.Color = ColorSequence.new(Color3.fromRGB(150, 145, 140))
+		smoke.Size = NumberSequence.new(size * 0.6, size * 2)
+		smoke.Transparency = NumberSequence.new(0.4, 1)
+		smoke.Lifetime = NumberRange.new(0.6, 1)
+		smoke.Rate = 60
+		smoke.Speed = NumberRange.new(0, 1)
+		smoke.Parent = orb
+	else
+		orb.Transparency = 0.15
+	end
 	local core = neon(Vector3.new(size * 0.5, size * 0.5, size * 0.5), CFrame.new(from), Color3.new(1, 1, 1), Enum.PartType.Ball)
 	local att = Instance.new("Attachment")
 	att.Parent = orb
@@ -85,7 +102,7 @@ local function onProjectile(e: { [string]: any })
 		ring.Transparency = 0
 		ring.Parent = orb
 	end
-	orbs[e.id] = { part = orb, core = core, from = from, vel = vel, start = os.clock(), range = tonumber(e.range) or 80, deflectable = e.deflectable == true }
+	orbs[e.id] = { part = orb, core = core, from = from, vel = vel, start = os.clock(), range = tonumber(e.range) or 80, deflectable = e.deflectable == true, rocket = rocket }
 	Fx.Burst(from, { texture = Fx.Textures.Fire, color = color, count = 14, speed = 14, size = 1.2, lifetime = 0.3 })
 	SpellFx.Sound(EffectsConfig.Sounds.cast, from, if e.reflected then 1.6 else 0.7, 0.6)
 end
@@ -156,6 +173,45 @@ local function onWave(e: { [string]: any })
 	SpellFx.Sound(EffectsConfig.Sounds.boom, origin, 0.6, 1)
 end
 
+-- Laser: a flickering red warning line, then a blinding beam along it.
+local function onLaser(e: { [string]: any })
+	local from: Vector3 = e.from
+	local dir: Vector3 = e.dir
+	local length = tonumber(e.length) or 80
+	local width = tonumber(e.width) or 3
+	local delay = tonumber(e.delay) or 0.8
+	local color = rgb(e.color)
+	local mid = from + dir * (length / 2)
+	local cf = CFrame.lookAt(mid, mid + dir)
+	local warn = neon(Vector3.new(0.35, 0.2, length), cf, Color3.fromRGB(255, 40, 40))
+	warn.Transparency = 0.5
+	local edgeL = neon(Vector3.new(0.12, 0.12, length), cf * CFrame.new(-width / 2, 0, 0), Color3.fromRGB(255, 80, 80))
+	local edgeR = neon(Vector3.new(0.12, 0.12, length), cf * CFrame.new(width / 2, 0, 0), Color3.fromRGB(255, 80, 80))
+	for _, p in { edgeL, edgeR } do
+		p.Transparency = 0.6
+		TweenService:Create(p, TweenInfo.new(delay), { Transparency = 0.1 }):Play()
+	end
+	TweenService:Create(warn, TweenInfo.new(delay, Enum.EasingStyle.Linear), { Transparency = 0, Size = Vector3.new(0.6, 0.3, length) }):Play()
+	Fx.LightFlash(from, color, 16, delay)
+	task.delay(delay, function()
+		warn:Destroy()
+		edgeL:Destroy()
+		edgeR:Destroy()
+		local beam = neon(Vector3.new(width, width, length), cf, color, Enum.PartType.Block)
+		beam.Transparency = 0.25
+		local core = neon(Vector3.new(width * 0.4, width * 0.4, length), cf, Color3.new(1, 1, 1))
+		TweenService:Create(beam, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = Vector3.new(0.1, 0.1, length), Transparency = 1 }):Play()
+		TweenService:Create(core, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = Vector3.new(0.05, 0.05, length), Transparency = 1 }):Play()
+		Debris:AddItem(beam, 0.4)
+		Debris:AddItem(core, 0.4)
+		Fx.Burst(from, { color = color, count = 20, speed = 24, size = 0.6, lifetime = 0.3 })
+		Fx.Burst(from + dir * length, { texture = Fx.Textures.Fire, color = color, count = 20, speed = 18, size = 1.4, lifetime = 0.4 })
+		Fx.LightFlash(mid, color, 40, 0.3)
+		SpellFx.Sound(EffectsConfig.Sounds.boom, from, 2, 0.8)
+		Fx.CameraPunch(3)
+	end)
+end
+
 local function onRain(e: { [string]: any })
 	local color = rgb(e.color)
 	local radius = tonumber(e.radius) or 7
@@ -196,6 +252,8 @@ function HazardFxController.Start()
 			onWave(e)
 		elseif e.kind == "HazardRain" then
 			onRain(e)
+		elseif e.kind == "HazardLaser" then
+			onLaser(e)
 		elseif e.kind == "Returned" then
 			local model = EffectsController.ModelFor(e.targetId)
 			if model and model == game:GetService("Players").LocalPlayer.Character then
@@ -216,10 +274,17 @@ function HazardFxController.Start()
 				orbs[id] = nil
 				continue
 			end
-			local pulse = if o.deflectable then 1 + math.sin(now * 14) * 0.12 else 1
-			o.part.CFrame = CFrame.new(pos)
-			o.core.CFrame = CFrame.new(pos)
-			o.core.Size = Vector3.new(1, 1, 1) * (o.part.Size.X * 0.5 * pulse)
+			if o.rocket then
+				local look = CFrame.lookAt(pos, pos + o.vel)
+				o.part.CFrame = look * CFrame.Angles(0, math.rad(90), 0)
+				o.core.CFrame = look * CFrame.new(0, 0, o.part.Size.X * 0.55) -- exhaust flame
+				o.core.Size = Vector3.new(1, 1, 1) * (o.part.Size.Y * (0.9 + math.random() * 0.4))
+			else
+				local pulse = if o.deflectable then 1 + math.sin(now * 14) * 0.12 else 1
+				o.part.CFrame = CFrame.new(pos)
+				o.core.CFrame = CFrame.new(pos)
+				o.core.Size = Vector3.new(1, 1, 1) * (o.part.Size.X * 0.5 * pulse)
+			end
 		end
 	end)
 end

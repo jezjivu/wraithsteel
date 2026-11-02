@@ -27,7 +27,9 @@ export type BossMove = {
 	--   Wave: shockwave ring from the boss along the ground (jump it)
 	--   Rain: `count` eruptions marked around players, after `delay` (get out)
 	--   Leap: jumps onto the target's spot (marked circle), crashes down with a ring
-	kind: ("Melee" | "Projectile" | "Volley" | "Wave" | "Rain" | "Leap")?,
+	--   Laser: red warning line at the target, then a beam along it; LaserSweep: `count` beams
+	--   fanned over `spread` degrees, one after another
+	kind: ("Melee" | "Projectile" | "Volley" | "Wave" | "Rain" | "Leap" | "Laser" | "LaserSweep")?,
 	speed: number?, -- projectile / wave speed (studs/s)
 	count: number?,
 	spread: number?,
@@ -38,6 +40,7 @@ export type BossMove = {
 	reflectPosture: number?,
 	color: { number }?,
 	style: string?, -- AnimationConfig style for humanoid bosses (default: alternating slashes)
+	visual: string?, -- projectile look: "Rocket" (default: glowing orb)
 	pose: string?, -- creature pose (CreatureAnimator): Tiger Swipe/Pounce/Rear/Roar/Spit/Spin; Oni Swing/Slam/Throw/Grab/Leap/Spin/Roar
 	animationId: string,
 }
@@ -84,44 +87,45 @@ BossConfig.Knockback = { normal = 16, wide = 30, perilous = 45, perilousLaunch =
 local PLACEHOLDER_ANIM = "rbxassetid://0"
 
 BossConfig.Bosses = {
-	-- The Bell Oni: the first gate's warden. A towering demon with a bell for a hammer.
-	-- Phase 1 teaches the basics (sweeps to deflect, a bell-orb to send back, a toll ring to
-	-- jump, a grab to dodge). Phase 2 it starts leaping across the arena and hurling orbs in
-	-- threes. Phase 3 it spins and rings the whole arena with falling bells.
-	bell_oni = {
-		name = "Bell Oni",
-		title = "Warden of the Cracked Bell",
+	-- The Thunderbell Engine: the first gate's warden, an iron war machine. EVERYTHING it does
+	-- can be deflected with perfect timing (rockets fly back at it!), or dodged:
+	--   rockets / rocket fist -> dash sideways or deflect   lasers -> step out of the red line
+	--   seismic slam ring -> jump or deflect                  thruster drop -> leave the circle
+	bell_engine = {
+		name = "Thunderbell Engine",
+		title = "Iron Warden of the Cracked Bell",
 		chapter = 0,
 		kind = "Story",
-		creature = "Oni",
-		maxHealth = 1300,
+		creature = "Mech",
+		maxHealth = 1400,
 		healthPerExtraPlayer = 0.6,
-		maxPosture = 200,
-		postureRegen = 7,
+		maxPosture = 210,
+		postureRegen = 8,
 		postureBrokenSeconds = 3.5,
-		walkSpeed = 16,
-		deflectChance = 0.2,
+		walkSpeed = 15,
+		deflectChance = 0.3,
 		moves = {
-			hammer_sweep = { name = "Bell-Hammer Sweep", pose = "Swing", damage = 18, postureDamage = 22, windup = 0.65, active = 0.2, recovery = 0.6, range = 17, arcDegrees = 150, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
-			double_sweep = { name = "Back-Swing", pose = "Swing", damage = 14, postureDamage = 18, windup = 0.5, active = 0.7, recovery = 0.7, range = 17, arcDegrees = 150, weight = 2, cooldown = 4, hits = 2, animationId = PLACEHOLDER_ANIM },
-			overhead = { name = "Temple Breaker", pose = "Slam", damage = 30, postureDamage = 34, windup = 0.9, active = 0.2, recovery = 0.9, range = 16, arcDegrees = 50, weight = 2, cooldown = 4, animationId = PLACEHOLDER_ANIM },
-			bell_orb = { name = "Bell-Orb", kind = "Projectile", pose = "Throw", damage = 24, postureDamage = 26, windup = 0.85, active = 0.2, recovery = 0.7, range = 75, arcDegrees = 360, weight = 3, cooldown = 5, speed = 40, radius = 2.4, deflectable = true, reflectDamage = 110, reflectPosture = 85, color = { 255, 170, 70 }, animationId = PLACEHOLDER_ANIM },
-			toll_ring = { name = "Toll of the Cracked Bell", kind = "Wave", pose = "Slam", damage = 22, postureDamage = 14, windup = 1.0, active = 0.3, recovery = 1.0, range = 55, arcDegrees = 360, weight = 2, cooldown = 8, speed = 34, radius = 62, color = { 255, 150, 60 }, animationId = PLACEHOLDER_ANIM },
-			oni_grab = { name = "Oni's Grasp", pose = "Grab", damage = 36, postureDamage = 0, windup = 0.85, active = 0.25, recovery = 1.0, range = 11, arcDegrees = 70, weight = 1, cooldown = 9, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
-			leap_crash = { name = "Heaven-Fall Leap", kind = "Leap", pose = "Leap", damage = 34, postureDamage = 24, windup = 0.7, active = 1.1, recovery = 1.1, range = 70, minRange = 14, arcDegrees = 360, weight = 3, cooldown = 7, radius = 13, delay = 1.1, color = { 255, 110, 50 }, animationId = PLACEHOLDER_ANIM },
-			triple_orb = { name = "Three Tolls", kind = "Volley", pose = "Throw", damage = 20, postureDamage = 22, windup = 0.9, active = 0.2, recovery = 0.8, range = 75, minRange = 12, arcDegrees = 360, weight = 2, cooldown = 9, speed = 44, count = 3, spread = 34, radius = 2.2, deflectable = true, reflectDamage = 80, reflectPosture = 60, color = { 255, 170, 70 }, animationId = PLACEHOLDER_ANIM },
-			spin_storm = { name = "Bell Cyclone", pose = "Spin", damage = 12, postureDamage = 12, windup = 0.7, active = 1.4, recovery = 1.0, range = 16, arcDegrees = 360, weight = 2, cooldown = 9, hits = 5, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
-			bell_rain = { name = "Rain of Bells", kind = "Rain", pose = "Roar", damage = 30, postureDamage = 12, windup = 1.0, active = 0.3, recovery = 1.0, range = 80, arcDegrees = 360, weight = 2, cooldown = 11, count = 10, radius = 8, delay = 1.2, color = { 255, 120, 40 }, animationId = PLACEHOLDER_ANIM },
+			piston_punch = { name = "Piston Jab", pose = "Punch", damage = 18, postureDamage = 22, windup = 0.55, active = 0.15, recovery = 0.55, range = 16, arcDegrees = 110, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
+			one_two = { name = "Piston One-Two", pose = "Punch", damage = 14, postureDamage = 18, windup = 0.45, active = 0.6, recovery = 0.6, range = 16, arcDegrees = 110, weight = 2, cooldown = 3, hits = 2, animationId = PLACEHOLDER_ANIM },
+			hammer_slam = { name = "Hammer-Fist Slam", pose = "Slam", damage = 30, postureDamage = 34, windup = 0.85, active = 0.2, recovery = 0.9, range = 15, arcDegrees = 60, weight = 2, cooldown = 4, animationId = PLACEHOLDER_ANIM },
+			rocket_fist = { name = "Rocket Fist", kind = "Projectile", pose = "Punch", damage = 28, postureDamage = 30, windup = 0.8, active = 0.2, recovery = 0.9, range = 80, minRange = 10, arcDegrees = 360, weight = 3, cooldown = 5, speed = 55, radius = 2.4, deflectable = true, reflectDamage = 120, reflectPosture = 90, color = { 255, 150, 60 }, visual = "Rocket", animationId = PLACEHOLDER_ANIM },
+			rocket_barrage = { name = "Rocket Barrage", kind = "Volley", pose = "Aim", damage = 13, postureDamage = 12, windup = 0.9, active = 0.4, recovery = 0.8, range = 75, minRange = 8, arcDegrees = 360, weight = 3, cooldown = 6, speed = 62, count = 6, spread = 70, radius = 1.4, color = { 255, 120, 50 }, visual = "Rocket", animationId = PLACEHOLDER_ANIM },
+			laser_lance = { name = "Lightning Lance", kind = "Laser", pose = "Laser", damage = 32, postureDamage = 26, windup = 0.6, active = 0.4, recovery = 0.9, range = 90, arcDegrees = 360, weight = 3, cooldown = 6, delay = 0.85, radius = 3.2, color = { 255, 60, 60 }, animationId = PLACEHOLDER_ANIM },
+			seismic_slam = { name = "Seismic Slam", kind = "Wave", pose = "Slam", damage = 22, postureDamage = 16, windup = 0.95, active = 0.3, recovery = 1.0, range = 55, arcDegrees = 360, weight = 2, cooldown = 7, speed = 36, radius = 60, color = { 255, 170, 70 }, animationId = PLACEHOLDER_ANIM },
+			thruster_drop = { name = "Thruster Drop", kind = "Leap", pose = "Leap", damage = 34, postureDamage = 24, windup = 0.6, active = 1.1, recovery = 1.0, range = 75, minRange = 14, arcDegrees = 360, weight = 3, cooldown = 7, radius = 13, delay = 1.1, color = { 120, 180, 255 }, animationId = PLACEHOLDER_ANIM },
+			laser_sweep = { name = "Thunder Sweep", kind = "LaserSweep", pose = "Laser", damage = 26, postureDamage = 20, windup = 0.8, active = 1.2, recovery = 1.0, range = 85, arcDegrees = 360, weight = 2, cooldown = 9, count = 6, spread = 110, delay = 0.7, radius = 3, color = { 255, 60, 60 }, animationId = PLACEHOLDER_ANIM },
+			missile_rain = { name = "Missile Rain", kind = "Rain", pose = "Aim", damage = 28, postureDamage = 12, windup = 1.0, active = 0.3, recovery = 1.0, range = 80, arcDegrees = 360, weight = 2, cooldown = 11, count = 10, radius = 8, delay = 1.25, color = { 255, 110, 40 }, animationId = PLACEHOLDER_ANIM },
+			turbine_spin = { name = "Turbine Spin", pose = "Spin", damage = 12, postureDamage = 12, windup = 0.7, active = 1.4, recovery = 1.0, range = 16, arcDegrees = 360, weight = 2, cooldown = 9, hits = 5, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
 		},
 		phases = {
-			{ hpThreshold = 1.0, moves = { "hammer_sweep", "overhead", "bell_orb", "toll_ring", "oni_grab" }, speedMultiplier = 1, transitionSeconds = 0 },
-			{ hpThreshold = 0.6, moves = { "hammer_sweep", "double_sweep", "overhead", "bell_orb", "toll_ring", "oni_grab", "leap_crash", "triple_orb" }, speedMultiplier = 1.15, transitionSeconds = 2.5 },
-			{ hpThreshold = 0.3, moves = { "hammer_sweep", "double_sweep", "bell_orb", "toll_ring", "leap_crash", "triple_orb", "spin_storm", "bell_rain" }, speedMultiplier = 1.3, enrage = true, transitionSeconds = 2.5 },
+			{ hpThreshold = 1.0, moves = { "piston_punch", "hammer_slam", "rocket_fist", "rocket_barrage", "laser_lance" }, speedMultiplier = 1, transitionSeconds = 0 },
+			{ hpThreshold = 0.6, moves = { "piston_punch", "one_two", "hammer_slam", "rocket_fist", "rocket_barrage", "laser_lance", "seismic_slam", "thruster_drop", "laser_sweep" }, speedMultiplier = 1.15, transitionSeconds = 2.5 },
+			{ hpThreshold = 0.3, moves = { "piston_punch", "one_two", "rocket_fist", "rocket_barrage", "laser_sweep", "seismic_slam", "thruster_drop", "missile_rain", "turbine_spin" }, speedMultiplier = 1.3, enrage = true, transitionSeconds = 2.5 },
 		},
-		idleBetweenMoves = 0.6,
+		idleBetweenMoves = 0.55,
 		rewards = { ember = 400, xp = 500, jadeFirstClear = 25 },
 		modelId = 0,
-		look = { skin = { 150, 45, 40 }, body = { 120, 75, 50 }, legs = { 60, 40, 60 }, accent = { 235, 225, 205 }, glow = { 255, 140, 50 }, scale = 2.4 },
+		look = { skin = { 120, 200, 255 }, body = { 150, 152, 160 }, legs = { 55, 56, 64 }, accent = { 230, 180, 60 }, glow = { 255, 60, 50 }, scale = 2.4 },
 	},
 	-- Optional duel (Ashen Village): a pure posture fight. Deflects everything you mash.
 	sable_crane = {
