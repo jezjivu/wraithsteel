@@ -97,6 +97,8 @@ CombatConfig.GuardPostureRegen = 1.6 -- regen multiplier while holding guard
 -- Severing Blow: strike an enemy whose posture is broken. Regular enemies die; bosses lose a
 -- large chunk of health (their phases do the rest).
 CombatConfig.Severing = { bossFraction = 0.3, hitStop = 0.35 }
+-- Execution cinematic (Severing Blow / Shadow Strike): the blow lands after `delay` seconds.
+CombatConfig.Execution = { delay = 1.05 }
 
 -- Enemy deflects: guarding enemies may deflect your strike outright (no damage).
 CombatConfig.Deflect = {

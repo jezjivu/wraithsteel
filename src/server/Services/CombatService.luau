@@ -633,6 +633,7 @@ local function onCombatAction(player: Player, req: { [string]: any })
 		local riposte = os.clock() < rules.riposteUntil
 		local mult = if riposte then CombatConfig.RiposteMultiplier + style.riposteBonus else 1
 		local hitAny = false
+		local executed = false
 		local attackMult = 1 + (CombatService.PlayerStats(player).Attack or 0)
 		for _, target in CombatService.TargetsInArc(c, move.range + (move.step or 0) * 0.5, move.arcDegrees, aim) do
 			hitAny = true
@@ -640,17 +641,37 @@ local function onCombatAction(player: Player, req: { [string]: any })
 			local shadow = target.kind == "Enemy" and target.unaware == true and not target.dead
 			if target.kind ~= "Player" and (shadow or Posture.IsBroken(target.posture, os.clock())) then
 				local sever = if target.kind == "Boss" then target.humanoid.MaxHealth * CombatConfig.Severing.bossFraction else target.humanoid.Health + 1
-				target.posture.brokenUntil = os.clock()
 				target.posture.value = 0
 				target.model:SetAttribute("Broken", false)
-				CombatService.ApplyHit(c, target, {
+				local hitDef: Hit = {
 					damage = sever,
 					postureDamage = 0,
 					moveId = moveId :: string,
 					knockback = kb * 2,
 					severing = true,
 					shadow = shadow,
-				})
+				}
+				if executed then
+					target.posture.brokenUntil = os.clock()
+					CombatService.ApplyHit(c, target, hitDef)
+					continue
+				end
+				-- The first one per swing is an execution cinematic: both are held in place while the
+				-- client plays it, then the blow lands.
+				executed = true
+				local delaySeconds = CombatConfig.Execution.delay
+				local now0 = os.clock()
+				rules.iframeUntil = math.max(rules.iframeUntil, now0 + delaySeconds + 0.4)
+				rules.busyUntil = math.max(rules.busyUntil, now0 + delaySeconds + 0.2)
+				target.posture.brokenUntil = now0 + delaySeconds + 0.2 -- stays broken until the blow
+				CombatService.Staggered:Fire(target, delaySeconds + 0.3)
+				broadcast({ kind = "Execution", sourceId = c.id, targetId = target.id, shadow = shadow, boss = target.kind == "Boss", delay = delaySeconds })
+				task.delay(delaySeconds, function()
+					if not target.dead then
+						target.posture.brokenUntil = os.clock()
+						CombatService.ApplyHit(c, target, hitDef)
+					end
+				end)
 				continue
 			end
 			local critMult, crit = CombatService.RollCrit(player)

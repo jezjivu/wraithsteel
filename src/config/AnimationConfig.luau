@@ -164,6 +164,13 @@ AnimationConfig.Styles = {
 		windup = { root = { 0, 0, 22, 0, -0.7, 0 }, waist = { 0, 0, -10 }, shoulder = { 20, 0, 50 }, leftShoulder = { 20, 0, -50 }, leftHip = { 0, 0, -30 }, rightHip = { 0, 0, 20 }, leftKnee = { -30, 0, 0 }, rightKnee = { -40, 0, 0 } },
 		strike = { root = { 0, 0, 28 }, waist = { 0, 0, -12 }, shoulder = { 25, 0, 60 }, leftShoulder = { 25, 0, -60 }, leftHip = { 0, 0, -35 }, rightHip = { 0, 0, 25 }, leftKnee = { -40, 0, 0 }, rightKnee = { -50, 0, 0 } },
 	},
+	-- Execution (Severing Blow cinematic): two-handed draw back, then a cut across the throat.
+	Execute = {
+		windup = { shoulder = { 150, 45, 10 }, leftShoulder = { 120, -25, 0 }, elbow = { 60, 0, 0 }, leftElbow = { 50, 0, 0 }, waist = { 0, 55, 0 }, root = { 4, 32, 0, 0, -0.7, 0.6 }, leftHip = { 25, 0, 0 }, rightHip = { -20, 0, 0 }, leftKnee = { -35, 0, 0 }, rightKnee = { -30, 0, 0 } },
+		strike = { shoulder = { 95, -85, 0 }, leftShoulder = { 45, 0, -35 }, elbow = { 5, 0, 0 }, waist = { 0, -60, 0 }, root = { -12, -38, 0, 0, -1, -0.9 }, leftHip = { -50, 0, 0 }, rightHip = { 35, 0, 0 }, leftKnee = { -45, 0, 0 }, rightKnee = { -15, 0, 0 } },
+		weaponWindup = { -45, 0, -95 },
+		weaponStrike = { 15, 0, 115 },
+	},
 	-- Spring Flask: left hand lifts the flask to the mouth, head tips back.
 	Drink = {
 		windup = { leftShoulder = { 120, 30, 0 }, leftElbow = { 110, 0, 0 }, waist = { -8, 0, 0 } },
