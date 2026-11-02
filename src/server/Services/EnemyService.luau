@@ -36,6 +36,8 @@ local CombatRules = require(Logic:WaitForChild("CombatRules"))
 local Posture = require(Logic:WaitForChild("Posture"))
 
 local RigBuilder = require(script.Parent.Parent:WaitForChild("World"):WaitForChild("RigBuilder"))
+local CreatureBuilder = require(script.Parent.Parent:WaitForChild("World"):WaitForChild("CreatureBuilder"))
+local HazardService = require(script.Parent.HazardService)
 local CombatService = require(script.Parent.CombatService)
 local ProgressionService = require(script.Parent.ProgressionService)
 local QuestService = require(script.Parent.QuestService)
@@ -113,8 +115,14 @@ local function getRig(enemyId: string): Model
 	if template and template:IsA("Model") then
 		return template:Clone()
 	end
-	-- No Studio rig yet: build a code-made R15 humanoid from the config look.
+	-- No Studio rig yet: a part-built creature, or a code-made R15 humanoid from the look.
 	local def = EnemyConfig.Enemies[enemyId]
+	if def and def.creature then
+		local creature = CreatureBuilder.Build(def.creature, def.look)
+		if creature then
+			return creature
+		end
+	end
 	if def and def.look then
 		local rig = RigBuilder.Build(def.look, def.name)
 		if rig then
@@ -201,6 +209,7 @@ local function strike(b: Brain, attackId: string, token: number)
 		perilous = a.perilous == true,
 		perilousKind = a.perilousKind,
 		style = a.style,
+		hazard = if a.kind and a.kind ~= "Melee" then a.kind else nil,
 		windup = a.windup,
 		active = a.active,
 		recovery = a.recovery,
@@ -208,6 +217,31 @@ local function strike(b: Brain, attackId: string, token: number)
 	})
 	task.delay(a.windup, function()
 		if b.c.dead or b.token ~= token or os.clock() < b.stunnedUntil then
+			return
+		end
+		-- Ranged / ground attacks go through HazardService (dodge, guard or deflect them).
+		local kind = a.kind or "Melee"
+		if kind ~= "Melee" then
+			local root = b.c.root
+			local from = root.Position + root.CFrame.LookVector * 2 + Vector3.new(0, 1.5, 0)
+			local aim = if b.target then b.target.root.Position else from + root.CFrame.LookVector * 30
+			local color = a.color or { 255, 120, 80 }
+			if kind == "Wave" then
+				HazardService.Wave(b.c, root.Position - Vector3.new(0, b.c.humanoid.HipHeight + root.Size.Y / 2 - 0.5, 0), {
+					speed = a.speed or 30, maxRadius = a.range, band = 3, damage = a.damage, posture = a.postureDamage, color = color, moveId = attackId,
+				})
+			else
+				local count = if kind == "Volley" then a.count or 3 else 1
+				local spread = if kind == "Volley" then a.spread or 30 else 0
+				for i = 1, count do
+					local ang = if count > 1 then -spread / 2 + spread * (i - 1) / (count - 1) else 0
+					HazardService.Projectile(b.c, from, CFrame.Angles(0, math.rad(ang), 0):VectorToWorldSpace(aim - from), {
+						speed = a.speed or 60, radius = 1.3, range = a.range + 15, damage = a.damage, posture = a.postureDamage,
+						color = color, size = if a.deflectable then 2.4 else 1.2, deflectable = a.deflectable,
+						reflectDamage = a.damage * 4, reflectPosture = a.postureDamage * 4, moveId = attackId,
+					})
+				end
+			end
 			return
 		end
 		-- Every strike steps the body into the swing; lunge attacks surge much further.

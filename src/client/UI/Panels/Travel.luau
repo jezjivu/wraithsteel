@@ -28,7 +28,13 @@ local Panel: PanelTypes.Panel = {
 			return
 		end
 		local list = dir:GetChildren()
+		local REALM_ORDER = { japan = 1, neon = 2, greek = 3 }
 		table.sort(list, function(a, b)
+			local ra = REALM_ORDER[tostring(a:GetAttribute("Realm"))] or 9
+			local rb = REALM_ORDER[tostring(b:GetAttribute("Realm"))] or 9
+			if ra ~= rb then
+				return ra < rb
+			end
 			return (tonumber(a:GetAttribute("Order")) or 0) < (tonumber(b:GetAttribute("Order")) or 0)
 		end)
 		local lastRealm = nil

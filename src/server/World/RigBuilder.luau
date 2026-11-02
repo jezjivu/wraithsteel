@@ -89,6 +89,29 @@ local headwear: { [string]: (Model, BasePart, RigLook) -> () } = {
 		attach(model, head, "Hair", Vector3.new(s.X * 1.08, s.Y * 0.45, s.Z * 1.08), CFrame.new(0, s.Y * 0.35, s.Z * 0.05), Color3.fromRGB(25, 18, 18), Enum.Material.SmoothPlastic)
 		attach(model, head, "Bun", Vector3.new(s.X * 0.5, s.X * 0.5, s.X * 0.5), CFrame.new(0, s.Y * 0.75, s.Z * 0.25), c, Enum.Material.Neon, Enum.PartType.Ball)
 	end,
+	-- Cyber visor: a glowing slit band and a chrome jaw plate.
+	Visor = function(model, head, look)
+		local s = head.Size
+		local glow = rgb(look.glow or { 60, 230, 255 })
+		attach(model, head, "VisorBand", Vector3.new(s.X * 1.12, s.Y * 0.28, s.Z * 1.12), CFrame.new(0, s.Y * 0.08, 0), Color3.fromRGB(25, 25, 32), Enum.Material.Metal)
+		local slit = attach(model, head, "VisorGlow", Vector3.new(s.X * 0.9, s.Y * 0.1, 0.05), CFrame.new(0, s.Y * 0.08, -s.Z * 0.57), glow, Enum.Material.Neon)
+		light(slit, glow, 10)
+		attach(model, head, "JawPlate", Vector3.new(s.X * 0.9, s.Y * 0.3, s.Z * 0.3), CFrame.new(0, -s.Y * 0.32, -s.Z * 0.42), rgb(look.accent or { 160, 160, 175 }), Enum.Material.Metal)
+	end,
+	-- Hoplite helmet with a tall horsehair crest.
+	Crest = function(model, head, look)
+		local s = head.Size
+		local bronze = Color3.fromRGB(180, 120, 60)
+		attach(model, head, "Helmet", Vector3.new(s.X * 1.18, s.Y * 1.05, s.Z * 1.18), CFrame.new(0, s.Y * 0.08, 0), bronze, Enum.Material.Metal)
+		attach(model, head, "Crest", Vector3.new(s.X * 0.22, s.Y * 0.8, s.Z * 1.5), CFrame.new(0, s.Y * 0.85, s.Z * 0.1), rgb(look.accent or { 170, 30, 30 }), Enum.Material.Fabric)
+		attach(model, head, "EyeSlit", Vector3.new(s.X * 0.7, s.Y * 0.12, 0.05), CFrame.new(0, s.Y * 0.1, -s.Z * 0.6), Color3.fromRGB(10, 10, 10), Enum.Material.SmoothPlastic)
+	end,
+	-- Laurel wreath (Greek nobles / the Archon).
+	Laurel = function(model, head, look)
+		local s = head.Size
+		local gold = rgb(look.glow or { 255, 205, 90 })
+		attach(model, head, "Laurel", Vector3.new(s.Y * 0.18, s.X * 1.2, s.X * 1.2), CFrame.new(0, s.Y * 0.38, 0) * CFrame.Angles(0, 0, math.rad(90)), gold, Enum.Material.Neon, Enum.PartType.Cylinder)
+	end,
 	Bell = function(model, head, look)
 		local c = rgb(look.body)
 		local s = head.Size

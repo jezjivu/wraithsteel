@@ -16,6 +16,13 @@ export type EnemyAttack = {
 	perilousKind: ("Pierce" | "Sweep" | "Grasp")?, -- answer: dash in / jump / dodge (CombatConfig)
 	lunge: number?, -- studs the enemy surges forward during the active frames
 	style: string?, -- AnimationConfig style for the body (default: alternating slashes)
+	-- Ranged / ground attacks through HazardService instead of a melee arc:
+	kind: ("Melee" | "Projectile" | "Volley" | "Wave")?,
+	speed: number?,
+	count: number?,
+	spread: number?,
+	deflectable: boolean?,
+	color: { number }?,
 	animationId: string,
 }
 
@@ -25,7 +32,7 @@ export type RigLook = {
 	skin: { number },
 	body: { number },
 	legs: { number },
-	headwear: ("Hood" | "Helm" | "Horns" | "Lantern" | "Sack" | "Hair" | "Bell")?,
+	headwear: ("Hood" | "Helm" | "Horns" | "Lantern" | "Sack" | "Hair" | "Bell" | "Visor" | "Crest" | "Laurel")?,
 	accent: { number }?,
 	glow: { number }?,
 	weapon: string?,
@@ -54,6 +61,7 @@ export type EnemyDef = {
 	guardChance: number?, -- chance to raise its guard after being hit (blocks until posture breaks)
 	deflectChance: number?, -- while guarding: chance to deflect a strike outright and counter
 	look: RigLook?,
+	creature: string?, -- part-built body instead of a humanoid rig (World/CreatureBuilder): "Drone"
 }
 
 local EnemyConfig = {}
@@ -277,6 +285,158 @@ EnemyConfig.Enemies = {
 		deflectChance = 0.3,
 		modelId = 0,
 		look = { skin = { 110, 120, 90 }, body = { 70, 80, 55 }, legs = { 55, 60, 40 }, headwear = "Horns", accent = { 120, 160, 90 }, glow = { 150, 255, 120 }, weapon = "gb_gatebreaker", scale = 1.55 },
+	},
+	-- Neon Verge ---------------------------------------------------------------------------
+	-- Cyber-samurai: fast katana strings, deflects a lot, a plasma thrust you must dash into.
+	chrome_ronin = {
+		name = "Chrome Ronin",
+		chapter = 0,
+		maxHealth = 220,
+		maxPosture = 110,
+		postureRegen = 14,
+		walkSpeed = 17,
+		aggroRange = 42,
+		leashRange = 90,
+		preferredRange = 9,
+		attackCooldown = 1.0,
+		attacks = {
+			cut = { name = "Mono-Edge Cut", style = "SlashRight", damage = 16, postureDamage = 16, windup = 0.3, active = 0.12, recovery = 0.4, range = 8, arcDegrees = 100, weight = 3, animationId = PLACEHOLDER_ANIM },
+			reverse = { name = "Reverse Cut", style = "SlashLeft", damage = 16, postureDamage = 18, windup = 0.35, active = 0.12, recovery = 0.45, range = 8, arcDegrees = 100, weight = 2, animationId = PLACEHOLDER_ANIM },
+			plasma = { name = "Plasma Thrust", style = "Thrust", damage = 30, postureDamage = 26, windup = 0.7, active = 0.2, recovery = 0.7, range = 16, arcDegrees = 30, weight = 1, lunge = 10, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
+		},
+		emberReward = 40,
+		xpReward = 60,
+		combos = { { "cut", "reverse", "cut" }, { "cut", "plasma" }, { "reverse", "cut", "reverse", "plasma" } },
+		comboChance = 0.6,
+		guardChance = 0.5,
+		deflectChance = 0.7,
+		modelId = 0,
+		look = { skin = { 200, 200, 210 }, body = { 35, 35, 45 }, legs = { 25, 25, 32 }, headwear = "Visor", accent = { 170, 170, 185 }, glow = { 255, 60, 200 }, weapon = "jian_moonwater", scale = 1.05 },
+	},
+	-- Hovering drone: keeps its distance and fires bolts (guard them, or dash through).
+	drone_sentry = {
+		name = "Drone Sentry",
+		chapter = 0,
+		maxHealth = 110,
+		maxPosture = 50,
+		postureRegen = 8,
+		walkSpeed = 14,
+		aggroRange = 55,
+		leashRange = 90,
+		preferredRange = 26,
+		attackCooldown = 1.6,
+		attacks = {
+			bolt = { name = "Arc Bolt", kind = "Projectile", speed = 70, damage = 12, postureDamage = 10, windup = 0.55, active = 0.1, recovery = 0.4, range = 45, arcDegrees = 360, weight = 3, color = { 60, 230, 255 }, animationId = PLACEHOLDER_ANIM },
+			burst = { name = "Scatter Burst", kind = "Volley", count = 3, spread = 24, speed = 80, damage = 9, postureDamage = 8, windup = 0.8, active = 0.1, recovery = 0.6, range = 40, arcDegrees = 360, weight = 1, color = { 255, 60, 200 }, animationId = PLACEHOLDER_ANIM },
+			ram = { name = "Ram", damage = 10, postureDamage = 12, windup = 0.5, active = 0.2, recovery = 0.6, range = 6, arcDegrees = 90, weight = 1, lunge = 6, animationId = PLACEHOLDER_ANIM },
+		},
+		emberReward = 30,
+		xpReward = 45,
+		flinch = true,
+		modelId = 0,
+		creature = "Drone",
+		look = { skin = { 0, 0, 0 }, body = { 50, 52, 64 }, legs = { 0, 0, 0 }, accent = { 190, 195, 210 }, glow = { 60, 230, 255 }, scale = 1 },
+	},
+	-- Rail Brute: hydraulic giant. Jump the stomp-wave, dash out of the crushing grab.
+	rail_brute = {
+		name = "Rail Brute",
+		chapter = 0,
+		maxHealth = 560,
+		maxPosture = 190,
+		postureRegen = 6,
+		walkSpeed = 10,
+		aggroRange = 32,
+		leashRange = 70,
+		preferredRange = 8,
+		attackCooldown = 2,
+		attacks = {
+			slam = { name = "Piston Slam", style = "Overhead", damage = 30, postureDamage = 32, windup = 0.8, active = 0.2, recovery = 0.9, range = 9, arcDegrees = 90, weight = 3, animationId = PLACEHOLDER_ANIM },
+			stomp = { name = "Shock Stomp", style = "CastSky", kind = "Wave", speed = 30, damage = 22, postureDamage = 14, windup = 0.9, active = 0.2, recovery = 0.9, range = 32, arcDegrees = 360, weight = 2, color = { 255, 190, 60 }, animationId = PLACEHOLDER_ANIM },
+			crush = { name = "Hydraulic Crush", style = "Grasp", damage = 38, postureDamage = 0, windup = 0.9, active = 0.25, recovery = 1.1, range = 7, arcDegrees = 60, weight = 1, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
+		},
+		emberReward = 70,
+		xpReward = 90,
+		combos = { { "slam", "slam" } },
+		comboChance = 0.3,
+		guardChance = 0.2,
+		deflectChance = 0.25,
+		modelId = 0,
+		look = { skin = { 150, 150, 160 }, body = { 200, 150, 40 }, legs = { 60, 60, 70 }, headwear = "Visor", accent = { 90, 90, 100 }, glow = { 255, 190, 60 }, weapon = "gb_gatebreaker", scale = 1.6 },
+	},
+	-- Aeloria -------------------------------------------------------------------------------
+	-- Bronze Hoplite: shield wall (guards a lot), spear thrusts, a perilous charge.
+	bronze_hoplite = {
+		name = "Bronze Hoplite",
+		chapter = 0,
+		maxHealth = 320,
+		maxPosture = 150,
+		postureRegen = 10,
+		walkSpeed = 13,
+		aggroRange = 40,
+		leashRange = 85,
+		preferredRange = 10,
+		attackCooldown = 1.3,
+		attacks = {
+			jab = { name = "Spear Jab", style = "Thrust", damage = 18, postureDamage = 18, windup = 0.4, active = 0.12, recovery = 0.45, range = 11, arcDegrees = 40, weight = 3, animationId = PLACEHOLDER_ANIM },
+			bash = { name = "Shield Bash", style = "SlashLeft", damage = 14, postureDamage = 26, windup = 0.45, active = 0.15, recovery = 0.5, range = 7, arcDegrees = 90, weight = 2, animationId = PLACEHOLDER_ANIM },
+			charge = { name = "Phalanx Charge", style = "Thrust", damage = 34, postureDamage = 30, windup = 0.85, active = 0.3, recovery = 0.8, range = 20, arcDegrees = 30, weight = 1, lunge = 14, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
+		},
+		emberReward = 60,
+		xpReward = 80,
+		combos = { { "jab", "jab", "bash" }, { "bash", "charge" } },
+		comboChance = 0.45,
+		guardChance = 0.7,
+		deflectChance = 0.55,
+		modelId = 0,
+		look = { skin = { 215, 175, 140 }, body = { 170, 40, 35 }, legs = { 180, 120, 60 }, headwear = "Crest", accent = { 180, 30, 30 }, weapon = "spear_crimson_tassel", scale = 1.1 },
+	},
+	-- Siren Archer: shoots from range; her charged song-arrow can be deflected back.
+	siren_archer = {
+		name = "Siren Archer",
+		chapter = 0,
+		maxHealth = 180,
+		maxPosture = 70,
+		postureRegen = 10,
+		walkSpeed = 15,
+		aggroRange = 60,
+		leashRange = 90,
+		preferredRange = 28,
+		attackCooldown = 1.5,
+		attacks = {
+			arrow = { name = "Bronze Arrow", style = "CastPush", kind = "Projectile", speed = 85, damage = 14, postureDamage = 10, windup = 0.6, active = 0.1, recovery = 0.4, range = 55, arcDegrees = 360, weight = 3, color = { 230, 200, 140 }, animationId = PLACEHOLDER_ANIM },
+			song = { name = "Siren's Note", style = "CastSky", kind = "Projectile", speed = 40, deflectable = true, damage = 20, postureDamage = 22, windup = 0.9, active = 0.1, recovery = 0.6, range = 50, arcDegrees = 360, weight = 1, color = { 140, 220, 255 }, animationId = PLACEHOLDER_ANIM },
+			fan = { name = "Arrow Fan", style = "CastPush", kind = "Volley", count = 4, spread = 36, speed = 80, damage = 10, postureDamage = 8, windup = 0.8, active = 0.1, recovery = 0.6, range = 45, arcDegrees = 360, weight = 1, color = { 230, 200, 140 }, animationId = PLACEHOLDER_ANIM },
+			kick = { name = "Retreating Kick", style = "SlashRight", damage = 10, postureDamage = 14, windup = 0.4, active = 0.15, recovery = 0.5, range = 6, arcDegrees = 90, weight = 1, animationId = PLACEHOLDER_ANIM },
+		},
+		emberReward = 45,
+		xpReward = 65,
+		flinch = true,
+		modelId = 0,
+		look = { skin = { 225, 200, 175 }, body = { 240, 235, 220 }, legs = { 200, 190, 170 }, headwear = "Laurel", accent = { 100, 160, 200 }, glow = { 200, 230, 255 }, weapon = "fan_paper_crane", scale = 1 },
+	},
+	-- Marble Sentinel: a walking statue. Slow, huge posture, ground-shaking stomps.
+	marble_sentinel = {
+		name = "Marble Sentinel",
+		chapter = 0,
+		maxHealth = 800,
+		maxPosture = 240,
+		postureRegen = 5,
+		walkSpeed = 8,
+		aggroRange = 30,
+		leashRange = 60,
+		preferredRange = 9,
+		attackCooldown = 2.4,
+		attacks = {
+			sweep = { name = "Marble Sweep", style = "Sweep", damage = 30, postureDamage = 16, windup = 0.9, active = 0.25, recovery = 1, range = 12, arcDegrees = 220, weight = 2, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
+			smash = { name = "Pillar Smash", style = "Overhead", damage = 40, postureDamage = 36, windup = 1, active = 0.2, recovery = 1, range = 10, arcDegrees = 80, weight = 3, animationId = PLACEHOLDER_ANIM },
+			quake = { name = "Temple Quake", style = "CastSky", kind = "Wave", speed = 28, damage = 26, postureDamage = 16, windup = 1.1, active = 0.2, recovery = 1.1, range = 36, arcDegrees = 360, weight = 2, color = { 240, 230, 210 }, animationId = PLACEHOLDER_ANIM },
+		},
+		emberReward = 110,
+		xpReward = 140,
+		guardChance = 0.2,
+		deflectChance = 0.2,
+		modelId = 0,
+		look = { skin = { 236, 232, 222 }, body = { 225, 220, 210 }, legs = { 205, 198, 186 }, headwear = "Laurel", accent = { 205, 198, 186 }, glow = { 255, 215, 120 }, weapon = "staff_bellringer", scale = 1.8 },
 	},
 } :: { [string]: EnemyDef }
 

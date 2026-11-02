@@ -209,12 +209,75 @@ local function tiger(look: EnemyConfig.RigLook): Model
 	return model
 end
 
+-- Hovering security drone: armored sphere, spinning rotor ring, one big glowing eye, a gun.
+-- Joints: Body (bob), Rotor (spin), Eye (aim). It "floats" through a tall HipHeight.
+local function drone(look: EnemyConfig.RigLook): Model
+	local model = Instance.new("Model")
+	model.Name = "Drone"
+	local ctx: Ctx = { model = model, s = look.scale }
+	local shell = rgb(look.body)
+	local trim = rgb(look.accent or { 200, 200, 210 })
+	local glow = rgb(look.glow or { 60, 230, 255 })
+	local root = part(ctx, "HumanoidRootPart", Vector3.new(3, 3, 3), shell)
+	root.Transparency = 1
+	root.CanCollide = true
+	root.Massless = false
+	local body = part(ctx, "Body", Vector3.new(3.2, 3.2, 3.2), shell, Enum.Material.Metal, Enum.PartType.Ball)
+	joint(ctx, "Body", root, body, Vector3.zero, Vector3.zero)
+	local band = part(ctx, "Band", Vector3.new(0.5, 3.5, 3.5), trim, Enum.Material.Metal, Enum.PartType.Cylinder)
+	glue(ctx, body, band, CFrame.Angles(0, 0, math.rad(90)))
+	local rotor = part(ctx, "Rotor", Vector3.new(0.25, 6, 6), glow, Enum.Material.Neon, Enum.PartType.Cylinder)
+	rotor.Transparency = 0.35
+	joint(ctx, "Rotor", body, rotor, Vector3.new(0, 1.9, 0), Vector3.zero)
+	for i = 0, 3 do
+		local blade = part(ctx, "Blade", Vector3.new(2.6, 0.12, 0.5), trim, Enum.Material.Metal)
+		glue(ctx, rotor, blade, CFrame.Angles(0, math.rad(45 + i * 90), 0) * CFrame.new(1.4, 0, 0))
+	end
+	local eye = part(ctx, "Eye", Vector3.new(1.3, 1.3, 0.6), glow, Enum.Material.Neon)
+	joint(ctx, "Eye", body, eye, Vector3.new(0, 0, -1.45), Vector3.zero)
+	local lens = part(ctx, "Lens", Vector3.new(0.6, 0.6, 0.2), Color3.new(1, 1, 1), Enum.Material.Neon)
+	glue(ctx, eye, lens, CFrame.new(0, 0, -0.35))
+	local gun = part(ctx, "Gun", Vector3.new(0.5, 0.5, 2.2), Color3.fromRGB(40, 40, 48), Enum.Material.Metal)
+	glue(ctx, body, gun, CFrame.new(0, -1.5, -0.9))
+	local light = Instance.new("PointLight")
+	light.Color = glow
+	light.Range = 14
+	light.Brightness = 2
+	light.Parent = eye
+	-- Fix the rotor's resting joint so the ring lies flat.
+	local rj = rotor:FindFirstChild("Rotor")
+	if rj and rj:IsA("Motor6D") then
+		rj.C1 = CFrame.Angles(0, 0, math.rad(90))
+	end
+	root.CFrame = CFrame.new()
+	for _, d in model:GetDescendants() do
+		if d:IsA("JointInstance") then
+			local p0, p1 = d.Part0, d.Part1
+			if p0 and p1 then
+				p1.CFrame = p0.CFrame * d.C0 * d.C1:Inverse()
+			end
+		end
+	end
+	local hum = Instance.new("Humanoid")
+	hum.RigType = Enum.HumanoidRigType.R15
+	hum.HipHeight = 5 * ctx.s -- hovers above the ground
+	hum.RequiresNeck = false
+	hum.BreakJointsOnDeath = false
+	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	hum.Parent = model
+	model.PrimaryPart = root
+	model:SetAttribute("Creature", "Drone")
+	return model
+end
+
 function CreatureBuilder.Build(kind: string, look: EnemyConfig.RigLook?): Model?
 	if look == nil then
 		return nil
 	end
 	if kind == "Tiger" then
 		return tiger(look)
+	elseif kind == "Drone" then
+		return drone(look)
 	end
 	return nil
 end

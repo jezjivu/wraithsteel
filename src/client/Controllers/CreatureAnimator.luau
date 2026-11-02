@@ -125,7 +125,50 @@ local function actionOffsets(a: Action, now: number): { [string]: Angles }?
 	return out
 end
 
+-- Drones: rotor spin, body bob + tilt into movement, eye flick, recoil on attacks.
+local function animateDrone(model: Model, b: Beast, dt: number, now: number)
+	local root = model.PrimaryPart
+	if root == nil then
+		return
+	end
+	local v = root.CFrame:VectorToObjectSpace(root.AssemblyLinearVelocity)
+	b.phase += dt * 25
+	local rotor = b.motors.Rotor
+	if rotor and b.base[rotor] then
+		rotor.C0 = b.base[rotor] * CFrame.Angles(0, b.phase, 0)
+	end
+	local body = b.motors.Body
+	if body and b.base[body] then
+		local tilt = CFrame.Angles(math.rad(math.clamp(v.Z * 1.5, -20, 20)), 0, math.rad(math.clamp(-v.X * 1.5, -20, 20)))
+		local bob = CFrame.new(0, math.sin(now * 2.5) * 0.5, 0)
+		local recoil = CFrame.new()
+		local a = b.action
+		if a then
+			local t = now - a.start
+			if t < a.windup then
+				recoil = CFrame.Angles(math.rad(-15 * (t / a.windup)), 0, 0) -- rear back while charging
+			elseif t < a.windup + a.active + a.recovery then
+				recoil = CFrame.new(0, 0, 0.6) * CFrame.Angles(math.rad(10), 0, 0)
+			else
+				b.action = nil
+			end
+		end
+		if now < b.wobbleUntil then
+			recoil = recoil * CFrame.Angles(0, 0, math.sin(now * 50) * 0.3)
+		end
+		body.C0 = b.base[body] * bob * tilt * recoil
+	end
+	local eye = b.motors.Eye
+	if eye and b.base[eye] then
+		eye.C0 = b.base[eye] * CFrame.Angles(0, math.sin(now * 1.3) * 0.4, 0)
+	end
+end
+
 local function animate(model: Model, b: Beast, dt: number, now: number)
+	if model:GetAttribute("Creature") == "Drone" then
+		animateDrone(model, b, dt, now)
+		return
+	end
 	local root = model.PrimaryPart
 	if root == nil then
 		return
