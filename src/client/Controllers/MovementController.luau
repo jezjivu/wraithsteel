@@ -259,6 +259,41 @@ function MovementController.Blink(dir: Vector3, distance: number): (Vector3?, Ve
 	return from, to
 end
 
+-- Arcs the character to `point` over `seconds` (Heaven's Fall leap, Thousand Cuts flash).
+function MovementController.ArcTo(point: Vector3, seconds: number, height: number)
+	local character, _, root = parts()
+	if character == nil or root == nil then
+		return
+	end
+	local from = root.Position
+	local to = Vector3.new(point.X, point.Y + 3, point.Z)
+	local start = os.clock()
+	local conn: RBXScriptConnection
+	conn = RunService.Heartbeat:Connect(function()
+		local t = math.min(1, (os.clock() - start) / seconds)
+		if root.Parent == nil then
+			conn:Disconnect()
+			return
+		end
+		local p = from:Lerp(to, t) + Vector3.new(0, math.sin(t * math.pi) * height, 0)
+		local flat = Vector3.new(to.X - from.X, 0, to.Z - from.Z)
+		root.CFrame = if flat.Magnitude > 0.5 then CFrame.lookAt(p, p + flat) else CFrame.new(p) * root.CFrame.Rotation
+		root.AssemblyLinearVelocity = Vector3.zero
+		if t >= 1 then
+			conn:Disconnect()
+		end
+	end)
+end
+
+-- Straight up (Rising Dragon).
+function MovementController.Launch(upSpeed: number)
+	local _, _, root = parts()
+	if root then
+		local v = root.AssemblyLinearVelocity
+		root.AssemblyLinearVelocity = Vector3.new(v.X * 0.3, upSpeed, v.Z * 0.3)
+	end
+end
+
 function MovementController.Knockback(velocity: Vector3, seconds: number)
 	local _, _, root = parts()
 	if root == nil then

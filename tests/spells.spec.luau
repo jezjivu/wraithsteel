@@ -12,16 +12,16 @@ local cases = {}
 
 cases["Spells: cast needs slot, level, Qi and cooldown"] = function()
 	local st = SpellLogic.NewState(100)
-	local loadout = { "lantern_flare", "ghost_step", "" }
-	expectEq((SpellLogic.CanCast(st, loadout, 1, "lantern_flare", 0)), true)
-	expectEq((SpellLogic.CanCast(st, loadout, 20, "nine_bells", 0)), false) -- not slotted
-	local cd = SpellLogic.Commit(st, "lantern_flare", 0, 0)
-	expectEq(cd, SpellConfig.Spells.lantern_flare.cooldown)
-	expectEq(st.qi, 100 - SpellConfig.Spells.lantern_flare.qi)
-	local ok, reason = SpellLogic.CanCast(st, loadout, 1, "lantern_flare", 1)
+	local loadout = { "thousand_cuts", "ghost_step", "" }
+	expectEq((SpellLogic.CanCast(st, loadout, 1, "thousand_cuts", 0)), true)
+	expectEq((SpellLogic.CanCast(st, loadout, 20, "heavens_fall", 0)), false) -- not slotted
+	local cd = SpellLogic.Commit(st, "thousand_cuts", 0, 0)
+	expectEq(cd, SpellConfig.Spells.thousand_cuts.cooldown)
+	expectEq(st.qi, 100 - SpellConfig.Spells.thousand_cuts.qi)
+	local ok, reason = SpellLogic.CanCast(st, loadout, 1, "thousand_cuts", 1)
 	expectEq(ok, false)
 	expectEq(reason, "Cooling down")
-	expectEq((SpellLogic.CanCast(st, loadout, 1, "lantern_flare", cd + 0.01)), true)
+	expectEq((SpellLogic.CanCast(st, loadout, 1, "thousand_cuts", cd + 0.01)), true)
 	st.qi = 1
 	local ok2, reason2 = SpellLogic.CanCast(st, loadout, 1, "ghost_step", 0)
 	expectEq(ok2, false)
@@ -40,13 +40,13 @@ cases["Spells: haste shortens cooldowns, Qi is clamped"] = function()
 end
 
 cases["Spells: loadout respects level and moves duplicates"] = function()
-	local loadout = { "lantern_flare", "ghost_step", "" }
-	local ok, err = SpellLogic.SetLoadout(loadout, 3, "nine_bells", 1)
+	local loadout = { "thousand_cuts", "ghost_step", "" }
+	local ok, err = SpellLogic.SetLoadout(loadout, 3, "heavens_fall", 1)
 	expectEq(ok, false)
-	expectEq(err, "Unlocks at level 15")
-	expectEq((SpellLogic.SetLoadout(loadout, 3, "lantern_flare", 1)), true)
+	expectEq(err, "Unlocks at level 12")
+	expectEq((SpellLogic.SetLoadout(loadout, 3, "thousand_cuts", 1)), true)
 	expectEq(loadout[1], "")
-	expectEq(loadout[3], "lantern_flare")
+	expectEq(loadout[3], "thousand_cuts")
 	expectEq((SpellLogic.SetLoadout(loadout, 4, "ghost_step", 1)), false)
 	expectEq((SpellLogic.SetLoadout(loadout, 2, "", 1)), true)
 	expectEq(loadout[2], "")

@@ -156,6 +156,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Full-body animation: poses can shift the whole body (crouch, lunge, recoil, kneel); every attack coils and lunges with hips/legs; NPC walk with hip sway, bob and torso twist
 - [x] Part 13: Thunderbell Engine gets its own Foundry arena (cover pillars, molten channels, vents, pipes, the cracked bell); cover blocks rockets/lasers/projectiles; 6 new Valley enemies (Rust Hound, Kite Archer, Ash Monk, Shadow Shinobi, Lantern Wisp, Spear Ronin) + 4 elite super enemies (Gravelord Ishiki, Gorge Matriarch, Crimson Oni Captain, Masked Retainer Kurogiri) with gold names/auras; enemy Rain attacks + creature poses
 - [x] Store: Robux levels / Ember / bundle, DoubleXP / ExtraFlask / VIP passes, intended prices; Studio-only free simulated test purchases (same receipt path)
+- [x] Part 14: Kagehisa (swordmaster duel, moonlit courtyard arena) replaces the robot; elite signature moves; execution cinematic on Severing Blows; Qi arts reworked into blade arts (Thousand Cuts, Ghost Step, Crescent Wave, Earthsplitter, Rising Dragon, Tempest Spin, Heaven's Fall); migration v7
 - [ ] Create the real passes/products on the Creator Dashboard and fill the ids (MonetizationConfig)
 - [x] Shockwave rings drawn hollow (the filled disc read as a giant cylinder)
 - [ ] Studio playtest of realms/portals/arenas; tune enemy/boss numbers

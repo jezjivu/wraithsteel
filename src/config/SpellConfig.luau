@@ -7,38 +7,38 @@
 export type SpellDef = {
 	name: string,
 	text: string,
-	-- Projectile: flies forward, bursts on the first enemy   Blink: teleport forward, cut through
-	-- Barrier: shield + heal on yourself                       Seal: lightning strikes the target area
-	-- Storm: whirling petals around you (pulls enemies in)     Lance: piercing line in front of you
-	-- Bell: a giant bell falls on the target area (ultimate art)
-	kind: "Projectile" | "Blink" | "Barrier" | "Seal" | "Storm" | "Lance" | "Bell",
+	-- Blade arts (all melee/movement):
+	--   Flurry    - flash to the target and cut it a dozen times in a second (Thousand Cuts)
+	--   Blink     - vanish forward, cutting everything you pass through (Ghost Step)
+	--   SlashWave - a flying crescent of steel that pierces the whole line (Crescent Wave)
+	--   Fissure   - a slash into the ground: the earth splits forward in a line (Earthsplitter)
+	--   Rising    - a rising cut that launches everyone around you, and you with it (Rising Dragon)
+	--   Storm     - spin into a blade cyclone that drags enemies in (Tempest Spin)
+	--   SkyFall   - leap high and fall on the target like a meteor (Heaven's Fall)
+	kind: "Flurry" | "Blink" | "SlashWave" | "Fissure" | "Rising" | "Storm" | "SkyFall",
 	unlockLevel: number,
 	qi: number,
 	cooldown: number,
 	color: { number },
-	damage: number?,
+	damage: number?, -- per hit
 	posture: number?,
-	range: number?, -- max distance from you (target point / projectile / blink)
+	range: number?, -- max distance from you (target point / dash / wave)
 	radius: number?,
-	width: number?, -- Lance / Blink: half-width of the hit corridor
-	speed: number?, -- Projectile studs/s
-	delay: number?, -- seconds before the hit lands (telegraph)
+	width: number?, -- corridor half-width (Blink / SlashWave / Fissure)
+	speed: number?, -- SlashWave studs/s
+	delay: number?, -- seconds before the hit lands
 	knockback: number?,
 	launch: number?,
-	ticks: number?, -- Storm
+	ticks: number?, -- Flurry / Storm hits
 	interval: number?,
-	stun: number?, -- Seal: stagger seconds
-	shield: number?, -- Barrier: fraction of max health
-	heal: number?,
-	seconds: number?,
-	iframes: number?, -- Blink: invulnerable seconds
+	iframes: number?, -- invulnerable seconds while it runs
 }
 
 local SpellConfig = {}
 
-SpellConfig.Order = { "lantern_flare", "ghost_step", "jade_barrier", "thunder_seal", "petal_storm", "mist_lance", "nine_bells" }
+SpellConfig.Order = { "thousand_cuts", "ghost_step", "crescent_wave", "earthsplitter", "rising_dragon", "tempest_spin", "heavens_fall" }
 SpellConfig.Slots = 3
-SpellConfig.DefaultLoadout = { "lantern_flare", "ghost_step", "jade_barrier" }
+SpellConfig.DefaultLoadout = { "thousand_cuts", "ghost_step", "crescent_wave" }
 SpellConfig.KeyLabels = { "Z", "X", "C" }
 
 SpellConfig.Qi = {
@@ -51,40 +51,40 @@ SpellConfig.Qi = {
 }
 
 SpellConfig.Spells = {
-	lantern_flare = {
-		name = "Lantern Flare", text = "Hurl a burst of lantern fire that explodes on the first enemy.",
-		kind = "Projectile", unlockLevel = 1, qi = 18, cooldown = 2.5, color = { 255, 150, 60 },
-		damage = 26, posture = 8, range = 70, speed = 110, radius = 6,
+	thousand_cuts = {
+		name = "Thousand Cuts", text = "Flash to your target and carve it a dozen times in a single second.",
+		kind = "Flurry", unlockLevel = 1, qi = 25, cooldown = 6, color = { 230, 230, 255 },
+		damage = 8, posture = 6, range = 30, radius = 9, ticks = 12, interval = 0.07, iframes = 1,
 	},
 	ghost_step = {
 		name = "Ghost Step", text = "Vanish and reappear ahead, cutting everything you pass through.",
 		kind = "Blink", unlockLevel = 1, qi = 15, cooldown = 4, color = { 170, 200, 255 },
-		damage = 14, posture = 12, range = 26, width = 5, iframes = 0.35,
+		damage = 16, posture = 14, range = 26, width = 5, iframes = 0.35,
 	},
-	jade_barrier = {
-		name = "Jade Barrier", text = "A jade ward absorbs damage and mends your wounds.",
-		kind = "Barrier", unlockLevel = 3, qi = 30, cooldown = 14, color = { 90, 220, 150 },
-		shield = 0.3, heal = 0.12, seconds = 6,
+	crescent_wave = {
+		name = "Crescent Wave", text = "Swing so fast the air itself cuts: a crescent of steel pierces the whole line.",
+		kind = "SlashWave", unlockLevel = 1, qi = 18, cooldown = 2.5, color = { 120, 220, 255 },
+		damage = 26, posture = 16, range = 60, width = 5, speed = 130,
 	},
-	thunder_seal = {
-		name = "Thunder Seal", text = "Call lightning onto the target area. Stuns everything it strikes.",
-		kind = "Seal", unlockLevel = 5, qi = 35, cooldown = 9, color = { 150, 200, 255 },
-		damage = 40, posture = 30, range = 45, radius = 11, delay = 0.45, stun = 1.2,
+	earthsplitter = {
+		name = "Earthsplitter", text = "Drive your blade into the ground: the earth splits open in a line ahead.",
+		kind = "Fissure", unlockLevel = 3, qi = 28, cooldown = 7, color = { 255, 160, 70 },
+		damage = 34, posture = 30, range = 45, width = 5, delay = 0.25, launch = 28,
 	},
-	petal_storm = {
-		name = "Petal Storm", text = "Razor petals whirl around you and drag enemies in.",
-		kind = "Storm", unlockLevel = 8, qi = 40, cooldown = 11, color = { 255, 160, 200 },
-		damage = 12, posture = 6, radius = 13, ticks = 6, interval = 0.3, knockback = -14,
+	rising_dragon = {
+		name = "Rising Dragon", text = "A rising cut that launches everyone around you into the air - and you after them.",
+		kind = "Rising", unlockLevel = 5, qi = 30, cooldown = 8, color = { 255, 210, 90 },
+		damage = 30, posture = 26, radius = 11, launch = 46, iframes = 0.4,
 	},
-	mist_lance = {
-		name = "Mist Lance", text = "A spear of freezing mist pierces every enemy in a line.",
-		kind = "Lance", unlockLevel = 12, qi = 25, cooldown = 6, color = { 170, 230, 255 },
-		damage = 34, posture = 22, range = 42, width = 4.5, knockback = 30, delay = 0.15,
+	tempest_spin = {
+		name = "Tempest Spin", text = "Spin into a cyclone of blades that drags enemies in.",
+		kind = "Storm", unlockLevel = 8, qi = 35, cooldown = 10, color = { 200, 240, 255 },
+		damage = 11, posture = 8, radius = 13, ticks = 7, interval = 0.18, knockback = -14,
 	},
-	nine_bells = {
-		name = "Nine Bells", text = "Ultimate art: a colossal bell falls from the sky. Nothing stays standing.",
-		kind = "Bell", unlockLevel = 15, qi = 100, cooldown = 35, color = { 255, 215, 120 },
-		damage = 120, posture = 120, range = 40, radius = 18, delay = 0.9, launch = 34, knockback = 30,
+	heavens_fall = {
+		name = "Heaven's Fall", text = "Ultimate art: leap high into the sky and fall on your target like a meteor.",
+		kind = "SkyFall", unlockLevel = 12, qi = 70, cooldown = 25, color = { 255, 120, 60 },
+		damage = 90, posture = 90, range = 40, radius = 16, delay = 0.85, launch = 34, iframes = 1.1,
 	},
 } :: { [string]: SpellDef }
 

@@ -152,47 +152,52 @@ local function onCast(player: Player, spellId: string, aim: Vector3?, point: Vec
 		cooldown = cooldown,
 	}
 
-	if spell.kind == "Projectile" then
-		-- First enemy along the flight line (generous corridor), else full range.
-		local best, bestAlong = nil, range
-		for _, v in inCorridor(origin, dir, range, 3.5) do
-			local along = (v.root.Position - origin):Dot(dir)
-			if along < bestAlong then
-				best, bestAlong = v, along
-			end
+	local function iframes(seconds: number?)
+		local r = c.rules
+		if r and seconds then
+			r.iframeUntil = math.max(r.iframeUntil, now + seconds)
 		end
-		local impact = if best then best.root.Position else origin + dir * range
-		event.point = impact
-		event.travel = bestAlong / (spell.speed or 100)
+	end
+	if spell.kind == "Flurry" then
+		-- Flash to the target (the client moves you) and carve everything around it.
+		iframes(spell.iframes)
 		Net.Server.FireAll("CombatEvent", event)
-		task.delay(event.travel, function()
-			hitAll(player, c, spellId, inRadius(impact, spell.radius or 5))
+		task.spawn(function()
+			task.wait(0.12)
+			for _ = 1, spell.ticks or 10 do
+				if c.dead then
+					break
+				end
+				hitAll(player, c, spellId, inRadius(target, spell.radius or 9))
+				task.wait(spell.interval or 0.08)
+			end
 		end)
 	elseif spell.kind == "Blink" then
 		-- The caster's client moves the character (it owns its physics); the server cuts the path.
-		rules = c.rules
-		if rules then
-			rules.iframeUntil = math.max(rules.iframeUntil, now + (spell.iframes or 0.3))
-		end
+		iframes(spell.iframes or 0.3)
 		event.point = origin + dir * range
 		Net.Server.FireAll("CombatEvent", event)
 		hitAll(player, c, spellId, inCorridor(origin, dir, range, spell.width or 5))
-	elseif spell.kind == "Barrier" then
+	elseif spell.kind == "SlashWave" then
+		-- A flying crescent: each enemy in the line is cut when the wave reaches it.
 		Net.Server.FireAll("CombatEvent", event)
-		local maxHp = c.humanoid.MaxHealth
-		CombatService.AddShield(c, maxHp * (spell.shield or 0), spell.seconds or 6)
-		CombatService.Heal(c, maxHp * (spell.heal or 0))
-	elseif spell.kind == "Seal" then
-		Net.Server.FireAll("CombatEvent", event)
-		task.delay(spell.delay or 0.4, function()
-			local victims = inRadius(target, spell.radius or 10)
-			hitAll(player, c, spellId, victims)
-			for _, v in victims do
+		for _, v in inCorridor(origin, dir, range, spell.width or 5) do
+			local along = math.max(0, (v.root.Position - origin):Dot(dir))
+			task.delay(along / (spell.speed or 120), function()
 				if not v.dead then
-					CombatService.Staggered:Fire(v, spell.stun or 1)
+					hitAll(player, c, spellId, { v })
 				end
-			end
+			end)
+		end
+	elseif spell.kind == "Fissure" then
+		Net.Server.FireAll("CombatEvent", event)
+		task.delay(spell.delay or 0.25, function()
+			hitAll(player, c, spellId, inCorridor(origin, dir, range, spell.width or 5))
 		end)
+	elseif spell.kind == "Rising" then
+		iframes(spell.iframes)
+		Net.Server.FireAll("CombatEvent", event)
+		hitAll(player, c, spellId, inRadius(origin, spell.radius or 10))
 	elseif spell.kind == "Storm" then
 		Net.Server.FireAll("CombatEvent", event)
 		task.spawn(function()
@@ -204,12 +209,9 @@ local function onCast(player: Player, spellId: string, aim: Vector3?, point: Vec
 				task.wait(spell.interval or 0.3)
 			end
 		end)
-	elseif spell.kind == "Lance" then
-		Net.Server.FireAll("CombatEvent", event)
-		task.delay(spell.delay or 0.1, function()
-			hitAll(player, c, spellId, inCorridor(origin, dir, range, spell.width or 4))
-		end)
-	elseif spell.kind == "Bell" then
+	elseif spell.kind == "SkyFall" then
+		-- Leap up (client) and crash onto the target point.
+		iframes(spell.iframes)
 		Net.Server.FireAll("CombatEvent", event)
 		task.delay(spell.delay or 0.8, function()
 			hitAll(player, c, spellId, inRadius(target, spell.radius or 16))

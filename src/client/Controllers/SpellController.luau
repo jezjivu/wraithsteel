@@ -309,40 +309,65 @@ local function onSpell(e: { [string]: any })
 	if mine then
 		Fx.CenterText(string.upper(spell.name), color, 30, 0.5)
 	end
-	SpellFx.Sound(EffectsConfig.Sounds.cast, origin, if spell.kind == "Bell" then 0.6 else 1.2)
-	if spell.kind == "Bell" or spell.kind == "Seal" then
-		task.delay(spell.delay or 0.5, function()
-			SpellFx.Sound(EffectsConfig.Sounds.boom, point, if spell.kind == "Bell" then 0.5 else 1.4, 0.9)
-		end)
-	end
-	if spell.kind == "Projectile" then
-		SpellFx.Bolt(origin + Vector3.new(0, 1, 0) + dir * 2, point, color, tonumber(e.travel) or 0.3, 1.6)
-		Fx.Burst(origin + dir * 2, { texture = Fx.Textures.Fire, color = color, count = 14, speed = 16, size = 1, lifetime = 0.3 })
+	SpellFx.Sound(EffectsConfig.Sounds.cast, origin, if spell.kind == "SkyFall" then 0.6 else 1.3)
+	if spell.kind == "Flurry" then
+		-- Flash next to the target, then the storm of cuts.
+		if mine then
+			local flat = Vector3.new(point.X - origin.X, 0, point.Z - origin.Z)
+			local stop = if flat.Magnitude > 4 then point - flat.Unit * 3.5 else origin
+			SpellFx.BlinkTrail(origin, stop, color)
+			MovementController.ArcTo(stop, 0.1, 0)
+			local ch = localPlayer.Character
+			if ch then
+				AnimationController.Play(ch, "Spin", nil, { windup = 0.1, active = (spell.ticks or 10) * (spell.interval or 0.08), recovery = 0.2 })
+			end
+		end
+		SpellFx.ThousandCuts(point, color, spell.radius or 9, (spell.ticks or 10) * (spell.interval or 0.08) + 0.1)
+		Fx.CenterText(if mine then "THOUSAND CUTS" else "", color, 36, 0.6)
 	elseif spell.kind == "Blink" then
 		if mine then
 			local from, to = MovementController.Blink(dir, spell.range or 24)
 			if from and to then
 				SpellFx.BlinkTrail(from, to, color)
+				for k = 1, 4 do
+					local p = from:Lerp(to, k / 5)
+					SpellFx.SlashArc(CFrame.lookAt(p, p + dir) * CFrame.Angles(0, 0, math.rad(60 * k)), color, 7, 0.22)
+				end
 			end
 		else
 			SpellFx.BlinkTrail(origin, point, color)
 		end
-	elseif spell.kind == "Barrier" then
+	elseif spell.kind == "SlashWave" then
+		SpellFx.CrescentWave(origin, dir, spell.range or 60, spell.speed or 120, color)
+	elseif spell.kind == "Fissure" then
+		SpellFx.Fissure(origin, dir, spell.range or 40, color, spell.delay or 0.25)
+	elseif spell.kind == "Rising" then
 		if caster then
-			SpellFx.Barrier(caster, color, spell.seconds or 6)
-			SpellFx.Heal(caster, color)
+			SpellFx.RisingDragon(caster, color)
 		end
-	elseif spell.kind == "Seal" then
-		SpellFx.Seal(point, color, spell.radius or 10, spell.delay or 0.4)
+		if mine then
+			MovementController.Launch(48)
+		end
 	elseif spell.kind == "Storm" then
 		if caster then
 			SpellFx.Storm(caster, color, spell.radius or 12, (spell.ticks or 5) * (spell.interval or 0.3))
+			for k = 1, spell.ticks or 5 do
+				task.delay((k - 1) * (spell.interval or 0.3), function()
+					local r = caster:FindFirstChild("HumanoidRootPart")
+					if r and r:IsA("BasePart") then
+						SpellFx.SlashArc(CFrame.new(r.Position) * CFrame.Angles(0, k * 1.3, math.rad(85)), color, (spell.radius or 12) * 1.5, 0.2)
+					end
+				end)
+			end
 		end
-	elseif spell.kind == "Lance" then
-		SpellFx.Lance(origin, dir, spell.range or 40, color)
-	elseif spell.kind == "Bell" then
-		SpellFx.BellDrop(point, color, spell.radius or 16, spell.delay or 0.8)
+	elseif spell.kind == "SkyFall" then
+		SpellFx.SkyFall(point, color, spell.radius or 16, spell.delay or 0.8)
 		if mine then
+			MovementController.ArcTo(point, spell.delay or 0.8, 40)
+			local ch = localPlayer.Character
+			if ch then
+				AnimationController.Play(ch, "LightAttack", nil, { windup = (spell.delay or 0.8) * 0.7, active = 0.2, recovery = 0.4 }, "Air")
+			end
 			Fx.ColorPulse(-0.4, 0.3, color, 1)
 		end
 	end

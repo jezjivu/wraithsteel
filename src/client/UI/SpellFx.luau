@@ -321,4 +321,133 @@ function SpellFx.BlinkTrail(from: Vector3, to: Vector3, color: Color3)
 	Fx.Shockwave(to - Vector3.new(0, 2.6, 0), color, 7, 0.3)
 end
 
+-- Blade arts --------------------------------------------------------------------------------
+
+-- One crescent slash flash (a thin bright arc of light) at `cf`.
+function SpellFx.SlashArc(cf: CFrame, color: Color3, size: number, seconds: number?)
+	local life = seconds or 0.18
+	local arc = neon(Vector3.new(size, 0.18, size * 0.22), cf, color)
+	arc.Transparency = 0.05
+	local core = neon(Vector3.new(size * 0.8, 0.08, size * 0.08), cf, Color3.new(1, 1, 1))
+	tween(arc, life, { Size = Vector3.new(size * 1.25, 0.04, size * 0.05), Transparency = 1 })
+	tween(core, life * 0.8, { Transparency = 1 })
+	Debris:AddItem(arc, life + 0.05)
+	Debris:AddItem(core, life + 0.05)
+end
+
+-- Thousand Cuts: a storm of slash lines around a point for `seconds`.
+function SpellFx.ThousandCuts(point: Vector3, color: Color3, radius: number, seconds: number)
+	local start = os.clock()
+	task.spawn(function()
+		while os.clock() - start < seconds do
+			for _ = 1, 3 do
+				local off = Vector3.new(math.random() - 0.5, math.random() * 0.6, math.random() - 0.5) * radius * 1.2
+				local cf = CFrame.new(point + off + Vector3.new(0, 2, 0)) * CFrame.Angles(math.random() * 6, math.random() * 6, math.random() * 6)
+				SpellFx.SlashArc(cf, if math.random() < 0.3 then Color3.new(1, 1, 1) else color, radius * 0.9, 0.15)
+			end
+			task.wait(0.03)
+		end
+		Fx.Burst(point + Vector3.new(0, 2, 0), { color = color, count = 40, speed = 30, size = 0.5, lifetime = 0.4 })
+		Fx.Shockwave(ground(point) + Vector3.new(0, 0.2, 0), color, radius * 1.4, 0.35)
+	end)
+	Fx.LightFlash(point, color, radius * 3, seconds)
+end
+
+-- Crescent Wave: a tall crescent of light flying along `dir`.
+function SpellFx.CrescentWave(origin: Vector3, dir: Vector3, length: number, speed: number, color: Color3)
+	local seconds = length / speed
+	local cf0 = CFrame.lookAt(origin + Vector3.new(0, 1, 0), origin + Vector3.new(0, 1, 0) + dir)
+	local wave = neon(Vector3.new(9, 0.35, 2.2), cf0 * CFrame.Angles(0, 0, math.rad(70)), color)
+	wave.Transparency = 0.05
+	local core = neon(Vector3.new(7, 0.15, 0.5), wave.CFrame, Color3.new(1, 1, 1))
+	local trail = Instance.new("ParticleEmitter")
+	trail.Texture = Fx.Textures.Sparkle
+	trail.Color = ColorSequence.new(color)
+	trail.LightEmission = 1
+	trail.Size = NumberSequence.new(1.2, 0)
+	trail.Lifetime = NumberRange.new(0.2, 0.35)
+	trail.Rate = 150
+	trail.Speed = NumberRange.new(0, 1)
+	trail.Shape = Enum.ParticleEmitterShape.Box
+	trail.Parent = wave
+	local start = os.clock()
+	local conn
+	conn = RunService.RenderStepped:Connect(function()
+		local t = (os.clock() - start) / seconds
+		if t >= 1 then
+			conn:Disconnect()
+			tween(wave, 0.15, { Transparency = 1 })
+			tween(core, 0.15, { Transparency = 1 })
+			Debris:AddItem(wave, 0.2)
+			Debris:AddItem(core, 0.2)
+			return
+		end
+		local cf = (cf0 + dir * length * t) * CFrame.Angles(0, 0, math.rad(70))
+		wave.CFrame = cf
+		core.CFrame = cf
+	end)
+	SpellFx.SlashArc(cf0 * CFrame.new(0, 0, -2) * CFrame.Angles(0, 0, math.rad(70)), color, 10, 0.2)
+end
+
+-- Earthsplitter: the ground cracks open in a line, rocks burst up one after another.
+function SpellFx.Fissure(origin: Vector3, dir: Vector3, length: number, color: Color3, delay: number)
+	local steps = math.floor(length / 4)
+	for i = 1, steps do
+		task.delay(delay * 0.3 + i * 0.025, function()
+			local p = ground(origin + dir * (i * 4))
+			local crack = neon(Vector3.new(2.6, 0.1, 4.2), CFrame.lookAt(p + Vector3.new(0, 0.12, 0), p + Vector3.new(0, 0.12, 0) + dir), color)
+			tween(crack, 1.2, { Transparency = 1 })
+			Debris:AddItem(crack, 1.25)
+			local rock = neon(Vector3.new(2, 0.4, 2), CFrame.new(p), Color3.fromRGB(110, 100, 90))
+			rock.Material = Enum.Material.Slate
+			local h = 3 + math.random() * 3
+			tween(rock, 0.1, { Size = Vector3.new(2.2, h, 2.2), CFrame = CFrame.new(p + Vector3.new(0, h / 2, 0)) * CFrame.Angles(math.random() - 0.5, math.random(), math.random() - 0.5) }, Enum.EasingStyle.Back)
+			tween(rock, 0.4, { Transparency = 1 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+			Debris:AddItem(rock, 0.9)
+			if i % 3 == 0 then
+				Fx.Burst(p, { texture = Fx.Textures.Smoke, color = Color3.fromRGB(150, 130, 110), count = 6, speed = 8, size = 2, lifetime = 0.6, lightEmission = 0 })
+			end
+		end)
+	end
+	Fx.CameraPunch(4)
+end
+
+-- Rising Dragon: a spiral of light around the caster shooting upward.
+function SpellFx.RisingDragon(model: Model, color: Color3)
+	local root = model:FindFirstChild("HumanoidRootPart")
+	if root == nil or not root:IsA("BasePart") then
+		return
+	end
+	local base = root.Position - Vector3.new(0, 2.5, 0)
+	for i = 0, 15 do
+		task.delay(i * 0.02, function()
+			local a = i * 0.8
+			local p = base + Vector3.new(math.cos(a) * 4, i * 1.1, math.sin(a) * 4)
+			SpellFx.SlashArc(CFrame.lookAt(p, base + Vector3.new(0, i * 1.1, 0)) * CFrame.Angles(0, 0, math.rad(80)), color, 6, 0.25)
+		end)
+	end
+	Fx.Shockwave(base + Vector3.new(0, 0.2, 0), color, 12, 0.35)
+	Fx.Burst(base, { color = color, count = 30, speed = 28, size = 0.6, lifetime = 0.5, acceleration = Vector3.new(0, 30, 0) })
+end
+
+-- Heaven's Fall: a falling streak and a crater blast at the target.
+function SpellFx.SkyFall(point: Vector3, color: Color3, radius: number, delay: number)
+	SpellFx.Telegraph(point, color, radius, delay)
+	task.delay(delay, function()
+		local g = ground(point)
+		Fx.Shockwave(g + Vector3.new(0, 0.3, 0), color, radius * 1.3, 0.55)
+		Fx.Shockwave(g + Vector3.new(0, 0.5, 0), Color3.new(1, 1, 1), radius * 0.8, 0.35)
+		Fx.Burst(g, { texture = Fx.Textures.Smoke, color = Color3.fromRGB(200, 180, 160), count = 50, speed = radius * 2.4, size = 4, lifetime = 1, lightEmission = 0, acceleration = Vector3.new(0, 4, 0) })
+		Fx.Burst(g + Vector3.new(0, 3, 0), { texture = Fx.Textures.Fire, color = color, count = 60, speed = 40, size = 1.2, lifetime = 0.7 })
+		Fx.Pillar(g, color, 45)
+		Fx.LightFlash(g, color, radius * 3, 0.6)
+		Fx.ScreenFlash(color, 0.6, 0.25)
+		Fx.CameraPunch(10)
+		for k = 0, 7 do
+			local a = k / 8 * math.pi * 2
+			SpellFx.SlashArc(CFrame.new(g + Vector3.new(math.cos(a) * radius * 0.5, 1, math.sin(a) * radius * 0.5)) * CFrame.Angles(0, a, math.rad(90)), color, radius * 0.8, 0.3)
+		end
+	end)
+end
+
 return SpellFx

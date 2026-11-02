@@ -257,13 +257,13 @@ AnimationConfig.StanceByClass = { Jian = "OneHanded", Dao = "OneHanded", Spear =
 
 -- Which cast pose each art kind uses.
 AnimationConfig.CastStyles = {
-	Projectile = "CastPush",
+	Flurry = "Spin",
 	Blink = "DashStrike",
-	Barrier = "CastGuard",
-	Seal = "CastSky",
-	Storm = "CastSpin",
-	Lance = "CastPush",
-	Bell = "CastSky",
+	SlashWave = "SlashRight",
+	Fissure = "Overhead",
+	Rising = "Finisher",
+	Storm = "Spin",
+	SkyFall = "AirSlam",
 } :: { [string]: string }
 
 -- Trails glow from slightly before the active window until slightly after it.

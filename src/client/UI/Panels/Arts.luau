@@ -21,13 +21,13 @@ local function rgb(c: { number }): Color3
 end
 
 local KIND_TEXT = {
-	Projectile = "Projectile",
-	Blink = "Movement",
-	Barrier = "Defense",
-	Seal = "Area stun",
-	Storm = "Close range area",
-	Lance = "Piercing line",
-	Bell = "Ultimate area",
+	Flurry = "Dash + flurry",
+	Blink = "Movement cut",
+	SlashWave = "Flying slash",
+	Fissure = "Ground slash",
+	Rising = "Launcher",
+	Storm = "Spin attack",
+	SkyFall = "Ultimate leap",
 }
 
 local Panel: PanelTypes.Panel = {
@@ -42,7 +42,7 @@ local Panel: PanelTypes.Panel = {
 			table.insert(slots, SpellConfig.KeyLabels[i] .. ": " .. (if spell then spell.name else "-"))
 		end
 		Kit.Label(body, table.concat(slots, "     "), { bold = true, color = C.Gold })
-		Kit.Label(body, string.format("Arts cost Qi (max %d). Qi refills over time and faster when you land hits (+%d) and perfect parries (+%d).", SpellConfig.Qi.max, SpellConfig.Qi.onHit, SpellConfig.Qi.onParry), { size = 13, color = C.Muted, wrap = true })
+		Kit.Label(body, string.format("Blade arts cost Qi (max %d). Qi refills over time and faster when you land hits (+%d) and perfect parries (+%d).", SpellConfig.Qi.max, SpellConfig.Qi.onHit, SpellConfig.Qi.onParry), { size = 13, color = C.Muted, wrap = true })
 
 		for i, id in SpellConfig.Order do
 			local spell = SpellConfig.Spells[id]
