@@ -21,7 +21,7 @@ local Services = script.Parent:WaitForChild("Services")
 
 local EditTools = {}
 
-local GENERATED_FOLDERS = { "World", "Hub", "EnemySpawns", "BossArenas", "Realms" }
+local GENERATED_FOLDERS = { "World", "Hub", "EnemySpawns", "BossArenas", "WorldBossSpawns", "Realms" }
 
 function EditTools.ClearWorld()
 	local recording = ChangeHistoryService:TryBeginRecording("Clear Wraithsteel world")

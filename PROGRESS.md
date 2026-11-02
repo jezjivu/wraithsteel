@@ -149,7 +149,9 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] NPCs + dialogue + main questline (SagaConfig/SagaLogic/SagaService): 10 NPCs, 10 quests across all realms, quest markers, quest cards, objective tracker + waypoint
 - [x] Stealth + Shadow Strike: enemies only notice you in front / up close; striking an unaware enemy finishes it
 - [x] Animation: hit/heavy-hit reactions, guard recoil, deflect pose, kneel on posture break, directional dashes, per-attack enemy styles, relaxed idle for townsfolk
-- [ ] Full remake of the Ashen Valley map (currently the original valley + grounding fixes)
+- [x] Ashen Valley remade (part 11): ~2.7 km linear valley (World/ValleyBuilder + MapConfig.Route) walled by rock ridges: Torii Road tunnel, Whispering Bamboo, Lantern Graveyard, Steaming Springs, Red Maple Gorge (river + bridge + waterfall), Ashen Village, Thousand-Step Stair to a plateau, Temple of the Silent Bell, Gate of the Cracked Bell. All props raycast-placed on the finished terrain; terrain grass decoration off; test baseplate removed; 4 waystones far apart
+- [x] Bell Oni replaces the Rust Tiger (id bell_oni, migration v5): part-built oni with a bell-hammer, 3 phases, leap slams, bell-orbs (deflect back), toll rings, grab, bell cyclone, rain of bells
+- [x] Shockwave rings drawn hollow (the filled disc read as a giant cylinder)
 - [ ] Studio playtest of realms/portals/arenas; tune enemy/boss numbers
 
 ## Phase 2 - Chapter 1 + depth

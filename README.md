@@ -92,6 +92,15 @@ To build it in edit mode so you can move, delete or recolor things yourself:
 
 The hub town (Ninefold Crossing) is generated automatically if `Workspace.Hub` does not exist.
 
+## The first realm: Ashen Valley
+
+A long, linear journey north from the hub: Torii Road -> Whispering Bamboo -> Lantern
+Graveyard -> Red Maple Gorge -> Ashen Village -> Thousand-Step Stair -> Temple of the Silent
+Bell -> Gate of the Cracked Bell, where the **Bell Oni** waits. Mountains wall the road; rest at
+the waystones (hub, graveyard, village, temple). If you built the world into your place
+before, rebuild it: Command Bar ->
+`require(game.ServerScriptService.EditTools).ClearWorld()` then `...BuildWorld()`.
+
 ## Quick playtest without Rojo
 
 `rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` makes a place file with all code
