@@ -31,6 +31,7 @@ function ProfileTemplate.New(): Types.ProfileData
 		spellLoadout = table.clone(SpellConfig.DefaultLoadout),
 		waystones = { hub = true },
 		respawnWaystone = "hub",
+		saga = { quest = 1, step = 1, progress = 0, started = false },
 
 		spirits = {},
 		equippedSpirits = {},

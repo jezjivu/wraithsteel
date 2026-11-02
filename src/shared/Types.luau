@@ -70,6 +70,7 @@ export type ProfileData = {
 	spellLoadout: { string }, -- SpellConfig ids per art slot ("" = empty); added in dataVersion 3
 	waystones: { [string]: boolean }, -- attuned waystones (fast travel); added in dataVersion 4
 	respawnWaystone: string, -- where you respawn (last waystone you rested at)
+	saga: { quest: number, step: number, progress: number, started: boolean }, -- main questline (SagaLogic)
 
 	-- Spirits
 	spirits: { [string]: SpiritInstance }, -- uid -> instance

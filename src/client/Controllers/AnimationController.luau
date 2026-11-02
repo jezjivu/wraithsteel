@@ -364,7 +364,7 @@ end
 local function stanceNameFor(model: Model): string?
 	local held = model:FindFirstChild("HeldWeapon")
 	if held == nil then
-		return nil
+		return if model:GetAttribute("NpcId") ~= nil then "Relaxed" else nil
 	end
 	local id = held:GetAttribute("WeaponId")
 	local def = if type(id) == "string" then WeaponConfig.Weapons[id] else nil
@@ -855,6 +855,13 @@ function AnimationController.Start()
 		trackNpc(m)
 	end
 	CollectionService:GetInstanceAddedSignal("Combatant"):Connect(function(m)
+		task.defer(trackNpc, m)
+	end)
+	-- Story NPCs (townsfolk) get idle stances too.
+	for _, m in CollectionService:GetTagged("Npc") do
+		trackNpc(m)
+	end
+	CollectionService:GetInstanceAddedSignal("Npc"):Connect(function(m)
 		task.defer(trackNpc, m)
 	end)
 	CollectionService:GetInstanceRemovedSignal("Combatant"):Connect(function(m)

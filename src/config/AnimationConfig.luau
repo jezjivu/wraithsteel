@@ -232,6 +232,13 @@ AnimationConfig.Stances = {
 		waist = { 6, -22, 0 }, root = { -4, 20, 0 },
 		leftHip = { 26, 0, -6 }, rightHip = { -18, 0, 8 }, leftKnee = { -28, 0, 0 }, rightKnee = { -24, 0, 0 },
 	},
+	-- Townsfolk (unarmed NPCs): relaxed, hands clasped in front, weight on one leg.
+	Relaxed = {
+		shoulder = { 18, 0, -12 }, elbow = { 55, 0, 0 },
+		leftShoulder = { 18, 0, 12 }, leftElbow = { 55, 0, 0 },
+		waist = { 2, 6, 0 }, root = { 0, -4, 2 },
+		leftHip = { 6, 0, -3 }, rightHip = { -4, 0, 2 }, rightKnee = { -8, 0, 0 },
+	},
 	-- Fans: both arms open and loose.
 	Open = {
 		shoulder = { 30, 0, 22 }, elbow = { 35, 0, 0 },

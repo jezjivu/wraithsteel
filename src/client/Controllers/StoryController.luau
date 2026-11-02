@@ -189,6 +189,49 @@ handlers.ChapterUnlocked = function(e)
 	fadeIn(name, 0.3, 3)
 end
 
+handlers.QuestStarted = function(e)
+	local root = card(2.6)
+	if root == nil then
+		return
+	end
+	local head = label(root, "NEW QUEST", Enum.Font.GothamBold, 20, Color3.fromRGB(235, 225, 210), 0.2)
+	local name = label(root, e.title or "", Enum.Font.Antique, 44, GOLD, 0.26)
+	fadeIn(head, 0, 2.2)
+	fadeIn(name, 0.15, 2)
+end
+
+handlers.QuestComplete = function(e)
+	local root = card(3.2)
+	if root == nil then
+		return
+	end
+	gong(0.9)
+	local head = label(root, "QUEST COMPLETE", Enum.Font.GothamBold, 22, Color3.fromRGB(235, 225, 210), 0.2)
+	local name = label(root, e.title or "", Enum.Font.Antique, 46, GOLD, 0.27)
+	local parts = { "+" .. FormatNumber.Short(e.ember or 0) .. " Ember", "+" .. FormatNumber.Short(e.xp or 0) .. " XP" }
+	if (e.jade or 0) > 0 then
+		table.insert(parts, "+" .. tostring(e.jade) .. " Jade")
+	end
+	local rewards = label(root, table.concat(parts, "     "), Enum.Font.GothamBold, 20, Kit.Colors.Jade:Lerp(GOLD, 0.5), 0.34)
+	fadeIn(head, 0, 2.8)
+	fadeIn(name, 0.15, 2.6)
+	fadeIn(rewards, 0.4, 2.4)
+end
+
+handlers.RealmEntered = function(e)
+	local root = card(4)
+	if root == nil then
+		return
+	end
+	letterbox(root, 4)
+	gong(0.6)
+	local name = label(root, e.name or "", Enum.Font.Antique, 64, GOLD, 0.42)
+	local sub = label(root, e.subtitle or "", Enum.Font.GothamMedium, 22, Color3.fromRGB(235, 225, 210), 0.52)
+	brush(root, 0.475, BLOOD, 0.35)
+	fadeIn(name, 0.1, 3.2)
+	fadeIn(sub, 0.4, 3)
+end
+
 function StoryController.Init()
 	gui = Kit.Screen(Players.LocalPlayer:WaitForChild("PlayerGui"), "StoryCards", 20)
 	;(gui :: ScreenGui).IgnoreGuiInset = true

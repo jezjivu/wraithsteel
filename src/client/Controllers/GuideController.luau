@@ -16,6 +16,8 @@ local ChapterConfig = require(Config:WaitForChild("ChapterConfig"))
 local BossConfig = require(Config:WaitForChild("BossConfig"))
 local HubConfig = require(Config:WaitForChild("HubConfig"))
 local MapConfig = require(Config:WaitForChild("MapConfig"))
+local RealmConfig = require(Config:WaitForChild("RealmConfig"))
+local SagaConfig = require(Config:WaitForChild("SagaConfig"))
 
 local UI = script.Parent.Parent:WaitForChild("UI")
 local Kit = require(UI:WaitForChild("Kit"))
@@ -80,7 +82,79 @@ local function arenaPos(bossId: string): Vector3?
 			return Vector3.new(a.at[1], 0, a.at[2])
 		end
 	end
+	for id, r in RealmConfig.Realms do
+		for _, a in r.arenas do
+			if a.bossId == bossId then
+				return RealmConfig.World(id, a.at)
+			end
+		end
+	end
 	return nil
+end
+
+local function npcPos(id: string): Vector3?
+	local dir = ReplicatedStorage:FindFirstChild("NpcDirectory")
+	local entry = dir and dir:FindFirstChild(id)
+	local p = entry and entry:GetAttribute("Position")
+	return if typeof(p) == "Vector3" then p else nil
+end
+
+-- Nearest spawn of any of these enemies (for "go fight" waypoints).
+local function spawnPos(enemies: { string }): Vector3?
+	local character = Players.LocalPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local from = if root and root:IsA("BasePart") then root.Position else Vector3.zero
+	local best, bestD = nil, math.huge
+	local function consider(p: Vector3)
+		local d = (p - from).Magnitude
+		if d < bestD then
+			best, bestD = p, d
+		end
+	end
+	for _, s in MapConfig.EnemySpawns do
+		if table.find(enemies, s.enemyId) then
+			consider(Vector3.new(s.at[1], 0, s.at[2]))
+		end
+	end
+	for id, r in RealmConfig.Realms do
+		for _, s in r.spawns do
+			if table.find(enemies, s.enemyId) then
+				consider(RealmConfig.World(id, s.at))
+			end
+		end
+	end
+	return best
+end
+
+-- Main questline objective (mirrors server Logic/SagaLogic.Objective).
+local function sagaObjective(): (string?, string?, Vector3?)
+	local saga = DataController.Get("saga")
+	if type(saga) ~= "table" then
+		return nil, nil, nil
+	end
+	local q = SagaConfig.Quests[saga.quest]
+	if q == nil then
+		return "The story so far is complete. More gates await...", nil, nil
+	end
+	local giver = SagaConfig.Npc(q.giver)
+	local giverName = if giver then giver.name else q.giver
+	if not saga.started then
+		return string.format("%s - talk to %s", q.title, giverName), giverName, npcPos(q.giver)
+	end
+	local step = q.steps[saga.step]
+	if step == nil then
+		return string.format("%s - return to %s", q.title, giverName), giverName, npcPos(q.giver)
+	end
+	if step.kind == "Kill" then
+		return string.format("%s - %s (%d/%d)", q.title, step.text, saga.progress, step.count or 1), "Enemies", spawnPos(step.enemies or {})
+	elseif step.kind == "Boss" then
+		local boss = BossConfig.Bosses[step.bossId or ""]
+		return string.format("%s - %s", q.title, step.text), if boss then boss.name else "Boss", arenaPos(step.bossId or "")
+	elseif step.kind == "Reach" and step.at then
+		return string.format("%s - %s", q.title, step.text), "Destination", RealmConfig.World(step.realm or "japan", step.at)
+	end
+	local npc = SagaConfig.Npc(step.npc or "")
+	return string.format("%s - %s", q.title, step.text), if npc then npc.name else nil, npcPos(step.npc or "")
 end
 
 -- Returns objective text plus an optional waypoint (name + world position).
@@ -96,6 +170,13 @@ function GuideController.Objective(): (string, string?, Vector3?)
 		return T.openLantern, "Lantern Shrine", stationPos("LanternShrine")
 	elseif #(DataController.Get("equippedSpirits") or {}) == 0 then
 		return T.equipSpirit, "Spirit Shrine", stationPos("SpiritShrine")
+	end
+	local sagaText, sagaName, sagaPos = sagaObjective()
+	if sagaText then
+		return sagaText, sagaName, sagaPos
+	end
+	if false then
+		return "", nil, nil
 	elseif level < GuideConfig.LevelGoal then
 		local first = MapConfig.EnemySpawns[1]
 		return string.format(T.fightWilds, GuideConfig.LevelGoal), "Enemies", Vector3.new(first.at[1], 0, first.at[2])
@@ -310,6 +391,13 @@ end
 function GuideController.Start()
 	DataController.Changed:Connect(refresh)
 	refresh()
+	-- NPC positions / kill-spawn targets can change as you move around: refresh now and then.
+	task.spawn(function()
+		while true do
+			task.wait(3)
+			refresh()
+		end
+	end)
 	game:GetService("RunService").RenderStepped:Connect(updateWaypoint)
 	Net.Client.On("BossState", function(st)
 		if st.state ~= "Dead" and (tonumber(st.hpFrac) or 0) > 0 then

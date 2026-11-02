@@ -38,6 +38,9 @@ Migrations.Steps = {
 		if type(data.respawnWaystone) ~= "string" then
 			data.respawnWaystone = "hub"
 		end
+		if type(data.saga) ~= "table" then
+			data.saga = { quest = 1, step = 1, progress = 0, started = false }
+		end
 	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
