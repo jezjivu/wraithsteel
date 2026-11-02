@@ -5,7 +5,8 @@
 --
 --     require(game.ServerScriptService.EditTools).BuildWorld()
 --
--- It creates Workspace.World (terrain + map), Workspace.Hub (town + shops), EnemySpawns,
+-- It creates Workspace.World (terrain + map), Workspace.Hub (town + shops), Workspace.Realms
+-- (the cyberpunk city and the Greek island), EnemySpawns,
 -- BossArenas and the lighting. Save the place afterwards (File -> Save). On Play the game
 -- uses what you saved instead of generating it again, so every change you make sticks.
 -- Undo works (Ctrl+Z). To start over:
@@ -20,7 +21,7 @@ local Services = script.Parent:WaitForChild("Services")
 
 local EditTools = {}
 
-local GENERATED_FOLDERS = { "World", "Hub", "EnemySpawns", "BossArenas" }
+local GENERATED_FOLDERS = { "World", "Hub", "EnemySpawns", "BossArenas", "Realms" }
 
 function EditTools.ClearWorld()
 	local recording = ChangeHistoryService:TryBeginRecording("Clear Wraithsteel world")
@@ -49,9 +50,11 @@ function EditTools.BuildWorld()
 	local AmbienceService = require(Services:WaitForChild("AmbienceService")) :: any
 	local MapService = require(Services:WaitForChild("MapService")) :: any
 	local HubService = require(Services:WaitForChild("HubService")) :: any
+	local RealmService = require(Services:WaitForChild("RealmService")) :: any
 	AmbienceService.Apply()
 	MapService.Build()
 	HubService.Build()
+	RealmService.Build() -- Neon Verge + Aeloria (portals, spawns and waystones are added on Play)
 	workspace:SetAttribute("WraithsteelGenerated", true)
 	-- The SpawnLocation lives in the hub; the old test baseplate is no longer needed for spawning.
 	local folder = workspace:FindFirstChild("EnemySpawns")

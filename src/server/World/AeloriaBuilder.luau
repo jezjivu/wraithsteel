@@ -263,14 +263,14 @@ function AeloriaBuilder.Build(origin: Vector3, parent: Instance): Model
 	while placed < 70 and tries < 600 do
 		tries += 1
 		local x, z = rng:NextNumber(-half + 40, half - 40), rng:NextNumber(-half + 40, half - 40)
-		local free = (Vector2.new(x, z)).Magnitude < half - 40
+		local free = K.dist(x, z, 0, 0) < half - 40
 		for _, a in realm.areas do
-			if (Vector2.new(x, z) - Vector2.new(a.center[1], a.center[2])).Magnitude < a.radius + 10 then
+			if K.dist(x, z, a.center[1], a.center[2]) < a.radius + 10 then
 				free = false
 			end
 		end
 		for _, p in AeloriaBuilder.ShrinePoints do
-			if (Vector2.new(x, z) - Vector2.new(p[1], p[2])).Magnitude < 14 then
+			if K.dist(x, z, p[1], p[2]) < 14 then
 				free = false
 			end
 		end

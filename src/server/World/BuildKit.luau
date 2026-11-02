@@ -88,6 +88,11 @@ function BuildKit.sign(p: BasePart, text: string, color: Color3, font: Enum.Font
 	end
 end
 
+function BuildKit.dist(x1: number, z1: number, x2: number, z2: number): number
+	local dx, dz = x1 - x2, z1 - z2
+	return math.sqrt(dx * dx + dz * dz)
+end
+
 function BuildKit.model(name: string, parent: Instance): Model
 	local m = Instance.new("Model")
 	m.Name = name

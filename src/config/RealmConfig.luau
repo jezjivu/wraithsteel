@@ -93,7 +93,7 @@ RealmConfig.Realms = {
 			{ name = "GreekOliveArchers", enemyId = "siren_archer", count = 2, respawn = 22, at = { -190, -80 } },
 			{ name = "GreekTheatreSentinel", enemyId = "marble_sentinel", count = 1, respawn = 35, at = { 150, -40 } },
 			{ name = "GreekTheatreArchers", enemyId = "siren_archer", count = 2, respawn = 22, at = { 170, 0 } },
-			{ name = "GreekHarborHoplites", enemyId = "bronze_hoplite", count = 2, respawn = 25, at = { 20, 160 } },
+			{ name = "GreekHarborHoplites", enemyId = "bronze_hoplite", count = 2, respawn = 25, at = { 65, 150 } },
 			{ name = "GreekTempleSentinels", enemyId = "marble_sentinel", count = 2, respawn = 35, at = { 30, -185 } },
 		},
 		arenas = { { name = "HelionArena", bossId = "archon_helion", at = { 0, -245 } } },
@@ -111,7 +111,7 @@ RealmConfig.Realms = {
 RealmConfig.Portals = {
 	{ from = "japan", to = "neon", at = { 60, 0 }, facing = -90 }, -- Japan: relative to the hub center
 	{ from = "neon", to = "japan", at = { 0, 55 }, facing = 0 },
-	{ from = "neon", to = "greek", at = { 60, -60 }, facing = 0 },
+	{ from = "neon", to = "greek", at = { 70, 40 }, facing = 90 },
 	{ from = "greek", to = "neon", at = { 0, 55 }, facing = 0 },
 } :: { PortalDef }
 

@@ -92,7 +92,7 @@ function NeonBuilder.Build(origin: Vector3, parent: Instance): Model
 	-- Keep-out zones for buildings: areas + avenues.
 	local function blocked(x: number, z: number, margin: number): boolean
 		for _, a in realm.areas do
-			if (Vector2.new(x, z) - Vector2.new(a.center[1], a.center[2])).Magnitude < a.radius + margin then
+			if K.dist(x, z, a.center[1], a.center[2]) < a.radius + margin then
 				return true
 			end
 		end

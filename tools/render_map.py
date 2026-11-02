@@ -18,6 +18,7 @@ from render_weapons import corners, hull  # noqa: E402
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 LUAU = sys.argv[1] if len(sys.argv) > 1 else "luau"
 OUT = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "build" / "map_top.png"
+REALM = sys.argv[3] if len(sys.argv) > 3 else "japan"  # japan | neon | greek
 
 SPEC = """
 return {
@@ -35,12 +36,26 @@ MAT = {
     "Material.Grass": (88, 128, 62), "Material.Cobblestone": (140, 135, 125), "Material.Ground": (125, 100, 70),
     "Material.Rock": (110, 105, 100), "Material.Snow": (240, 245, 250), "Material.Sand": (215, 195, 150),
     "Material.Water": (60, 110, 150), "Material.Mud": (80, 65, 50), "Material.Air": None,
-    "Material.Pavement": (165, 160, 150), "Material.LeafyGrass": (120, 110, 55),
+    "Material.Pavement": (165, 160, 150), "Material.LeafyGrass": (120, 110, 55), "Material.Limestone": (200, 190, 160),
 }
 
 
+REALM_SPEC = """
+return {
+	dump = function()
+		local SSS = game:GetService("ServerScriptService")
+		local builder = require(SSS.World.%s)
+		builder.Build(Vector3.new(0, 0, 0), workspace)
+		__dumpTerrain()
+		__dumpParts(workspace)
+	end,
+}
+"""
+
+
 def main():
-    bundle = build_bundle([("map", SPEC)], preludes=["tests/engine_mock.luau"])
+    spec = SPEC if REALM == "japan" else REALM_SPEC % ("NeonBuilder" if REALM == "neon" else "AeloriaBuilder")
+    bundle = build_bundle([("map", spec)], preludes=["tests/engine_mock.luau"])
     f = ROOT / "build" / "render_map.luau"
     f.parent.mkdir(exist_ok=True)
     f.write_text(bundle)
@@ -56,7 +71,7 @@ def main():
         sys.exit(1)
     terrain = terrain or []
 
-    minx, maxx, minz, maxz = -330, 330, -400, 320
+    minx, maxx, minz, maxz = (-330, 330, -400, 320) if REALM == "japan" else (-400, 400, -400, 400)
     size = 1400
     scale = size / max(maxx - minx, maxz - minz)
 
