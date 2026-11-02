@@ -243,6 +243,58 @@ local function brokenMarker(model: Model)
 	gui.Parent = model
 end
 
+-- "SHADOW STRIKE" cue over an unaware enemy you are close to.
+local shadowMark: BillboardGui? = nil
+local function updateShadowMark()
+	local ch = localPlayer.Character
+	local root = ch and ch:FindFirstChild("HumanoidRootPart")
+	local best: Model? = nil
+	if root and root:IsA("BasePart") then
+		local bestD = 10
+		for _, m in CollectionService:GetTagged(COMBATANT_TAG) do
+			if m:IsA("Model") and m:GetAttribute("Unaware") == true and m:GetAttribute("CombatantKind") == "Enemy" then
+				local r = m:FindFirstChild("HumanoidRootPart")
+				local hum = m:FindFirstChildOfClass("Humanoid")
+				if r and r:IsA("BasePart") and hum and hum.Health > 0 then
+					local d = (r.Position - root.Position).Magnitude
+					if d < bestD then
+						best, bestD = m, d
+					end
+				end
+			end
+		end
+	end
+	if best == nil then
+		if shadowMark then
+			shadowMark.Enabled = false
+		end
+		return
+	end
+	local mark = shadowMark
+	if mark == nil then
+		local bb = Instance.new("BillboardGui")
+		bb.Name = "ShadowMark"
+		bb.Size = UDim2.fromOffset(150, 30)
+		bb.StudsOffset = Vector3.new(0, 3.4, 0)
+		bb.AlwaysOnTop = true
+		local l = Instance.new("TextLabel")
+		l.Size = UDim2.fromScale(1, 1)
+		l.BackgroundTransparency = 1
+		l.Font = Enum.Font.GothamBlack
+		l.TextSize = 16
+		l.TextColor3 = Color3.fromRGB(255, 70, 70)
+		l.TextStrokeTransparency = 0.2
+		l.Text = "◆ SHADOW STRIKE"
+		l.Parent = bb
+		bb.Parent = localPlayer:WaitForChild("PlayerGui")
+		shadowMark = bb
+		mark = bb
+	end
+	local m = mark :: BillboardGui
+	m.Adornee = anchorPart(best) :: any
+	m.Enabled = true
+end
+
 local function track(model: Instance)
 	if not model:IsA("Model") then
 		return
@@ -393,7 +445,8 @@ local function onDamage(e: { [string]: any })
 	if e.severing then
 		-- Severing Blow: slow-motion, ink-red slash, the body crumples.
 		local c = rgb(EffectsConfig.Outcome.Severed.color)
-		floatText(part, EffectsConfig.Outcome.Severed.text :: string, c, 44)
+		local severText = if e.shadow then "SHADOW STRIKE" else EffectsConfig.Outcome.Severed.text :: string
+		floatText(part, severText, c, 44)
 		Fx.Burst(part.Position, { texture = Fx.Textures.Smoke, color = Color3.fromRGB(120, 10, 20), count = 40, speed = 18, size = 2.2, lifetime = 0.9, lightEmission = 0, acceleration = Vector3.new(0, -6, 0) })
 		Fx.Burst(part.Position, { color = c, count = 50, speed = 40, size = 0.5, lifetime = 0.5 })
 		Fx.Shockwave(part.Position - Vector3.new(0, 2.5, 0), c, 16, 0.5)
@@ -401,7 +454,7 @@ local function onDamage(e: { [string]: any })
 			AnimationController.HitStop(CombatConfig.Severing.hitStop, 0.05)
 			Fx.ColorPulse(-0.8, 0.5, Color3.fromRGB(255, 200, 200), 0.7)
 			Fx.Streaks(c, 26, 0.45)
-			Fx.CenterText(EffectsConfig.Outcome.Severed.text :: string, c, 78, 0.8)
+			Fx.CenterText(severText, c, 78, 0.8)
 			Fx.CameraPunch(EffectsConfig.Shake.bigHitFov * 2)
 			shake(EffectsConfig.Shake.broken)
 		end
@@ -537,6 +590,12 @@ function EffectsController.Start()
 		end
 	end)
 
+	task.spawn(function()
+		while true do
+			task.wait(0.2)
+			updateShadowMark()
+		end
+	end)
 	CombatController.EventReceived:Connect(function(e)
 		if e.kind == "Damage" then
 			onDamage(e)

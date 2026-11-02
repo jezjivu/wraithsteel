@@ -86,6 +86,9 @@ EnemyConfig.FlinchCooldown = 1.4 -- an enemy cannot be flinch-locked
 EnemyConfig.GuardSeconds = 1.4
 EnemyConfig.GuardDamageMultiplier = 0.2 -- health damage taken through guard
 EnemyConfig.GuardPostureMultiplier = 1.4 -- guard soaks more posture (break it!)
+-- Stealth (Shadow Strike): unaware enemies only see you within viewDegrees in front of them,
+-- or within closeRange. A strike on an unaware enemy is an instant Shadow Strike.
+EnemyConfig.Stealth = { viewDegrees = 120, closeRange = 7 }
 EnemyConfig.SpawnFolderName = "EnemySpawns" -- TODO(Studio/Agent D): Workspace folder of spawn Parts
 EnemyConfig.TemplateFolderName = "Enemies" -- TODO(Studio/Agent C): ServerStorage folder of rigs
 

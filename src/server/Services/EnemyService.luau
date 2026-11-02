@@ -138,8 +138,17 @@ local function nearestPlayer(b: Brain): (Combatant?, number)
 	for _, player in Players:GetPlayers() do
 		local pc = CombatService.GetByPlayer(player)
 		if pc and not pc.dead then
-			local d = (pc.root.Position - pos).Magnitude
-			if d < bestDist and d <= b.def.aggroRange and (pc.root.Position - b.home).Magnitude <= b.def.leashRange then
+			local offset = pc.root.Position - pos
+			local d = offset.Magnitude
+			-- Stealth: an unaware enemy only notices you in front of it, up close, or when hurt.
+			-- Once it has a target it keeps tracking all around.
+			local noticed = b.target ~= nil or not b.c.unaware or d <= EnemyConfig.Stealth.closeRange
+			if not noticed and d > 0.1 then
+				local look = b.c.root.CFrame.LookVector
+				local flat = Vector3.new(offset.X, 0, offset.Z)
+				noticed = flat.Magnitude > 0.1 and flat.Unit:Dot(Vector3.new(look.X, 0, look.Z).Unit) >= math.cos(math.rad(EnemyConfig.Stealth.viewDegrees / 2))
+			end
+			if noticed and d < bestDist and d <= b.def.aggroRange and (pc.root.Position - b.home).Magnitude <= b.def.leashRange then
 				best, bestDist = pc, d
 			end
 		end
@@ -320,6 +329,11 @@ local function think(b: Brain, _dt: number, now: number)
 	end
 	local target, dist = nearestPlayer(b)
 	b.target = target
+	local unaware = target == nil
+	if b.c.unaware ~= unaware then
+		b.c.unaware = unaware
+		b.c.model:SetAttribute("Unaware", unaware)
+	end
 	local humanoid = b.c.humanoid
 	if target == nil then
 		director:Release(b.c.id, now)
@@ -388,6 +402,7 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 		dead = false,
 		contributions = {},
 		deflectChance = def.deflectChance,
+		unaware = true,
 	}
 	CombatService.Register(c)
 	local brain: Brain = {
@@ -479,6 +494,12 @@ function EnemyService.Start()
 	end)
 	CombatService.Damaged:Connect(function(c, attacker)
 		local b = brains[c.id]
+		if b and attacker and attacker.player and c.unaware then
+			-- Hit from hiding (spells, arrows...): now it knows.
+			c.unaware = false
+			c.model:SetAttribute("Unaware", false)
+			b.target = attacker
+		end
 		if b and attacker and attacker.player then
 			onHurt(b)
 		end

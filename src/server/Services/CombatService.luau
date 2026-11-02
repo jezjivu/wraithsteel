@@ -67,6 +67,7 @@ export type Combatant = {
 	dodgeDir: Vector3?,
 	flask: number?, -- players: Spring Flask charges left
 	breath: boolean?, -- players: Second Breath still available this life
+	unaware: boolean?, -- enemies: hasn't noticed any player yet (Shadow Strike possible)
 	deflectChance: number?, -- enemies/bosses: chance to deflect a strike while canDeflect()
 	canDeflect: (() -> boolean)?,
 }
@@ -85,6 +86,7 @@ export type Hit = {
 	perilousKind: string?, -- "Pierce" | "Sweep" | "Grasp" (see CombatConfig)
 	severing: boolean?, -- Severing Blow on a posture-broken enemy
 	ranged: boolean?, -- projectile / wave / eruption: a parry does not stagger the attacker
+	shadow: boolean?, -- Severing Blow on an enemy that never saw you coming
 }
 
 local MAX_TARGETS_PER_SWING = 4
@@ -424,6 +426,7 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		broken = broke,
 		riposte = hit.riposte,
 		severing = hit.severing,
+		shadow = hit.shadow,
 		crit = hit.crit,
 		source = hit.source,
 		color = hit.color,
@@ -594,7 +597,8 @@ local function onCombatAction(player: Player, req: { [string]: any })
 		for _, target in CombatService.TargetsInArc(c, move.range + (move.step or 0) * 0.5, move.arcDegrees, aim) do
 			hitAny = true
 			-- Severing Blow: an enemy with broken posture is finished (bosses lose a big chunk).
-			if target.kind ~= "Player" and Posture.IsBroken(target.posture, os.clock()) then
+			local shadow = target.kind == "Enemy" and target.unaware == true and not target.dead
+			if target.kind ~= "Player" and (shadow or Posture.IsBroken(target.posture, os.clock())) then
 				local sever = if target.kind == "Boss" then target.humanoid.MaxHealth * CombatConfig.Severing.bossFraction else target.humanoid.Health + 1
 				target.posture.brokenUntil = os.clock()
 				target.posture.value = 0
@@ -605,6 +609,7 @@ local function onCombatAction(player: Player, req: { [string]: any })
 					moveId = moveId :: string,
 					knockback = kb * 2,
 					severing = true,
+					shadow = shadow,
 				})
 				continue
 			end
