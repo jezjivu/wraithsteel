@@ -486,6 +486,69 @@ local function updateWalk(model: Model, st: TrackState, speed: number, armed: bo
 	end
 end
 
+-- Self-check (no Output reading needed): the first time the local player's attack plays as a
+-- generated track, look at the right shoulder joint mid-swing. If the engine did not move it,
+-- switch to joint posing for the rest of the session and say so on screen (Studio only).
+local checked = false
+local function rightShoulderTransform(model: Model): CFrame?
+	local arm = model:FindFirstChild("RightUpperArm") or model:FindFirstChild("Right Arm")
+	if arm == nil then
+		return nil
+	end
+	for _, d in model:GetDescendants() do
+		if d:IsA("Motor6D") and d.Part1 == arm then
+			return d.Transform
+		elseif d:IsA("AnimationConstraint") and d.Attachment1 and d.Attachment1.Parent == arm then
+			return d.Transform
+		end
+	end
+	return nil
+end
+
+local function notify(text: string)
+	if not RunService:IsStudio() then
+		return
+	end
+	local ok, Notification = pcall(function()
+		return require(script.Parent:WaitForChild("NotificationController")) :: any
+	end)
+	if ok and Notification and Notification.Show then
+		Notification.Show("Info", text)
+	end
+end
+
+local function selfCheck(model: Model, track: AnimationTrack)
+	if checked or model ~= Players.LocalPlayer.Character then
+		return
+	end
+	checked = true
+	task.spawn(function()
+		local biggest = 0
+		local t0 = os.clock()
+		while os.clock() - t0 < 0.6 and track.IsPlaying do
+			local tf = rightShoulderTransform(model)
+			if tf then
+				local _, angle = tf:ToAxisAngle()
+				biggest = math.max(biggest, math.abs(angle))
+			end
+			task.wait()
+		end
+		if biggest < math.rad(8) then
+			AnimBuilder.Disable("tracks did not move the rig (max shoulder angle " .. string.format("%.1f", math.deg(biggest)) .. " deg)")
+			for _, st in trackStates do
+				for _, t in st.loaded do
+					t:Stop(0.1)
+				end
+			end
+			table.clear(trackStates)
+			notify("Animation check: switched to fallback body posing.")
+		else
+			print("[AnimationController] self-check OK: generated tracks move the body")
+			notify("Animation check: full-body animations OK.")
+		end
+	end)
+end
+
 -- Virtual animation clock: advances slower during hit-stop.
 local vnow = 0
 local timeScale = 1
@@ -602,6 +665,7 @@ function AnimationController.Play(model: Model, action: string, moveId: string?,
 			track:Play(0.06, 1, timeScale)
 			st.action = track
 			st.actionIsGuard = action == "Parry"
+			selfCheck(model, track)
 		end
 	end
 end

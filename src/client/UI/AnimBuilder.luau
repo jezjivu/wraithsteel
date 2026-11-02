@@ -66,6 +66,14 @@ function AnimBuilder.Available(): boolean
 	return not failed
 end
 
+-- Switch generated tracks off (the self-check found they don't move the rig).
+function AnimBuilder.Disable(reason: string)
+	if not failed then
+		failed = true
+		warn("[AnimBuilder] generated animations disabled:", reason)
+	end
+end
+
 local function isR6(model: Model): boolean
 	local hum = model:FindFirstChildOfClass("Humanoid")
 	return hum ~= nil and hum.RigType == Enum.HumanoidRigType.R6
