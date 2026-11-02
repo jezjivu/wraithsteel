@@ -96,6 +96,13 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
 - `UI/AnimBuilder` builds KeyframeSequences from AnimationConfig poses and registers them with `KeyframeSequenceProvider:RegisterKeyframeSequence` (temporary ids, client-side). If registration fails it warns once and AnimationController falls back to joint-anchor posing.
 - Known risk: temporary ids are meant for local testing; if they do not work in a published game, upload the generated sequences (or real animations) and set `animationId`s.
 
+## Realms, story, waystones (part 10)
+- RealmConfig (local coords per realm; Japan portal relative to the hub), RealmService (priority 29.5: after Hub, before Enemy/Boss so spawns + shrine pads exist when they start), builders in World/ (BuildKit, NeonBuilder, AeloriaBuilder). Player attribute `Realm`; client RealmAmbienceController applies LightingConfig.Realms.
+- WaystoneService + WaystoneConfig; ReplicatedStorage.WaystoneDirectory lists waystones for the Travel panel (far models aren't streamed). Profile v4: `waystones`, `respawnWaystone`, `saga`.
+- SagaConfig/SagaLogic (tested in tests/saga.spec.luau)/SagaService; ReplicatedStorage.NpcDirectory holds NPC positions; StoryEvent kinds `Dialogue`, `QuestStarted`, `QuestComplete`, `RealmEntered`.
+- Stealth: EnemyConfig.Stealth; combatant `unaware` + model attribute `Unaware`; Hit `shadow`.
+- Preview realms offline: `python3 tools/render_map.py <luau> build/neon.png neon` (or `greek`).
+
 ## Things for Studio agents
 - See README "What you need to build in Studio" and `AssetLog.md`.
 - Enemy spawns: `Workspace.EnemySpawns/<Part>` (attrs `EnemyId`, `Count`, `RespawnSeconds`).

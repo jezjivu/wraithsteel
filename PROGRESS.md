@@ -140,6 +140,18 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Fight animations: anticipation, overshoot, automatic footwork + torso coil, idle sway
 - [x] Second Breath: once per life a killing blow leaves you at 1 HP and you rise with 50% (recharges at the springs; ✦ on the HUD)
 
+## Realms, story & stealth (night 1, part 10)
+- [x] Three realms: Ashen Valley (Japan, original map + hub), Neon Verge (cyberpunk city, World/NeonBuilder), Aeloria (Greek island, World/AeloriaBuilder); RealmConfig + RealmService; portals sealed until the previous realm's boss falls
+- [x] Per-realm lighting + weather on the client (neon night rain, Greek sun motes)
+- [x] 6 realm enemies (Chrome Ronin, Drone Sentry creature, Rail Brute, Bronze Hoplite, Siren Archer, Marble Sentinel); enemies can now shoot/volley/stomp-wave via HazardService
+- [x] Bosses: Kagura-9 (Neon) and Helion (Aeloria) in instanced arenas
+- [x] Waystones (WaystoneService): rest = heal + flask + second breath + respawn point; fast travel panel; per-realm waystones
+- [x] NPCs + dialogue + main questline (SagaConfig/SagaLogic/SagaService): 10 NPCs, 10 quests across all realms, quest markers, quest cards, objective tracker + waypoint
+- [x] Stealth + Shadow Strike: enemies only notice you in front / up close; striking an unaware enemy finishes it
+- [x] Animation: hit/heavy-hit reactions, guard recoil, deflect pose, kneel on posture break, directional dashes, per-attack enemy styles, relaxed idle for townsfolk
+- [ ] Full remake of the Ashen Valley map (currently the original valley + grounding fixes)
+- [ ] Studio playtest of realms/portals/arenas; tune enemy/boss numbers
+
 ## Phase 2 - Chapter 1 + depth
 - [x] BossConfig entries for the 4 Chapter 1 bosses (Hollow Abbot, Twin Cinder Sisters, Rustwood Matriarch, Gatekeeper of Rust - 3 phases)
 - [x] Chapter 1 enemies: Rustwood Stalker, Rust-Eaten Sentinel

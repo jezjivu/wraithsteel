@@ -54,6 +54,14 @@ it breaks, a red SEVER mark appears - strike to finish them (bosses lose a big c
 Red (perilous) attacks can't be guarded: dash INTO a Pierce, jump over a Sweep, dash away from a
 Grasp. Guarding enemies and bosses deflect your strings and counter - don't just mash.
 
+The world has three realms joined by portals: **Ashen Valley** (feudal Japan, where you start),
+**Neon Verge** (a rainy cyberpunk city; its portal by the hub opens after the Rust Tiger) and
+**Aeloria** (an ancient Greek island; opens after Kagura-9). Follow the story: talk to NPCs with a
+gold **!** over their heads; the objective (top right) and the waypoint beam lead the way.
+Rest at **Waystones** to heal, refill your flask and set your respawn; the Travel menu warps
+between waystones you have rested at. Sneak up on enemies that haven't seen you (approach from
+behind) for an instant **Shadow Strike**.
+
 Story bosses are fought in their own walled arena: hold E at a boss shrine to be taken there with
 everyone nearby (you return to the shrine afterwards). Bosses mix melee with orbs, volleys, quake
 rings and eruptions. Gold-ringed ORBS can be deflected (tap F as they hit) - they fly back and
