@@ -49,6 +49,10 @@ slam), Shift = sprint, Q = Spring Flask (3 heals, refill at the hot springs), Ta
 T = Spirit Burst (all your Spirits cast at once).
 E = use a hub station, H = controls card. Attacks auto-aim at the nearest enemy in front of you. Menu buttons (bottom-left): Spirits, Weapons, Arts, Styles, Quests, Expeditions, Store, Party, Trade, Codes.
 
+A perfectly timed deflect (tap F as the hit lands) stops EVERYTHING - red attacks, rockets,
+lasers, shockwaves - and deflected projectiles fly back at whoever threw them. Enemies hit hard
+and deflect you back if you mash: read them, deflect, then punish.
+
 Combat is posture-based: deflect enemy strikes (tap F on impact) to fill THEIR posture bar; when
 it breaks, a red SEVER mark appears - strike to finish them (bosses lose a big chunk instead).
 Red (perilous) attacks can't be guarded: dash INTO a Pierce, jump over a Sweep, dash away from a

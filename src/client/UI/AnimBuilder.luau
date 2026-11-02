@@ -92,8 +92,10 @@ local function anchorRotation(model: Model, partName: string): CFrame
 	return CFrame.new()
 end
 
+-- {rx, ry, rz [, tx, ty, tz]}: degrees, plus an optional shift in studs (used on the root to
+-- crouch, lunge and recoil the whole body).
 local function angles(a: { number }): CFrame
-	return CFrame.Angles(math.rad(a[1] or 0), math.rad(a[2] or 0), math.rad(a[3] or 0))
+	return CFrame.new(a[4] or 0, a[5] or 0, a[6] or 0) * CFrame.Angles(math.rad(a[1] or 0), math.rad(a[2] or 0), math.rad(a[3] or 0))
 end
 
 -- Builds (once per key + rig type) and registers an animation. Returns its id or nil.
@@ -167,7 +169,9 @@ function AnimBuilder.Get(key: string, frames: { Frame }, opts: Opts, model: Mode
 			if k then
 				local a = f.pose[k] or { 0, 0, 0 }
 				local r = rot[partName]
-				pose.CFrame = r:Inverse() * angles(a) * r
+				local cf = angles(a)
+				-- Rotation in the parent's axes; the shift stays in the parent's axes too.
+				pose.CFrame = CFrame.new(r:Inverse() * cf.Position) * (r:Inverse() * cf.Rotation * r)
 				pose.Weight = 1
 			else
 				pose.Weight = 0 -- hierarchy only

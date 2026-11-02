@@ -291,8 +291,14 @@ end
 -- A move as keyframes: rest -> windup -> strike (spins add in-between frames) -> hold -> rest.
 -- Footwork + torso added to every move that does not specify them itself: the hips coil
 -- into the windup and uncoil through the strike, the lead leg steps in, the body leans in.
-local AUTO_WINDUP: { [string]: { number } } = { waist = { -6, 28, 0 }, root = { 6, 10, 0 }, rightHip = { 18, 0, 0 }, leftKnee = { -22, 0, 0 }, rightKnee = { -18, 0, 0 } }
-local AUTO_STRIKE: { [string]: { number } } = { waist = { 10, -30, 0 }, root = { -10, -12, 0 }, leftHip = { -32, 0, 0 }, rightHip = { 26, 0, 0 }, leftKnee = { -30, 0, 0 }, rightKnee = { -12, 0, 0 } }
+local AUTO_WINDUP: { [string]: { number } } = {
+	waist = { -8, 32, 0 }, root = { 8, 14, 0, 0, -0.5, 0.5 },
+	leftHip = { 10, 0, -6 }, rightHip = { -22, 0, 8 }, leftKnee = { -30, 0, 0 }, rightKnee = { -26, 0, 0 },
+}
+local AUTO_STRIKE: { [string]: { number } } = {
+	waist = { 12, -34, 0 }, root = { -14, -16, 0, 0, -0.9, -1.4 },
+	leftHip = { -48, 0, -4 }, rightHip = { 34, 0, 6 }, leftKnee = { -42, 0, 0 }, rightKnee = { -14, 0, 0 },
+}
 
 local function withAuto(pose: AnimationConfig.Pose, auto: { [string]: { number } }): { [string]: { number } }
 	local out: { [string]: { number } } = {}
@@ -310,7 +316,12 @@ local function mix(a: { [string]: { number } }, b: { [string]: { number } }, k: 
 	local out: { [string]: { number } } = {}
 	for name, x in a do
 		local y = b[name] or x
-		out[name] = { x[1] + (y[1] - x[1]) * k, x[2] + (y[2] - x[2]) * k, x[3] + (y[3] - x[3]) * k }
+		local v = {}
+		for c = 1, math.max(#x, #y) do
+			local xa, ya = x[c] or 0, y[c] or 0
+			v[c] = xa + (ya - xa) * k
+		end
+		out[name] = v
 	end
 	return out
 end
@@ -445,11 +456,14 @@ local function updateWalk(model: Model, st: TrackState, speed: number, armed: bo
 		for i = 0, steps do
 			local ph = i / steps * math.pi * 2
 			local sn = math.sin(ph)
+			-- Whole-body walk: legs stride, hips sway and bob, torso counter-twists.
 			local pose: { [string]: { number } } = {
 				leftHip = { cfg.legSwingDegrees * sn, 0, 0 },
 				rightHip = { -cfg.legSwingDegrees * sn, 0, 0 },
 				leftKnee = { -cfg.kneeBendDegrees * math.max(0, sn), 0, 0 },
 				rightKnee = { -cfg.kneeBendDegrees * math.max(0, -sn), 0, 0 },
+				root = { -6, sn * 5, sn * 2, 0, -math.abs(sn) * 0.35, 0 },
+				waist = { 4, -sn * 9, 0 },
 			}
 			if not armed then
 				pose.shoulder = { cfg.armSwingDegrees * sn, 0, 0 }

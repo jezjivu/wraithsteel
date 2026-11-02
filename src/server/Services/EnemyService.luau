@@ -281,7 +281,7 @@ end
 local function startAttack(b: Brain, attackId: string, now: number)
 	local sequence = { attackId }
 	local combos = b.def.combos
-	if combos and #combos > 0 and rng:NextNumber() < (b.def.comboChance or 0) then
+	if combos and #combos > 0 and rng:NextNumber() < (b.def.comboChance or 0) + EnemyConfig.ExtraComboChance then
 		sequence = combos[rng:NextInteger(1, #combos)]
 	end
 	b.c.humanoid:MoveTo(b.c.root.Position)

@@ -151,6 +151,9 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Animation: hit/heavy-hit reactions, guard recoil, deflect pose, kneel on posture break, directional dashes, per-attack enemy styles, relaxed idle for townsfolk
 - [x] Ashen Valley remade (part 11): ~2.7 km linear valley (World/ValleyBuilder + MapConfig.Route) walled by rock ridges: Torii Road tunnel, Whispering Bamboo, Lantern Graveyard, Steaming Springs, Red Maple Gorge (river + bridge + waterfall), Ashen Village, Thousand-Step Stair to a plateau, Temple of the Silent Bell, Gate of the Cracked Bell. All props raycast-placed on the finished terrain; terrain grass decoration off; test baseplate removed; 4 waystones far apart
 - [x] Bell Oni replaces the Rust Tiger (id bell_oni, migration v5): part-built oni with a bell-hammer, 3 phases, leap slams, bell-orbs (deflect back), toll rings, grab, bell cyclone, rain of bells
+- [x] Combat challenge pass (part 12): perfect deflect stops everything (perilous, projectiles - all reflect back -, waves, eruptions, lasers); enemies +35% damage, +25% posture, faster attacks, 3 attackers, more combos; Sekiro-style enemy deflects that escalate when you mash; spawns spread out + road ambushes
+- [x] Thunderbell Engine (bell_engine) replaces the Bell Oni: war-mech with rocket-pod arms, laser visor, thrusters; Laser / LaserSweep hazards; migration v6
+- [x] Full-body animation: poses can shift the whole body (crouch, lunge, recoil, kneel); every attack coils and lunges with hips/legs; NPC walk with hip sway, bob and torso twist
 - [x] Shockwave rings drawn hollow (the filled disc read as a giant cylinder)
 - [ ] Studio playtest of realms/portals/arenas; tune enemy/boss numbers
 

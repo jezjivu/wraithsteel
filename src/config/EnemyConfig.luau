@@ -84,6 +84,7 @@ EnemyConfig.PerilousKnockback = 38
 EnemyConfig.DamageMultiplier = 1.35 -- applied to every enemy hit on a player
 EnemyConfig.PostureMultiplier = 1.25
 EnemyConfig.CooldownMultiplier = 0.8 -- shorter pauses between attacks
+EnemyConfig.ExtraComboChance = 0.15 -- strings of attacks more often
 -- Sekiro-style deflects: any aware enemy that isn't mid-swing may deflect your strike. Every
 -- hit you land in a quick string makes the next deflect likelier - stop mashing, read them.
 EnemyConfig.BaseDeflect = 0.18
