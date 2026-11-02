@@ -182,8 +182,6 @@ function GuideController.Objective(): (string, string?, Vector3?)
 		return string.format(T.fightWilds, GuideConfig.LevelGoal), "Enemies", Vector3.new(first.at[1], 0, first.at[2])
 	elseif count(owned) < 2 then
 		return string.format(T.buyWeapon, FormatNumber.Commas(cheapestNewWeapon(owned))), "Weapon Smith", stationPos("WeaponSmith")
-	elseif (defeated.kagehisa or 0) == 0 then
-		return T.kagehisa, "Kagehisa", arenaPos("kagehisa")
 	end
 	local chapter = DataController.Get("chapter") or 0
 	local def = ChapterConfig.Chapters[chapter]

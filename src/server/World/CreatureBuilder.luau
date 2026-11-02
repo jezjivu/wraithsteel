@@ -270,9 +270,6 @@ local function drone(look: EnemyConfig.RigLook): Model
 	return model
 end
 
--- The Kagehisa: a samurai-armored war machine. Its forearms are rocket pods (four
--- tubes each, a steel fist below), its visor is a laser lance, two thrusters on its back.
--- Biped joints: Root, Waist, Neck, Shoulder_L/R, Elbow_L/R, Hip_L/R, Knee_L/R.
 function CreatureBuilder.Build(kind: string, look: EnemyConfig.RigLook?): Model?
 	if look == nil then
 		return nil

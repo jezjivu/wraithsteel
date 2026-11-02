@@ -16,6 +16,7 @@ export type RealmDef = {
 	origin: { number }, -- world {x, y, z}
 	half: number, -- realm half-size (studs) for "which realm am I in"
 	unlockBoss: string?, -- boss that must be defeated before the portal INTO this realm opens
+	unlockLevel: number?, -- or: level needed
 	color: { number }, -- portal / UI color
 	areas: { AreaDef },
 	spawns: { SpawnDef },
@@ -48,7 +49,7 @@ RealmConfig.Realms = {
 		order = 2,
 		origin = { -4000, 0, 0 },
 		half = 360,
-		unlockBoss = "kagehisa",
+		unlockLevel = 8, -- (no boss for now)
 		color = { 60, 230, 255 },
 		areas = {
 			{ id = "neon_square", name = "Circuit Square", subtitle = "Holograms where the stars should be", center = { 0, 0 }, radius = 50 },

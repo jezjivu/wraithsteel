@@ -150,13 +150,17 @@ SagaConfig.Quests = {
 		rewards = { ember = 300, xp = 350, jade = 10 },
 	},
 	{
-		id = "warden", title = "Warden of the Cracked Bell", realm = "japan", giver = "shirane",
+		id = "warden", title = "The Bell's Guardians", realm = "japan", giver = "shirane",
 		intro = {
-			"Far to the north, past the Thousand-Step Stair and the temple, Kagehisa waits where the great bell fell.",
-			"The bell's own swordmaster. His blade leaves crimson ink in the air - crescents that fly, lines that cut the ground.",
-			"Deflect everything. His long draw-cut glows red: dash INTO it. When his posture breaks, finish him."
+			"Four guardians hold the valley now that the bell is cracked. Two of them stand between you and the high gate.",
+			"The Crimson Oni Captain prowls the Ashen Village. Masked Kurogiri watches the temple. Break them both.",
+			"Then climb to the Gate of the Cracked Bell and see what it shows you.",
 		},
-		steps = { { kind = "Boss", bossId = "kagehisa", text = "Defeat Kagehisa at the Gate of the Cracked Bell" } },
+		steps = {
+			{ kind = "Kill", enemies = { "oni_captain" }, count = 1, text = "Defeat the Crimson Oni Captain (Ashen Village)" },
+			{ kind = "Kill", enemies = { "masked_retainer" }, count = 1, text = "Defeat Masked Retainer Kurogiri (Temple)" },
+			{ kind = "Reach", realm = "japan", at = { 0, -1050 }, radius = 50, text = "Climb to the Gate of the Cracked Bell" },
+		},
 		outro = {
 			"The first gate is open. Can you feel it? East of the plaza, the portal hums blue.",
 			"Beyond it lies a city that never stopped ringing. Find a fixer called Juno-7. Go.",

@@ -47,7 +47,7 @@ cases["Saga: reach and boss steps"] = function()
 	for _ = 1, 3 do
 		SagaLogic.Kill(s, "ashen_duelist")
 	end
-	expectEq(SagaLogic.Boss(s, "kagehisa"), false)
+	expectEq(SagaLogic.Boss(s, "hollow_abbot"), false)
 	expectEq(SagaLogic.Boss(s, "sable_crane"), true)
 end
 

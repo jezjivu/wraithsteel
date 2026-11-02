@@ -22,7 +22,7 @@ cases["Content: Prologue and Chapter 1 bosses are fully defined"] = function()
 	for chapter = 0, ChapterConfig.FinalChapter do
 		count += #ChapterConfig.Chapters[chapter].bosses
 	end
-	expectEq(count, 21, "total bosses")
+	expectEq(count, 20, "total bosses (the Prologue boss was removed for now)")
 	for chapter = 0, 1 do
 		for _, bossId in ChapterConfig.Chapters[chapter].bosses do
 			expectTrue(BossConfig.Bosses[bossId] ~= nil, "missing boss " .. bossId)

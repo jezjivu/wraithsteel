@@ -46,7 +46,7 @@ local function fire(p: BasePart, color: Color3)
 	l.Parent = p
 end
 
--- The Kagehisa's arena: a ruined bell foundry. Cover pillars to hide from rockets and
+-- Foundry layout: a ruined bell foundry. Cover pillars to hide from rockets and
 -- lasers, molten channels in the floor, steam vents, pipes on the walls, the cracked bell.
 local function foundry(m: Model, center: Vector3, R: number, accent: Color3)
 	local steel = Color3.fromRGB(70, 68, 72)
@@ -98,7 +98,7 @@ local function foundry(m: Model, center: Vector3, R: number, accent: Color3)
 	l.Parent = crack
 end
 
--- Kagehisa's arena: a moonlit courtyard. Sakura ring, stone lanterns, a broken torii, a moon.
+-- Courtyard layout: a moonlit courtyard. Sakura ring, stone lanterns, a broken torii, a moon.
 local function courtyard(m: Model, center: Vector3, R: number, accent: Color3)
 	local wood = Color3.fromRGB(60, 40, 32)
 	local pink = Color3.fromRGB(255, 180, 205)
@@ -125,7 +125,7 @@ local function courtyard(m: Model, center: Vector3, R: number, accent: Color3)
 		l.Parent = box
 		part(m, "LanternRoof", Vector3.new(3.2, 0.6, 3.2), CFrame.new(p + Vector3.new(0, 5.9, 0)), Color3.fromRGB(150, 146, 138), Enum.Material.Slate)
 	end
-	-- Broken torii behind Kagehisa.
+	-- Broken torii at the back.
 	local back = center + Vector3.new(0, 0, -R * 0.78)
 	for _, x in { -11, 11 } do
 		local h = if x < 0 then 20 else 12

@@ -196,9 +196,9 @@ cases["AIScheduler runs each agent at tick rate, capped per step"] = function()
 	expectTrue(s:Step(5) >= 1)
 end
 
-cases["Kagehisa: chase -> move -> recovery -> chase, phase 2 at 50%"] = function()
+cases["Sable Crane: chase -> move -> recovery -> chase, phase 2 at 50%"] = function()
 	local events = {}
-	local m = BossStateMachine.new("kagehisa", function()
+	local m = BossStateMachine.new("sable_crane", function()
 		return 0
 	end, function(e, ...)
 		table.insert(events, e)
@@ -208,7 +208,7 @@ cases["Kagehisa: chase -> move -> recovery -> chase, phase 2 at 50%"] = function
 	expectEq(m.state, "Chase")
 	m:Update(0.1, ctx)
 	expectEq(m.state, "Windup")
-	expectEq(m.move, "crimson_cut") -- first in-range move at distance 5 with rng 0
+	expectEq(m.move, "quick_cut") -- first in-range move at distance 5 with rng 0
 	m:Update(1, ctx)
 	expectEq(m.state, "Active")
 	m:Update(1.2, ctx)
@@ -228,21 +228,21 @@ cases["Kagehisa: chase -> move -> recovery -> chase, phase 2 at 50%"] = function
 	expectTrue(table.find(events, "Died") ~= nil)
 end
 
-cases["Kagehisa: ranged move at range, break interrupts"] = function()
-	local m = BossStateMachine.new("kagehisa", function()
+cases["Sable Crane: ranged move at range, break interrupts"] = function()
+	local m = BossStateMachine.new("sable_crane", function()
 		return 0
 	end, function() end)
 	m:Update(0, { hasTarget = true, targetDistance = 20, hpFraction = 1 })
 	m:Update(0.1, { hasTarget = true, targetDistance = 20, hpFraction = 1 })
-	expectEq(m.move, "moonfall_draw") -- melee is out of reach at 20 studs; the long draw-cut is not
+	expectEq(m.move, "gate_thrust") -- melee is out of reach at 20 studs; the long thrust is not
 	m:Break(0.2)
 	expectEq(m.state, "Broken")
 	expectEq(m.move, nil)
-	m:Update(0.3 + BossConfig.Bosses.kagehisa.postureBrokenSeconds, { hasTarget = true, targetDistance = 20, hpFraction = 1 })
+	m:Update(0.3 + BossConfig.Bosses.sable_crane.postureBrokenSeconds, { hasTarget = true, targetDistance = 20, hpFraction = 1 })
 	expectEq(m.state, "Chase")
-	local def = BossConfig.Bosses.kagehisa
-	expectEq(BossStateMachine.ScaledHealth("kagehisa", 1), def.maxHealth)
-	expectEq(BossStateMachine.ScaledHealth("kagehisa", 4), math.floor(def.maxHealth * (1 + 3 * def.healthPerExtraPlayer) + 0.5))
+	local def = BossConfig.Bosses.sable_crane
+	expectEq(BossStateMachine.ScaledHealth("sable_crane", 1), def.maxHealth)
+	expectEq(BossStateMachine.ScaledHealth("sable_crane", 4), math.floor(def.maxHealth * (1 + 3 * def.healthPerExtraPlayer) + 0.5))
 end
 
 cases["Combat routes: air attack once per jump, dash strike, combo finisher"] = function()

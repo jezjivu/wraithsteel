@@ -147,11 +147,14 @@ function RealmService.CanEnter(player: Player, realmId: string): (boolean, strin
 	if r == nil then
 		return false, "Unknown realm"
 	end
+	local data = DataService.GetData(player)
+	if r.unlockLevel and (data == nil or data.level < r.unlockLevel) then
+		return false, "Sealed. Reach level " .. r.unlockLevel .. " to open this gate."
+	end
 	local need = r.unlockBoss
 	if need == nil then
 		return true, nil
 	end
-	local data = DataService.GetData(player)
 	if data and (data.bossesDefeated[need] or 0) > 0 then
 		return true, nil
 	end

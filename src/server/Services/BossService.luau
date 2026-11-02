@@ -4,7 +4,7 @@
 -- (PartyService will supply parties in Phase 3). Bosses ignore attack tokens.
 --
 -- Studio setup (TODO(Studio/Agent D + C)):
---   Workspace.BossArenas/<Part> with attribute BossId = "kagehisa"; BossService adds a
+--   Workspace.BossArenas/<Part> with attribute BossId = "sable_crane"; BossService adds a
 --   ProximityPrompt "Challenge" to it. Boss rig: ServerStorage.Bosses/<bossId> (placeholder block
 --   otherwise). Animations: BossConfig move animationId (all placeholders today).
 --
@@ -513,9 +513,6 @@ local function finish(e: Encounter, victory: boolean)
 					firstClear = first,
 				})
 				QuestService.Increment(p, "Boss:" .. e.bossId, 1)
-				if e.bossId == "kagehisa" then
-					AnalyticsService.Onboarding(p, "KagehisaDefeated")
-				end
 			end
 		end
 		BossService.BossDefeated:Fire(e.bossId, e.participants, firstClears)

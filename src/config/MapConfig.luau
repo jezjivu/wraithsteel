@@ -96,7 +96,6 @@ MapConfig.EnemySpawns = {
 MapConfig.BossArenas = {
 	{ name = "SableCraneArena", bossId = "sable_crane", at = { 70, -1440 } },
 	{ name = "HollowAbbotArena", bossId = "hollow_abbot", at = { -330, -2030 } },
-	{ name = "KagehisaArena", bossId = "kagehisa", at = { 0, -2470 } },
 }
 
 -- World boss spawn (open-world encounter in the gorge clearing).

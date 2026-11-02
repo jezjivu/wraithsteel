@@ -15,7 +15,7 @@ export type ChapterDef = {
 local ChapterConfig = {}
 
 ChapterConfig.Chapters = {
-	[0] = { name = "Prologue: The Cracked Bell", zone = "Zone_Prologue", recommendedPower = 20, stages = 3, bosses = { "kagehisa" }, unlockLantern = "paper_lantern" },
+	[0] = { name = "Prologue: The Cracked Bell", zone = "Zone_Prologue", recommendedPower = 20, stages = 3, bosses = {}, unlockLantern = "paper_lantern" },
 	[1] = { name = "Chapter 1: Rustwood Pass", zone = "Zone_Rustwood", recommendedPower = 200, stages = 5, bosses = { "hollow_abbot", "twin_cinder_sisters", "rustwood_matriarch", "gatekeeper_of_rust" }, unlockLantern = "rustwood_lantern" },
 	[2] = { name = "Chapter 2: The Drowned Market", zone = "Zone_DrownedMarket", recommendedPower = 900, stages = 5, bosses = { "tidewidow", "lantern_magistrate", "eel_of_debts", "gatekeeper_of_tides" } },
 	[3] = { name = "Chapter 3: Ashfall Monastery", zone = "Zone_Ashfall", recommendedPower = 3000, stages = 5, bosses = { "ash_monk_duo", "bellless_novice", "cinder_ox", "gatekeeper_of_ash" } },

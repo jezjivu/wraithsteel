@@ -47,7 +47,6 @@ RewardConfig.Quests = {
 	d_lanterns = { name = "Light the Way", stat = "LanternsOpened", goal = 5, reward = { ember = 150 }, daily = true },
 	d_posture_breaks = { name = "Break Their Stance", stat = "PostureBreaks", goal = 8, reward = { ember = 220 }, daily = true },
 	d_fusions = { name = "Twin Flames", stat = "Fusions", goal = 1, reward = { ember = 180, jade = 2 }, daily = true },
-	s_prologue_kagehisa = { name = "Silence Kagehisa", stat = "Boss:kagehisa", goal = 1, reward = { ember = 500, xp = 300 }, daily = false, chapter = 0 },
 	s_first_lantern = { name = "A Spirit Answers", stat = "LanternsOpened", goal = 1, reward = { ember = 60 }, daily = false, chapter = 0 },
 } :: { [string]: QuestDef }
 
