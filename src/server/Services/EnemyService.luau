@@ -220,6 +220,7 @@ local function strike(b: Brain, attackId: string, token: number)
 		perilousKind = a.perilousKind,
 		style = a.style,
 		hazard = if a.kind and a.kind ~= "Melee" then a.kind else nil,
+		pose = a.pose,
 		windup = a.windup,
 		active = a.active,
 		recovery = a.recovery,
@@ -236,7 +237,17 @@ local function strike(b: Brain, attackId: string, token: number)
 			local from = root.Position + root.CFrame.LookVector * 2 + Vector3.new(0, 1.5, 0)
 			local aim = if b.target then b.target.root.Position else from + root.CFrame.LookVector * 30
 			local color = a.color or { 255, 120, 80 }
-			if kind == "Wave" then
+			if kind == "Rain" then
+				local points = {}
+				local center = if b.target then b.target.root.Position else root.Position
+				for i = 1, (a.count or 4) do
+					local off = if i == 1 then Vector3.zero else Vector3.new(rng:NextNumber(-10, 10), 0, rng:NextNumber(-10, 10))
+					table.insert(points, center + off - Vector3.new(0, 2.5, 0))
+				end
+				HazardService.Rain(b.c, points, {
+					radius = a.radius or 6, delay = a.delay or 1, damage = a.damage, posture = a.postureDamage, color = color, moveId = attackId,
+				})
+			elseif kind == "Wave" then
 				HazardService.Wave(b.c, root.Position - Vector3.new(0, b.c.humanoid.HipHeight + root.Size.Y / 2 - 0.5, 0), {
 					speed = a.speed or 30, maxRadius = a.range, band = 3, damage = a.damage, posture = a.postureDamage, color = color, moveId = attackId,
 				})
@@ -404,6 +415,28 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None -- client draws its own bars
 	-- With instance streaming, send the whole rig at once (animations need every joint).
 	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
+	if def.elite then
+		-- Super enemy: golden aura + glow so it reads from afar.
+		model:SetAttribute("Elite", true)
+		local e = Instance.new("ParticleEmitter")
+		e.Name = "EliteAura"
+		e.Texture = "rbxasset://textures/particles/fire_main.dds"
+		e.Color = ColorSequence.new(Color3.fromRGB(255, 200, 80), Color3.fromRGB(255, 80, 40))
+		e.LightEmission = 1
+		e.Size = NumberSequence.new(1.6, 0)
+		e.Transparency = NumberSequence.new(0.4, 1)
+		e.Lifetime = NumberRange.new(0.6, 1)
+		e.Rate = 30
+		e.Speed = NumberRange.new(1, 3)
+		e.SpreadAngle = Vector2.new(180, 180)
+		e.Acceleration = Vector3.new(0, 5, 0)
+		e.Parent = root
+		local l = Instance.new("PointLight")
+		l.Color = Color3.fromRGB(255, 180, 80)
+		l.Range = 20
+		l.Brightness = 1.5
+		l.Parent = root
+	end
 	model.Parent = workspace
 	root:SetNetworkOwner(nil)
 

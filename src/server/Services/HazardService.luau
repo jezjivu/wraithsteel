@@ -56,6 +56,35 @@ type Projectile = {
 }
 
 local BODY_RADIUS = 2.5
+
+-- World geometry between two points (cover: pillars and walls stop rockets and lasers).
+local function blockedBy(from: Vector3, to: Vector3, owner: Combatant): Vector3?
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ignore: { Instance } = { owner.model }
+	for _, p in Players:GetPlayers() do
+		if p.Character then
+			table.insert(ignore, p.Character)
+		end
+	end
+	for _, name in { "SpiritFollowers", "Npcs" } do
+		local f = workspace:FindFirstChild(name)
+		if f then
+			table.insert(ignore, f)
+		end
+	end
+	params.FilterDescendantsInstances = ignore
+	params.IgnoreWater = true
+	local dir = to - from
+	if dir.Magnitude < 0.05 then
+		return nil
+	end
+	local hit = workspace:Raycast(from, dir, params)
+	if hit and hit.Instance and hit.Instance.CanCollide then
+		return hit.Position
+	end
+	return nil
+end
 local projectiles: { [number]: Projectile } = {}
 local nextId = 0
 
@@ -130,6 +159,12 @@ local function stepProjectiles(dt: number)
 			elseif p.travelled > p.spec.range * 2 then
 				endProjectile(p, p.pos, "Fizzle")
 			end
+			continue
+		end
+		-- Cover: a wall or pillar in the way stops it.
+		local wall = blockedBy(from, p.pos, p.owner)
+		if wall then
+			endProjectile(p, wall, "Impact")
 			continue
 		end
 		-- Hit the first player along the segment.
@@ -241,7 +276,8 @@ function HazardService.Laser(owner: Combatant, from: Vector3, dir: Vector3, spec
 				local rel = pc.root.Position - from
 				local along = rel.X * unit.X + rel.Z * unit.Z
 				local perp = math.abs(rel.X * unit.Z - rel.Z * unit.X)
-				if along > -2 and along < spec.length and perp <= spec.width / 2 + BODY_RADIUS and math.abs(rel.Y) < 14 then
+				if along > -2 and along < spec.length and perp <= spec.width / 2 + BODY_RADIUS and math.abs(rel.Y) < 14
+					and blockedBy(from, pc.root.Position, owner) == nil then
 					CombatService.ApplyHit(owner, pc, {
 						damage = spec.damage,
 						postureDamage = spec.posture,

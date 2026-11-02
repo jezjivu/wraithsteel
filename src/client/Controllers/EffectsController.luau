@@ -151,9 +151,10 @@ local function attachBars(model: Model)
 		return
 	end
 	local cfg = EffectsConfig.Bars
+	local elite = model:GetAttribute("Elite") == true
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "CombatBars"
-	gui.Size = UDim2.fromOffset(cfg.width, 34)
+	gui.Size = UDim2.fromOffset(if elite then cfg.width * 1.6 else cfg.width, 34)
 	gui.StudsOffset = Vector3.new(0, cfg.offsetY, 0)
 	gui.MaxDistance = cfg.maxDistance
 	gui.AlwaysOnTop = true
@@ -163,9 +164,13 @@ local function attachBars(model: Model)
 	name.BackgroundTransparency = 1
 	name.Font = Enum.Font.GothamBold
 	name.TextSize = 13
-	name.TextColor3 = Color3.fromRGB(240, 230, 215)
+	name.TextColor3 = if elite then Color3.fromRGB(255, 205, 90) else Color3.fromRGB(240, 230, 215)
 	name.TextStrokeTransparency = 0.3
-	name.Text = model.Name
+	name.Text = if elite then "★ " .. model.Name .. " ★" else model.Name
+	if elite then
+		gui.StudsOffset = Vector3.new(0, cfg.offsetY + 2.5, 0)
+		gui.MaxDistance = cfg.maxDistance * 1.5
+	end
 	name.Parent = gui
 	local function bar(y: number, color: { number }): Frame
 		local back = Instance.new("Frame")

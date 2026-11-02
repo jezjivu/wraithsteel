@@ -154,6 +154,9 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Combat challenge pass (part 12): perfect deflect stops everything (perilous, projectiles - all reflect back -, waves, eruptions, lasers); enemies +35% damage, +25% posture, faster attacks, 3 attackers, more combos; Sekiro-style enemy deflects that escalate when you mash; spawns spread out + road ambushes
 - [x] Thunderbell Engine (bell_engine) replaces the Bell Oni: war-mech with rocket-pod arms, laser visor, thrusters; Laser / LaserSweep hazards; migration v6
 - [x] Full-body animation: poses can shift the whole body (crouch, lunge, recoil, kneel); every attack coils and lunges with hips/legs; NPC walk with hip sway, bob and torso twist
+- [x] Part 13: Thunderbell Engine gets its own Foundry arena (cover pillars, molten channels, vents, pipes, the cracked bell); cover blocks rockets/lasers/projectiles; 6 new Valley enemies (Rust Hound, Kite Archer, Ash Monk, Shadow Shinobi, Lantern Wisp, Spear Ronin) + 4 elite super enemies (Gravelord Ishiki, Gorge Matriarch, Crimson Oni Captain, Masked Retainer Kurogiri) with gold names/auras; enemy Rain attacks + creature poses
+- [x] Store: Robux levels / Ember / bundle, DoubleXP / ExtraFlask / VIP passes, intended prices; Studio-only free simulated test purchases (same receipt path)
+- [ ] Create the real passes/products on the Creator Dashboard and fill the ids (MonetizationConfig)
 - [x] Shockwave rings drawn hollow (the filled disc read as a giant cylinder)
 - [ ] Studio playtest of realms/portals/arenas; tune enemy/boss numbers
 

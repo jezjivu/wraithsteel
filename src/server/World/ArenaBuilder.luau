@@ -46,7 +46,59 @@ local function fire(p: BasePart, color: Color3)
 	l.Parent = p
 end
 
-function ArenaBuilder.Build(center: Vector3, theme: { floor: { number }, wall: { number }, accent: { number } }): Model
+-- The Thunderbell Engine's arena: a ruined bell foundry. Cover pillars to hide from rockets and
+-- lasers, molten channels in the floor, steam vents, pipes on the walls, the cracked bell.
+local function foundry(m: Model, center: Vector3, R: number, accent: Color3)
+	local steel = Color3.fromRGB(70, 68, 72)
+	-- Cover: eight thick pillars (half of them broken short) in a ring.
+	for i = 0, 7 do
+		local a = i / 8 * math.pi * 2 + math.pi / 8
+		local p = center + Vector3.new(math.cos(a) * R * 0.55, 0, math.sin(a) * R * 0.55)
+		local h = if i % 2 == 0 then 22 else 9
+		part(m, "CoverPillar", Vector3.new(6, h, 6), CFrame.new(p + Vector3.new(0, h / 2, 0)) * CFrame.Angles(0, a, 0), steel, Enum.Material.CorrodedMetal)
+		part(m, "PillarBand", Vector3.new(6.4, 0.8, 6.4), CFrame.new(p + Vector3.new(0, h - 1.5, 0)) * CFrame.Angles(0, a, 0), accent, Enum.Material.Neon).CanCollide = false
+	end
+	-- Molten channels crossing the floor (just glowing; safe to walk on).
+	for i = 0, 2 do
+		local cf = CFrame.new(center + Vector3.new(0, 0.12, 0)) * CFrame.Angles(0, math.rad(60 * i + 15), 0)
+		local lava = part(m, "MoltenChannel", Vector3.new(2.4, 0.1, R * 1.7), cf, Color3.fromRGB(255, 110, 30), Enum.Material.Neon)
+		lava.CanCollide = false
+		lava.Transparency = 0.1
+	end
+	-- Steam vents.
+	for i = 0, 5 do
+		local a = i / 6 * math.pi * 2
+		local p = center + Vector3.new(math.cos(a) * R * 0.82, 0.3, math.sin(a) * R * 0.82)
+		local grate = part(m, "Vent", Vector3.new(5, 0.4, 5), CFrame.new(p), Color3.fromRGB(40, 40, 44), Enum.Material.DiamondPlate)
+		local e = Instance.new("ParticleEmitter")
+		e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+		e.Color = ColorSequence.new(Color3.fromRGB(230, 230, 230))
+		e.Transparency = NumberSequence.new(0.6, 1)
+		e.Size = NumberSequence.new(2, 7)
+		e.Lifetime = NumberRange.new(2, 3.5)
+		e.Rate = 8
+		e.Speed = NumberRange.new(6, 10)
+		e.EmissionDirection = Enum.NormalId.Top
+		e.Parent = grate
+	end
+	-- Pipes along the wall and the giant cracked bell behind the boss.
+	for i = 0, 11 do
+		local a = i / 12 * math.pi * 2
+		local p = center + Vector3.new(math.cos(a) * (R + 1.5), 14, math.sin(a) * (R + 1.5))
+		part(m, "Pipe", Vector3.new(20, 2.2, 2.2), CFrame.lookAt(p, center + Vector3.new(0, 14, 0)) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(110, 80, 50), Enum.Material.CorrodedMetal, Enum.PartType.Cylinder)
+	end
+	local bellPos = center + Vector3.new(0, 0, -R * 0.82)
+	local bell = part(m, "CrackedBell", Vector3.new(20, 18, 18), CFrame.new(bellPos + Vector3.new(0, 10, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(130, 95, 50), Enum.Material.CorrodedMetal, Enum.PartType.Cylinder)
+	local crack = part(m, "BellCrack", Vector3.new(0.5, 18, 1), bell.CFrame * CFrame.new(0, 0, 8.8), accent, Enum.Material.Neon)
+	crack.CanCollide = false
+	local l = Instance.new("PointLight")
+	l.Color = accent
+	l.Range = 50
+	l.Brightness = 2
+	l.Parent = crack
+end
+
+function ArenaBuilder.Build(center: Vector3, theme: { floor: { number }, wall: { number }, accent: { number }, layout: string? }): Model
 	local m = Instance.new("Model")
 	m.Name = "BossArena"
 	local R = ArenaConfig.Radius
@@ -122,6 +174,9 @@ function ArenaBuilder.Build(center: Vector3, theme: { floor: { number }, wall: {
 	sky.CanQuery = false
 	e.Shape = Enum.ParticleEmitterShape.Box
 	e.Parent = sky
+	if theme.layout == "Foundry" then
+		foundry(m, center, R, accent)
+	end
 	m:SetAttribute("Radius", R)
 	return m
 end
