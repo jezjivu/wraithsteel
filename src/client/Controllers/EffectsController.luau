@@ -575,6 +575,17 @@ function EffectsController.Start()
 					Fx.Shockwave(part.Position - Vector3.new(0, 2.6, 0), c, 12, 0.5)
 				end
 			end
+		elseif e.kind == "Rest" then
+			local model = EffectsController.ModelFor(e.targetId)
+			local part = model and anchorPart(model)
+			if part then
+				local c = Color3.fromRGB(120, 220, 255)
+				Fx.Pillar(part.Position - Vector3.new(0, 2.5, 0), c, 18)
+				Fx.Shockwave(part.Position - Vector3.new(0, 2.6, 0), c, 8, 0.5)
+				if isLocal(model) then
+					Fx.ScreenFlash(c, 0.8, 0.3)
+				end
+			end
 		elseif e.kind == "Heal" then
 			local model = EffectsController.ModelFor(e.targetId)
 			local part = model and anchorPart(model)

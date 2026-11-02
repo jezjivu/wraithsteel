@@ -30,6 +30,15 @@ Migrations.Steps = {
 			data.spellLoadout = table.clone(SpellConfig.DefaultLoadout)
 		end
 	end,
+	-- v3 -> v4: waystones (rest / respawn / fast travel).
+	[4] = function(data: { [string]: any })
+		if type(data.waystones) ~= "table" then
+			data.waystones = { hub = true }
+		end
+		if type(data.respawnWaystone) ~= "string" then
+			data.respawnWaystone = "hub"
+		end
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server

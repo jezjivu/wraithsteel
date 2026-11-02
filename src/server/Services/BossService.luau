@@ -190,7 +190,8 @@ local function releaseSlot(i: number)
 	end
 end
 
-local function teleport(player: Player, cf: CFrame)
+local function teleport(player: Player, cf: CFrame, inArena: boolean?)
+	player:SetAttribute("InArena", inArena == true)
 	pcall(function()
 		player:RequestStreamAroundAsync(cf.Position, 5)
 	end)
@@ -672,7 +673,7 @@ local function setupArena(arena: BasePart)
 			for i, p in participants do
 				local x = (i - (#participants + 1) / 2) * 5
 				local pos = arenaCenter + Vector3.new(x, 4, R * 0.55)
-				task.spawn(teleport, p, CFrame.lookAt(pos, arenaCenter + Vector3.new(0, 4, 0)))
+				task.spawn(teleport, p, CFrame.lookAt(pos, arenaCenter + Vector3.new(0, 4, 0)), true)
 			end
 			task.wait(1.2)
 			local bossPos = arenaCenter + Vector3.new(0, 0, -R * 0.45)

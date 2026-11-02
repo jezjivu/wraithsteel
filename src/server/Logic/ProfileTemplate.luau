@@ -29,6 +29,8 @@ function ProfileTemplate.New(): Types.ProfileData
 		equippedWeapon = EconomyConfig.StartingWeapon,
 		fightingStyle = "river",
 		spellLoadout = table.clone(SpellConfig.DefaultLoadout),
+		waystones = { hub = true },
+		respawnWaystone = "hub",
 
 		spirits = {},
 		equippedSpirits = {},

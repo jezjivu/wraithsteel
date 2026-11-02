@@ -223,6 +223,26 @@ function CombatService.Heal(c: Combatant, amount: number)
 	end
 end
 
+-- Seconds since this player last took damage (math.huge if never).
+function CombatService.SinceHurt(c: Combatant): number
+	local t = lastHurtAt[c]
+	return if t then os.clock() - t else math.huge
+end
+
+-- Resting at a waystone: full heal, Spring Flask + Second Breath refilled.
+function CombatService.Rest(c: Combatant)
+	if c.dead then
+		return
+	end
+	CombatService.Heal(c, c.humanoid.MaxHealth)
+	c.flask = CombatConfig.Flask.charges
+	c.model:SetAttribute("Flask", c.flask)
+	c.breath = true
+	c.model:SetAttribute("Breath", true)
+	c.posture.value = 0
+	c.model:SetAttribute("Posture", 0)
+end
+
 function CombatService.AddShield(c: Combatant, amount: number, seconds: number)
 	if c.dead or amount <= 0 then
 		return

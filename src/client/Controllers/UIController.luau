@@ -35,6 +35,7 @@ local STATION_PANELS = {
 	Store = "Store",
 	CodeStone = "Codes",
 	Dojo = "Styles",
+	Waystone = "Travel",
 }
 
 -- Menu bar (available anywhere). Buying weapons / opening lanterns still needs the hub station.
@@ -44,6 +45,7 @@ local MENU = {
 	{ panel = "Arts", label = "Arts" },
 	{ panel = "Styles", label = "Styles" },
 	{ panel = "Quests", label = "Quests" },
+	{ panel = "Travel", label = "Travel" },
 	{ panel = "Expeditions", label = "Expeditions" },
 	{ panel = "Store", label = "Store" },
 	{ panel = "Party", label = "Party" },
