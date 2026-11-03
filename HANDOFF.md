@@ -146,3 +146,11 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
 - Sentries: EnemySpawns entries with `lookout = n` stand on that lookout platform (`Sentry` spawn
   attribute; EnemyService never walks them).
 - Day/night: LightingConfig.DayNight, client-only, from workspace:GetServerTimeNow().
+
+## Part 17
+- Elites have `lives = 2` (EnemyConfig): CombatService.ApplyHit turns the first lethal blow into a
+  "LifeLost" event (full heal, posture reset, short invulnerability). Model attribute `Lives`.
+- Enemy alerts: spotting a player fires CombatEvent "Alert" and makes unaware allies within
+  EnemyConfig.Alert.radius aware for a few seconds.
+- Secrets: waterfall cave (MapConfig.WaterfallCave, relic with `absY`), rooftop hooks on intact
+  village houses. Map panel (M) draws MapConfig; K opens Skills.
