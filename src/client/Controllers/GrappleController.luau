@@ -1,6 +1,6 @@
 --!strict
 -- GrappleController: the grappling hook. Aim near a glowing hook point (CollectionService tag
--- "GrapplePoint": lookout towers, gate towers) and press V / R3: a chain shoots out and pulls
+-- "GrapplePoint": lookout towers, gate towers) and press V: a chain shoots out and pulls
 -- you up onto the platform. Movement is client-owned, so this is purely local.
 
 local CollectionService = game:GetService("CollectionService")

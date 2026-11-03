@@ -19,7 +19,7 @@ InputConfig.Bindings = {
 	Flask = { inputs = { Enum.KeyCode.Q, Enum.KeyCode.ButtonSelect }, touchButton = true, title = "Flask" },
 	SpiritCall = { inputs = { Enum.KeyCode.T, Enum.KeyCode.DPadUp }, touchButton = true, title = "Burst" },
 	-- Grappling hook (MovementController / GrappleController; not a combat action).
-	Grapple = { inputs = { Enum.KeyCode.V, Enum.KeyCode.ButtonR3 }, touchButton = true, title = "Hook" },
+	Grapple = { inputs = { Enum.KeyCode.V }, touchButton = true, title = "Hook" }, -- gamepad: every button is taken; touch gets a button
 	-- Qi arts (SpellController handles these; CombatController ignores them).
 	Spell1 = { inputs = { Enum.KeyCode.Z, Enum.KeyCode.DPadLeft }, touchButton = true, title = "Art 1" },
 	Spell2 = { inputs = { Enum.KeyCode.X, Enum.KeyCode.DPadRight }, touchButton = true, title = "Art 2" },
