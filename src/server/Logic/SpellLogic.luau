@@ -3,14 +3,15 @@
 --   SpellLogic.NewState(qi) -> State
 --   SpellLogic.Regen(state, dt, regenBonus)
 --   SpellLogic.AddQi(state, amount)
---   SpellLogic.CanCast(state, loadout, level, spellId, now) -> (ok, reason?)
+--   SpellLogic.CanCast(state, loadout, level, spellId, now, skills?) -> (ok, reason?)
 --   SpellLogic.Commit(state, spellId, now, haste) -> cooldownSeconds
---   SpellLogic.SetLoadout(loadout, slot, spellId, level) -> (ok, reason?)
+--   SpellLogic.SetLoadout(loadout, slot, spellId, level, skills?) -> (ok, reason?)
 --   SpellLogic.InCorridor(ox, oz, dx, dz, length, width, px, pz) -> boolean
 --   SpellLogic.ClampPoint(ox, oz, px, pz, range) -> (x, z)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SpellConfig = require(ReplicatedStorage:WaitForChild("Config"):WaitForChild("SpellConfig"))
+local SkillLogic = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SkillLogic"))
 
 local SpellLogic = {}
 
@@ -37,7 +38,7 @@ local function inLoadout(loadout: { string }, spellId: string): boolean
 	return false
 end
 
-function SpellLogic.CanCast(state: State, loadout: { string }, level: number, spellId: string, now: number): (boolean, string?)
+function SpellLogic.CanCast(state: State, loadout: { string }, level: number, spellId: string, now: number, skills: { [string]: number }?): (boolean, string?)
 	local spell = SpellConfig.Spells[spellId]
 	if spell == nil then
 		return false, "Unknown art"
@@ -47,6 +48,9 @@ function SpellLogic.CanCast(state: State, loadout: { string }, level: number, sp
 	end
 	if level < spell.unlockLevel then
 		return false, "Unlocks at level " .. spell.unlockLevel
+	end
+	if not SkillLogic.HasArt(skills, spellId) then
+		return false, "Learn it in the skill tree"
 	end
 	if now < (state.readyAt[spellId] or 0) then
 		return false, "Cooling down"
@@ -66,7 +70,7 @@ function SpellLogic.Commit(state: State, spellId: string, now: number, haste: nu
 end
 
 -- slot 1..Slots; spellId "" empties the slot. A spell already in another slot moves.
-function SpellLogic.SetLoadout(loadout: { string }, slot: number, spellId: string, level: number): (boolean, string?)
+function SpellLogic.SetLoadout(loadout: { string }, slot: number, spellId: string, level: number, skills: { [string]: number }?): (boolean, string?)
 	if slot ~= math.floor(slot) or slot < 1 or slot > SpellConfig.Slots then
 		return false, "Bad slot"
 	end
@@ -77,6 +81,9 @@ function SpellLogic.SetLoadout(loadout: { string }, slot: number, spellId: strin
 		end
 		if level < spell.unlockLevel then
 			return false, "Unlocks at level " .. spell.unlockLevel
+		end
+		if not SkillLogic.HasArt(skills, spellId) then
+			return false, "Learn it in the skill tree"
 		end
 		for i = 1, SpellConfig.Slots do
 			if loadout[i] == spellId then

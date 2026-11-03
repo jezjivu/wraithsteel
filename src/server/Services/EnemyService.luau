@@ -143,13 +143,16 @@ local function nearestPlayer(b: Brain): (Combatant?, number)
 			local d = offset.Magnitude
 			-- Stealth: an unaware enemy only notices you in front of it, up close, or when hurt.
 			-- Once it has a target it keeps tracking all around.
-			local noticed = b.target ~= nil or not b.c.unaware or d <= EnemyConfig.Stealth.closeRange
+			local aware = b.target ~= nil or not b.c.unaware
+			-- Silent Step (skill tree): unaware enemies judge you farther away than you are.
+			local sense = if aware then d else d * (1 + (CombatService.PlayerStats(player).Stealth or 0))
+			local noticed = aware or sense <= EnemyConfig.Stealth.closeRange
 			if not noticed and d > 0.1 then
 				local look = b.c.root.CFrame.LookVector
 				local flat = Vector3.new(offset.X, 0, offset.Z)
 				noticed = flat.Magnitude > 0.1 and flat.Unit:Dot(Vector3.new(look.X, 0, look.Z).Unit) >= math.cos(math.rad(EnemyConfig.Stealth.viewDegrees / 2))
 			end
-			if noticed and d < bestDist and d <= b.def.aggroRange and (pc.root.Position - b.home).Magnitude <= b.def.leashRange then
+			if noticed and d < bestDist and sense <= b.def.aggroRange and (pc.root.Position - b.home).Magnitude <= b.def.leashRange then
 				best, bestDist = pc, d
 			end
 		end

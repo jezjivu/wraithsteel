@@ -338,7 +338,10 @@ local function onSpell(e: { [string]: any })
 			SpellFx.BlinkTrail(origin, point, color)
 		end
 	elseif spell.kind == "SlashWave" then
-		SpellFx.CrescentWave(origin, dir, spell.range or 60, spell.speed or 120, color)
+		SpellFx.CrescentWave(origin, dir, spell.range or 60, spell.speed or 120, color, (spell.width or 5) / 5)
+		if (spell.width or 5) > 8 then
+			Fx.CameraPunch(10)
+		end
 	elseif spell.kind == "Fissure" then
 		SpellFx.Fissure(origin, dir, spell.range or 40, color, spell.delay or 0.25)
 	elseif spell.kind == "Rising" then
@@ -358,6 +361,38 @@ local function onSpell(e: { [string]: any })
 						SpellFx.SlashArc(CFrame.new(r.Position) * CFrame.Angles(0, k * 1.3, math.rad(85)), color, (spell.radius or 12) * 1.5, 0.2)
 					end
 				end)
+			end
+		end
+	elseif spell.kind == "Chain" then
+		-- Hop from target to target: trail + slash at each one.
+		local points: { Vector3 } = {}
+		if type(e.points) == "table" then
+			for _, p in e.points do
+				if typeof(p) == "Vector3" then
+					table.insert(points, p)
+				end
+			end
+		end
+		local interval = spell.interval or 0.16
+		local last = origin
+		for i, p in points do
+			local from = last
+			task.delay((i - 1) * interval, function()
+				local flat = Vector3.new(p.X - from.X, 0, p.Z - from.Z)
+				local stop = if flat.Magnitude > 4 then p - flat.Unit * 3 else p
+				SpellFx.BlinkTrail(from, stop, color)
+				SpellFx.SlashArc(CFrame.lookAt(p, p + (if flat.Magnitude > 0.1 then flat.Unit else dir)) * CFrame.Angles(0, 0, math.rad(40 + 70 * i)), color, 9, 0.25)
+				if mine then
+					MovementController.ArcTo(stop, interval * 0.7, 1.5)
+					Fx.CameraPunch(5)
+				end
+			end)
+			last = p
+		end
+		if mine then
+			local ch = localPlayer.Character
+			if ch then
+				AnimationController.Play(ch, "LightAttack", nil, { windup = 0.05, active = #points * interval, recovery = 0.2 }, "Dash")
 			end
 		end
 	elseif spell.kind == "SkyFall" then

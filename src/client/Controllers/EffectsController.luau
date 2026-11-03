@@ -713,6 +713,9 @@ function EffectsController.Start()
 				Fx.Pillar(root.Position - Vector3.new(0, 2.5, 0), rgb(EffectsConfig.LevelUp.color), 40)
 				Fx.ScreenFlash(rgb(EffectsConfig.LevelUp.color), 0.2, 0.5)
 			end
+			local SkillLogic = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("SkillLogic")) :: any
+			local gained = SkillLogic.PointsEarned(value) - SkillLogic.PointsEarned(lastLevel)
+			Fx.CenterText(string.format("LEVEL %d  ·  +%d SKILL POINT%s", value, gained, if gained == 1 then "" else "S"), rgb(EffectsConfig.LevelUp.color), 30, 1.6)
 		end
 		if key == "level" then
 			lastLevel = value

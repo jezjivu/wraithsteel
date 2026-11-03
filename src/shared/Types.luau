@@ -71,6 +71,7 @@ export type ProfileData = {
 	waystones: { [string]: boolean }, -- attuned waystones (fast travel); added in dataVersion 4
 	respawnWaystone: string, -- where you respawn (last waystone you rested at)
 	saga: { quest: number, step: number, progress: number, started: boolean }, -- main questline (SagaLogic)
+	skills: { [string]: number }, -- skill tree: skillId -> rank (SkillConfig); added in dataVersion 8
 
 	-- Spirits
 	spirits: { [string]: SpiritInstance }, -- uid -> instance

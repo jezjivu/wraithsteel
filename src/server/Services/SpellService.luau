@@ -92,7 +92,8 @@ end
 local function hitAll(player: Player, caster: Combatant, spellId: string, victims: { Combatant }, mult: number?)
 	local spell = SpellConfig.Spells[spellId]
 	local power = ProgressionService.GetPower(player)
-	local attack = 1 + (CombatService.PlayerStats(player).Attack or 0)
+	local stats = CombatService.PlayerStats(player)
+	local attack = (1 + (stats.Attack or 0)) * (1 + (stats.ArtPower or 0))
 	for _, v in victims do
 		local critMult, crit = CombatService.RollCrit(player)
 		CombatService.ApplyHit(caster, v, {
@@ -121,7 +122,7 @@ local function onCast(player: Player, spellId: string, aim: Vector3?, point: Vec
 		return
 	end
 	local st = stateFor(player, c)
-	local ok, reason = SpellLogic.CanCast(st, data.spellLoadout, data.level, spellId, now)
+	local ok, reason = SpellLogic.CanCast(st, data.spellLoadout, data.level, spellId, now, data.skills)
 	if not ok then
 		Net.Server.Fire("CombatEvent", player, { kind = "SpellRejected", spell = spellId, reason = reason })
 		return
@@ -209,6 +210,41 @@ local function onCast(player: Player, spellId: string, aim: Vector3?, point: Vec
 				task.wait(spell.interval or 0.3)
 			end
 		end)
+	elseif spell.kind == "Chain" then
+		-- Pick up to `count` enemies near you (nearest first, each hop from the last one) and cut
+		-- them one after another; the caster's client blinks along the same points.
+		iframes(spell.iframes)
+		local pool = inRadius(origin, range)
+		local order: { Combatant } = {}
+		local from = origin
+		while #order < (spell.count or 5) and #pool > 0 do
+			local bi, bd = 1, math.huge
+			for i, v in pool do
+				local d = (v.root.Position - from).Magnitude
+				if d < bd then
+					bi, bd = i, d
+				end
+			end
+			local v = table.remove(pool, bi) :: Combatant
+			table.insert(order, v)
+			from = v.root.Position
+		end
+		local points = {}
+		for _, v in order do
+			table.insert(points, v.root.Position)
+		end
+		if #points == 0 then
+			table.insert(points, origin + dir * math.min(range, 20))
+		end
+		event.points = points
+		Net.Server.FireAll("CombatEvent", event)
+		for i, v in order do
+			task.delay(i * (spell.interval or 0.16), function()
+				if not v.dead and not c.dead then
+					hitAll(player, c, spellId, { v })
+				end
+			end)
+		end
 	elseif spell.kind == "SkyFall" then
 		-- Leap up (client) and crash onto the target point.
 		iframes(spell.iframes)
@@ -224,7 +260,7 @@ local function onSetSlot(player: Player, slot: number, spellId: string): (boolea
 	if data == nil then
 		return false, "Loading..."
 	end
-	local ok, err = SpellLogic.SetLoadout(data.spellLoadout, slot, spellId, data.level)
+	local ok, err = SpellLogic.SetLoadout(data.spellLoadout, slot, spellId, data.level, data.skills)
 	if ok then
 		DataService.Changed(player, "spellLoadout")
 	end

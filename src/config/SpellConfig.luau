@@ -15,7 +15,9 @@ export type SpellDef = {
 	--   Rising    - a rising cut that launches everyone around you, and you with it (Rising Dragon)
 	--   Storm     - spin into a blade cyclone that drags enemies in (Tempest Spin)
 	--   SkyFall   - leap high and fall on the target like a meteor (Heaven's Fall)
-	kind: "Flurry" | "Blink" | "SlashWave" | "Fissure" | "Rising" | "Storm" | "SkyFall",
+	--   Chain     - blink from enemy to enemy, cutting each (Phantom Rush)
+	-- Arts unlocked by a skill (SkillConfig `art`) also need that skill learned.
+	kind: "Flurry" | "Blink" | "SlashWave" | "Fissure" | "Rising" | "Storm" | "SkyFall" | "Chain",
 	unlockLevel: number,
 	qi: number,
 	cooldown: number,
@@ -32,11 +34,12 @@ export type SpellDef = {
 	ticks: number?, -- Flurry / Storm hits
 	interval: number?,
 	iframes: number?, -- invulnerable seconds while it runs
+	count: number?, -- Chain: max targets
 }
 
 local SpellConfig = {}
 
-SpellConfig.Order = { "thousand_cuts", "ghost_step", "crescent_wave", "earthsplitter", "rising_dragon", "tempest_spin", "heavens_fall" }
+SpellConfig.Order = { "thousand_cuts", "ghost_step", "crescent_wave", "earthsplitter", "rising_dragon", "tempest_spin", "heavens_fall", "moon_severance", "phantom_rush", "crimson_lotus" }
 SpellConfig.Slots = 3
 SpellConfig.DefaultLoadout = { "thousand_cuts", "ghost_step", "crescent_wave" }
 SpellConfig.KeyLabels = { "Z", "X", "C" }
@@ -85,6 +88,22 @@ SpellConfig.Spells = {
 		name = "Heaven's Fall", text = "Ultimate art: leap high into the sky and fall on your target like a meteor.",
 		kind = "SkyFall", unlockLevel = 12, qi = 70, cooldown = 25, color = { 255, 120, 60 },
 		damage = 90, posture = 90, range = 40, radius = 16, delay = 0.85, launch = 34, iframes = 1.1,
+	},
+	-- Skill-tree arts (SkillConfig): learned in the Skills panel.
+	moon_severance = {
+		name = "Moon Severance", text = "A giant pale crescent rolls forward slowly, splitting everything in a wide line.",
+		kind = "SlashWave", unlockLevel = 1, qi = 40, cooldown = 12, color = { 235, 235, 255 },
+		damage = 70, posture = 55, range = 80, width = 11, speed = 70,
+	},
+	phantom_rush = {
+		name = "Phantom Rush", text = "Blink from enemy to enemy - up to five - cutting each as you pass.",
+		kind = "Chain", unlockLevel = 1, qi = 35, cooldown = 10, color = { 150, 130, 255 },
+		damage = 34, posture = 26, range = 40, count = 5, interval = 0.16, iframes = 1.1,
+	},
+	crimson_lotus = {
+		name = "Crimson Lotus", text = "A whirling bloom of blades: pulls enemies in and shreds their posture.",
+		kind = "Storm", unlockLevel = 1, qi = 40, cooldown = 12, color = { 255, 70, 90 },
+		damage = 9, posture = 16, radius = 16, ticks = 10, interval = 0.14, knockback = -18,
 	},
 } :: { [string]: SpellDef }
 

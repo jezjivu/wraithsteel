@@ -4,7 +4,7 @@
 
 local EconomyConfig = {}
 
-EconomyConfig.DataVersion = 7 -- bump together with a migration in Logic/Migrations
+EconomyConfig.DataVersion = 8 -- bump together with a migration in Logic/Migrations
 
 EconomyConfig.StartingEmber = 50
 EconomyConfig.StartingJade = 0

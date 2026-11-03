@@ -39,6 +39,9 @@ local NetSchema: { [string]: RemoteDef } = {
 	-- Qi arts: (spellId, aim direction?, target point?) / (slot, spellId or "")
 	CastSpell = { kind = "Event", direction = "ToServer", args = { "string", "Vector3?", "Vector3?" }, rate = { burst = 4, perSecond = 3 } },
 	SetSpellSlot = { kind = "Function", direction = "ToServer", args = { "integer", "string" }, rate = { burst = 6, perSecond = 3 } },
+	-- Skill tree: learn one rank / reset every skill (points come back).
+	LearnSkill = { kind = "Function", direction = "ToServer", args = { "string" }, rate = { burst = 6, perSecond = 3 } },
+	ResetSkills = { kind = "Function", direction = "ToServer", args = {}, rate = { burst = 2, perSecond = 0.2 } },
 
 	-- Enemies / bosses ---------------------------------------------------------------------
 	EnemyState = { kind = "Event", direction = "ToClient" }, -- (batched states table)

@@ -42,6 +42,7 @@ local STATION_PANELS = {
 local MENU = {
 	{ panel = "Spirits", label = "Spirits" },
 	{ panel = "Weapons", label = "Weapons" },
+	{ panel = "Skills", label = "Skills" },
 	{ panel = "Arts", label = "Arts" },
 	{ panel = "Styles", label = "Styles" },
 	{ panel = "Quests", label = "Quests" },

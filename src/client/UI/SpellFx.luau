@@ -354,12 +354,14 @@ function SpellFx.ThousandCuts(point: Vector3, color: Color3, radius: number, sec
 end
 
 -- Crescent Wave: a tall crescent of light flying along `dir`.
-function SpellFx.CrescentWave(origin: Vector3, dir: Vector3, length: number, speed: number, color: Color3)
+function SpellFx.CrescentWave(origin: Vector3, dir: Vector3, length: number, speed: number, color: Color3, scale: number?)
+	local k = scale or 1
 	local seconds = length / speed
-	local cf0 = CFrame.lookAt(origin + Vector3.new(0, 1, 0), origin + Vector3.new(0, 1, 0) + dir)
-	local wave = neon(Vector3.new(9, 0.35, 2.2), cf0 * CFrame.Angles(0, 0, math.rad(70)), color)
+	local lift = Vector3.new(0, 1 + (k - 1) * 2, 0)
+	local cf0 = CFrame.lookAt(origin + lift, origin + lift + dir)
+	local wave = neon(Vector3.new(9 * k, 0.35 * k, 2.2 * k), cf0 * CFrame.Angles(0, 0, math.rad(70)), color)
 	wave.Transparency = 0.05
-	local core = neon(Vector3.new(7, 0.15, 0.5), wave.CFrame, Color3.new(1, 1, 1))
+	local core = neon(Vector3.new(7 * k, 0.15 * k, 0.5 * k), wave.CFrame, Color3.new(1, 1, 1))
 	local trail = Instance.new("ParticleEmitter")
 	trail.Texture = Fx.Textures.Sparkle
 	trail.Color = ColorSequence.new(color)
@@ -386,7 +388,7 @@ function SpellFx.CrescentWave(origin: Vector3, dir: Vector3, length: number, spe
 		wave.CFrame = cf
 		core.CFrame = cf
 	end)
-	SpellFx.SlashArc(cf0 * CFrame.new(0, 0, -2) * CFrame.Angles(0, 0, math.rad(70)), color, 10, 0.2)
+	SpellFx.SlashArc(cf0 * CFrame.new(0, 0, -2) * CFrame.Angles(0, 0, math.rad(70)), color, 10 * k, 0.2)
 end
 
 -- Earthsplitter: the ground cracks open in a line, rocks burst up one after another.

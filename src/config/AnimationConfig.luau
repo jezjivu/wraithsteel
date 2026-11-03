@@ -264,6 +264,7 @@ AnimationConfig.CastStyles = {
 	Rising = "Finisher",
 	Storm = "Spin",
 	SkyFall = "AirSlam",
+	Chain = "DashStrike",
 } :: { [string]: string }
 
 -- Trails glow from slightly before the active window until slightly after it.

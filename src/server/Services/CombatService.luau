@@ -38,6 +38,7 @@ local Logic = script.Parent.Parent:WaitForChild("Logic")
 local CombatRules = require(Logic:WaitForChild("CombatRules"))
 local Posture = require(Logic:WaitForChild("Posture"))
 local SpiritLogic = require(Logic:WaitForChild("SpiritLogic"))
+local SkillLogic = require(Shared:WaitForChild("SkillLogic"))
 
 local DataService = require(script.Parent.DataService)
 local ProgressionService = require(script.Parent.ProgressionService)
@@ -174,6 +175,9 @@ end
 -- Spring Flask charges (the Bottomless Gourd pass adds one).
 flaskMax = function(c: Combatant): number
 	local extra = if c.player and MarketService.HasPass(c.player, "ExtraFlask") then 1 else 0
+	if c.player then
+		extra += math.floor((CombatService :: any).PlayerStats(c.player).Flask or 0)
+	end
 	return CombatConfig.Flask.charges + extra
 end
 
@@ -213,6 +217,10 @@ function CombatService.PlayerStats(player: Player): { [string]: number }
 		return EMPTY_STATS
 	end
 	local totals = SpiritLogic.StatTotals(data :: any)
+	-- Skill tree bonuses stack onto the same stats.
+	for stat, v in SkillLogic.Stats(data.skills) do
+		totals[stat] = (totals[stat] or 0) + v
+	end
 	statCache[player] = totals
 	return totals
 end
@@ -383,7 +391,8 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		task.delay(CombatConfig.SecondBreath.seconds, function()
 			if not target.dead then
 				target.invulnerable = false
-				CombatService.Heal(target, target.humanoid.MaxHealth * CombatConfig.SecondBreath.heal)
+				local bonus = if target.player then CombatService.PlayerStats(target.player).SecondBreathHeal or 0 else 0
+				CombatService.Heal(target, target.humanoid.MaxHealth * math.min(1, CombatConfig.SecondBreath.heal * (1 + bonus)))
 				broadcast({ kind = "Revived", targetId = target.id })
 			end
 		end)
@@ -583,7 +592,7 @@ local function onCombatAction(player: Player, req: { [string]: any })
 		broadcast({ kind = "Action", sourceId = c.id, action = "Flask", seq = seq })
 		task.delay(CombatConfig.Flask.drinkSeconds * 0.7, function()
 			if not c.dead and byPlayer[player] == c then
-				CombatService.Heal(c, c.humanoid.MaxHealth * CombatConfig.Flask.heal)
+				CombatService.Heal(c, c.humanoid.MaxHealth * CombatConfig.Flask.heal * (1 + (CombatService.PlayerStats(player).FlaskHeal or 0)))
 			end
 		end)
 		return
@@ -607,7 +616,7 @@ local function onCombatAction(player: Player, req: { [string]: any })
 	end
 	local stats = CombatService.PlayerStats(player)
 	local dodgeMult = (1 - (stats.Haste or 0)) * style.dashCooldown
-	CombatRules.Commit(c.rules :: CombatRules.State, decision, now, dodgeMult, { speed = style.speed, parryWindowBonus = style.parryWindowBonus })
+	CombatRules.Commit(c.rules :: CombatRules.State, decision, now, dodgeMult, { speed = style.speed, parryWindowBonus = style.parryWindowBonus + (stats.ParryWindow or 0) })
 	syncUltimate(c)
 	if action == "Dodge" then
 		c.dodgeAt = now
@@ -631,7 +640,8 @@ local function onCombatAction(player: Player, req: { [string]: any })
 		end
 		-- A riposte (first hit right after a perfect parry) hits much harder.
 		local riposte = os.clock() < rules.riposteUntil
-		local mult = if riposte then CombatConfig.RiposteMultiplier + style.riposteBonus else 1
+		local skillStats = CombatService.PlayerStats(player)
+		local mult = if riposte then CombatConfig.RiposteMultiplier + style.riposteBonus + (skillStats.Riposte or 0) else 1
 		local hitAny = false
 		local executed = false
 		local attackMult = 1 + (CombatService.PlayerStats(player).Attack or 0)
@@ -640,7 +650,10 @@ local function onCombatAction(player: Player, req: { [string]: any })
 			-- Severing Blow: an enemy with broken posture is finished (bosses lose a big chunk).
 			local shadow = target.kind == "Enemy" and target.unaware == true and not target.dead
 			if target.kind ~= "Player" and (shadow or Posture.IsBroken(target.posture, os.clock())) then
-				local sever = if target.kind == "Boss" then target.humanoid.MaxHealth * CombatConfig.Severing.bossFraction else target.humanoid.Health + 1
+				local sever = if target.kind == "Boss" then target.humanoid.MaxHealth * CombatConfig.Severing.bossFraction * (1 + (skillStats.Execution or 0)) else target.humanoid.Health + 1
+				if (skillStats.ExecutionHeal or 0) > 0 then
+					CombatService.Heal(c, c.humanoid.MaxHealth * skillStats.ExecutionHeal)
+				end
 				target.posture.value = 0
 				target.model:SetAttribute("Broken", false)
 				local hitDef: Hit = {
@@ -737,6 +750,24 @@ local function onCharacterAdded(player: Player, character: Model)
 	end)
 end
 
+-- Stats changed (spirit party, skill tree): recompute, keep the same health fraction, and
+-- top up flask charges if the maximum grew.
+function CombatService.RefreshStats(player: Player)
+	statCache[player] = nil
+	local c = byPlayer[player]
+	local data = DataService.GetData(player)
+	if c and data and not c.dead then
+		local frac = c.humanoid.Health / math.max(1, c.humanoid.MaxHealth)
+		c.humanoid.MaxHealth = maxHealthFor(player, data.level)
+		c.humanoid.Health = c.humanoid.MaxHealth * frac
+		local fm = flaskMax(c)
+		if (c.flask or 0) > fm then
+			c.flask = fm
+		end
+		c.model:SetAttribute("Flask", c.flask)
+	end
+end
+
 function CombatService.Init() end
 
 function CombatService.Start()
@@ -762,16 +793,7 @@ function CombatService.Start()
 		end
 	end)
 	-- Spirit party changes: new stats, new max health (keeps the same health fraction).
-	SpiritService.CollectionChanged:Connect(function(player: Player)
-		statCache[player] = nil
-		local c = byPlayer[player]
-		local data = DataService.GetData(player)
-		if c and data and not c.dead then
-			local frac = c.humanoid.Health / math.max(1, c.humanoid.MaxHealth)
-			c.humanoid.MaxHealth = maxHealthFor(player, data.level)
-			c.humanoid.Health = c.humanoid.MaxHealth * frac
-		end
-	end)
+	SpiritService.CollectionChanged:Connect(CombatService.RefreshStats)
 	local function hook(player: Player)
 		player.CharacterAdded:Connect(function(character)
 			onCharacterAdded(player, character)

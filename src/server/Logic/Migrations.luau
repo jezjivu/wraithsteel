@@ -82,6 +82,12 @@ Migrations.Steps = {
 		end
 		data.spellLoadout = { "thousand_cuts", "ghost_step", "crescent_wave" }
 	end,
+	-- v7 -> v8: the skill tree (points come from your level, so nothing else to convert).
+	[8] = function(data: { [string]: any })
+		if type(data.skills) ~= "table" then
+			data.skills = {}
+		end
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server
