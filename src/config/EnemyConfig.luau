@@ -38,7 +38,7 @@ export type RigLook = {
 	skin: { number },
 	body: { number },
 	legs: { number },
-	headwear: ("Hood" | "Helm" | "Horns" | "Lantern" | "Sack" | "Hair" | "Bell" | "Visor" | "Crest" | "Laurel")?,
+	headwear: ("Hood" | "Helm" | "Horns" | "Lantern" | "Sack" | "Hair" | "Bell" | "Visor" | "Crest" | "Laurel" | "Kasa" | "Kabuto")?,
 	accent: { number }?,
 	glow: { number }?,
 	weapon: string?,
@@ -260,7 +260,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.4,
 		deflectChance = 0.7,
 		modelId = 0,
-		look = { skin = { 120, 90, 70 }, body = { 110, 70, 45 }, legs = { 90, 60, 40 }, headwear = "Helm", accent = { 150, 85, 45 }, weapon = "staff_pilgrim", outfit = "Samurai", mask = "Menpo", scale = 1.45 },
+		look = { skin = { 120, 90, 70 }, body = { 110, 70, 45 }, legs = { 90, 60, 40 }, headwear = "Kabuto", accent = { 150, 85, 45 }, weapon = "staff_pilgrim", outfit = "Samurai", mask = "Menpo", scale = 1.45 },
 	},
 	-- Duelists: few hit points, iron posture, deflect strings and punish with thrusts.
 	ashen_duelist = {
@@ -286,7 +286,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.55,
 		deflectChance = 0.75,
 		modelId = 0,
-		look = { skin = { 210, 175, 150 }, body = { 60, 55, 60 }, legs = { 40, 38, 42 }, headwear = "Hair", accent = { 200, 70, 50 }, weapon = "jian_moonwater", outfit = "Ronin", scale = 1 },
+		look = { skin = { 210, 175, 150 }, body = { 60, 55, 60 }, legs = { 40, 38, 42 }, headwear = "Kasa", accent = { 200, 70, 50 }, weapon = "jian_moonwater", outfit = "Ronin", scale = 1 },
 	},
 	-- Brutes: slow, huge posture, sweeping and grabbing. Jump the sweeps, dash from the grabs.
 	mire_brute = {
@@ -361,7 +361,7 @@ EnemyConfig.Enemies = {
 		xpReward = 18,
 		flinch = true,
 		modelId = 0,
-		look = { skin = { 205, 170, 140 }, body = { 90, 100, 70 }, legs = { 60, 55, 45 }, headwear = "Helm", accent = { 120, 110, 80 }, weapon = "fan_paper_crane", outfit = "Archer", scale = 1 },
+		look = { skin = { 205, 170, 140 }, body = { 90, 100, 70 }, legs = { 60, 55, 45 }, headwear = "Kasa", accent = { 120, 110, 80 }, weapon = "fan_paper_crane", outfit = "Archer", scale = 1 },
 	},
 	-- Ash Monk: staff and palms. Guards a lot; his palm strike sends a short shockwave.
 	ash_monk = {
@@ -463,7 +463,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.3,
 		deflectChance = 0.4,
 		modelId = 0,
-		look = { skin = { 210, 180, 150 }, body = { 60, 60, 90 }, legs = { 40, 40, 60 }, headwear = "Helm", accent = { 140, 140, 160 }, weapon = "spear_reedline", outfit = "Samurai", scale = 1.05 },
+		look = { skin = { 210, 180, 150 }, body = { 60, 60, 90 }, legs = { 40, 40, 60 }, headwear = "Kabuto", accent = { 140, 140, 160 }, weapon = "spear_reedline", outfit = "Samurai", scale = 1.05 },
 	},
 	-- ELITES: super enemies. Each guards a zone and hits like a mini boss.
 	oni_captain = {

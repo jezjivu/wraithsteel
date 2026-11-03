@@ -294,7 +294,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.7,
 		rewards = { ember = 2600, xp = 3000, jadeFirstClear = 50 },
 		modelId = 0, -- TODO(Studio/Agent C)
-		look = { skin = { 90, 90, 100 }, body = { 60, 60, 70 }, legs = { 45, 45, 55 }, headwear = "Helm", accent = { 160, 80, 40 }, weapon = "gb_gatebreaker", outfit = "Samurai", mask = "Oni", scale = 2.7 },
+		look = { skin = { 90, 90, 100 }, body = { 60, 60, 70 }, legs = { 45, 45, 55 }, headwear = "Kabuto", accent = { 160, 80, 40 }, weapon = "gb_gatebreaker", outfit = "Samurai", mask = "Oni", scale = 2.7 },
 	},
 	-- World bosses (WorldBossService) ---------------------------------------------------------
 	hollow_carillon = {

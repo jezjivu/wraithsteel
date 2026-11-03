@@ -65,7 +65,7 @@ SagaConfig.Npcs = {
 	},
 	{
 		id = "sabaki", name = "Sabaki", title = "Ronin of the Ashen Village", realm = "japan", at = { -340, -720 }, facing = 200,
-		look = { skin = { 210, 180, 150 }, body = { 50, 40, 40 }, legs = { 35, 30, 30 }, headwear = "Hair", accent = { 160, 40, 40 }, weapon = "dao_rustcutter", outfit = "Ronin", face = "Calm", scale = 1 },
+		look = { skin = { 210, 180, 150 }, body = { 50, 40, 40 }, legs = { 35, 30, 30 }, headwear = "Kasa", accent = { 160, 40, 40 }, weapon = "dao_rustcutter", outfit = "Ronin", face = "Calm", scale = 1 },
 		chatter = { "I owe a debt to a woman with a crane on her sleeve. One day I'll pay it in steel." },
 	},
 	{
