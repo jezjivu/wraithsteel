@@ -20,7 +20,7 @@ local DataController = require(Controllers:WaitForChild("DataController"))
 
 local C = Kit.Colors
 
-local COL_W, NODE, ROW_H, TOP = 236, 62, 104, 54
+local COL_W, NODE, ROW_H, TOP, SPREAD = 240, 52, 100, 54, 80
 local selected: string? = nil
 
 local function rgb(c: { number }): Color3
@@ -28,7 +28,7 @@ local function rgb(c: { number }): Color3
 end
 
 local function center(pathIndex: number, def: SkillConfig.SkillDef): Vector2
-	return Vector2.new((pathIndex - 1) * COL_W + COL_W / 2 + def.col * 74, TOP + (def.tier - 1) * ROW_H + NODE / 2)
+	return Vector2.new((pathIndex - 1) * COL_W + COL_W / 2 + def.col * SPREAD, TOP + (def.tier - 1) * ROW_H + NODE / 2)
 end
 
 local function line(parent: Instance, a: Vector2, b: Vector2, color: Color3, lit: boolean)
@@ -172,10 +172,10 @@ local Panel: PanelTypes.Panel = {
 				local lab = Instance.new("TextLabel")
 				lab.AnchorPoint = Vector2.new(0.5, 0.5)
 				lab.Position = UDim2.fromOffset(p.X, p.Y - 2)
-				lab.Size = UDim2.fromOffset(NODE + 30, 30)
+				lab.Size = UDim2.fromOffset(SPREAD - 4, 30)
 				lab.BackgroundTransparency = 1
 				lab.Font = Enum.Font.GothamBold
-				lab.TextSize = 11
+				lab.TextSize = 10
 				lab.TextWrapped = true
 				lab.TextColor3 = if rank > 0 then C.Ink elseif reach then C.Text else C.Muted
 				lab.Text = if def.art then "✦ " .. def.name else def.name
