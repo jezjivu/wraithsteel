@@ -23,6 +23,7 @@ function ProfileTemplate.New(): Types.ProfileData
 		chapter = 0,
 		stage = 1,
 		bossesDefeated = {},
+		raidClears = {},
 		tutorialDone = false,
 
 		weapons = { [EconomyConfig.StartingWeapon] = true },

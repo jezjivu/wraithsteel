@@ -7,7 +7,7 @@
 -- API:
 --   UIController.Open(panelName, opts?)   panelName = "Weapons" | "Lanterns" | "Spirits" |
 --                                          "Expeditions" | "Quests" | "Store" | "Codes" | "Party" | "Trade"
---                                          | "NightMarket"
+--                                          | "NightMarket" | "Raid"
 --   UIController.Close()
 
 local Players = game:GetService("Players")
@@ -54,6 +54,7 @@ local MENU = {
 	{ panel = "Store", label = "Store" },
 	{ panel = "NightMarket", label = "Market" },
 	{ panel = "Party", label = "Party" },
+	{ panel = "Raid", label = "Raids" },
 	{ panel = "Trade", label = "Trade" },
 	{ panel = "Codes", label = "Codes" },
 }

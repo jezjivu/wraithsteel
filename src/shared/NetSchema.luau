@@ -89,6 +89,9 @@ local NetSchema: { [string]: RemoteDef } = {
 	-- Party / story --------------------------------------------------------------------------
 	PartyRequest = { kind = "Function", direction = "ToServer", args = { "string", "integer?" }, rate = { burst = 4, perSecond = 1 } },
 	PartyEvent = { kind = "Event", direction = "ToClient" },
+	-- Raids: (op "state"|"create"|"join"|"leave"|"launch", raidId or lobbyId)
+	RaidRequest = { kind = "Function", direction = "ToServer", args = { "string", "string?" }, rate = { burst = 4, perSecond = 1 } },
+	RaidEvent = { kind = "Event", direction = "ToClient" },
 	StoryEvent = { kind = "Event", direction = "ToClient" }, -- (cutscene/dialogue ids)
 	StoryAdvance = { kind = "Event", direction = "ToServer", args = { "string" }, rate = { burst = 4, perSecond = 2 } },
 }

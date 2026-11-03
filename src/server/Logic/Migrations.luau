@@ -123,6 +123,12 @@ Migrations.Steps = {
 			data.nightMarket = { window = -1, bought = {} }
 		end
 	end,
+	-- v13 -> v14: raid clear counts (first clear bonus).
+	[14] = function(data: { [string]: any })
+		if type(data.raidClears) ~= "table" then
+			data.raidClears = {}
+		end
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server

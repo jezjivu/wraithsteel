@@ -65,6 +65,7 @@ export type ProfileData = {
 	chapter: number, -- 0 = Prologue, 1..5
 	stage: number,
 	bossesDefeated: { [string]: number }, -- bossId -> clear count
+	raidClears: { [string]: number }, -- raidId -> clear count (RaidConfig); v14
 	tutorialDone: boolean,
 
 	-- Combat loadout
