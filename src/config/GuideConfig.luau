@@ -13,7 +13,7 @@ GuideConfig.Text = {
 	fightWilds = "Go north through the red gate and defeat enemies (reach Lv %d)",
 	buyWeapon = "Earn %s Ember and buy a new weapon at the Weapon Smith",
 	chapterBoss = "Defeat %s (Chapter %d)",
-	allDone = "Chapter cleared! Hunt world bosses, fuse Spirits and party up.",
+	allDone = "Chapter cleared! Hunt the elites, find every Ashen Relic, fuse Spirits and party up.",
 }
 
 -- Objective waypoint: beacon of light + distance label + screen-edge arrow.

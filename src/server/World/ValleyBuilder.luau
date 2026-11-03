@@ -7,7 +7,7 @@
 --      flagstone road, stone lanterns, sakura/maple rows, a torii tunnel, zone gates with name
 --      plaques, and a themed set piece per zone (bamboo forest, graveyard, river + bridge,
 --      burned village, stone stair, temple complex, the fallen bell at the boss gate).
---   3. EnemySpawns / BossArenas / WorldBossSpawns folders for the combat services.
+--   3. EnemySpawns / BossArenas folders for the combat services (the valley has no bosses).
 --
 -- API:
 --   ValleyBuilder.Build(parent: Instance) -> Model     -- the World model
@@ -854,16 +854,6 @@ local function buildFolders()
 			end
 			K.light(pad, Color3.fromRGB(255, 120, 60), 18, 1)
 		end
-		folder:SetAttribute("Generated", true)
-		folder.Parent = workspace
-	end
-	if workspace:FindFirstChild("WorldBossSpawns") == nil then
-		local folder = Instance.new("Folder")
-		folder.Name = "WorldBossSpawns"
-		local w = MapConfig.WorldBossSpawn
-		local p = K.part(folder, "GorgeClearing", Vector3.new(4, 0.2, 4), CFrame.new(ground(w[1], w[2]) + Vector3.new(0, 0.3, 0)), Color3.new(1, 1, 1))
-		p.Transparency = 1
-		p.CanCollide = false
 		folder:SetAttribute("Generated", true)
 		folder.Parent = workspace
 	end

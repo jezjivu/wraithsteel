@@ -99,6 +99,15 @@ Migrations.Steps = {
 			data.lostEmber = { amount = 0, x = 0, y = 0, z = 0 }
 		end
 	end,
+	-- v10 -> v11: the Ashen Valley bosses were deleted; forget them.
+	[11] = function(data: { [string]: any })
+		local d = data.bossesDefeated
+		if type(d) == "table" then
+			for _, id in { "sable_crane", "hollow_abbot", "twin_cinder_sisters", "rustwood_matriarch", "gatekeeper_of_rust", "hollow_carillon", "kagehisa", "bell_engine", "bell_oni", "rust_tiger" } do
+				d[id] = nil
+			end
+		end
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server

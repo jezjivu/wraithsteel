@@ -4,7 +4,7 @@
 -- (PartyService will supply parties in Phase 3). Bosses ignore attack tokens.
 --
 -- Studio setup (TODO(Studio/Agent D + C)):
---   Workspace.BossArenas/<Part> with attribute BossId = "sable_crane"; BossService adds a
+--   Workspace.BossArenas/<Part> with attribute BossId = "kagura_9"; BossService adds a
 --   ProximityPrompt "Challenge" to it. Boss rig: ServerStorage.Bosses/<bossId> (placeholder block
 --   otherwise). Animations: BossConfig move animationId (all placeholders today).
 --
@@ -695,7 +695,8 @@ end
 local function setupArena(arena: BasePart)
 	local bossId = arena:GetAttribute("BossId")
 	if type(bossId) ~= "string" or BossConfig.Bosses[bossId] == nil then
-		warn("[BossService] arena", arena:GetFullName(), "has invalid BossId")
+		-- A shrine for a boss that no longer exists (e.g. saved into an older Studio world): remove it.
+		arena:Destroy()
 		return
 	end
 	local prompt = Instance.new("ProximityPrompt")

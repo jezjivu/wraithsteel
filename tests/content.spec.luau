@@ -17,12 +17,13 @@ local WeaponLogic = require(Logic.WeaponLogic)
 
 local cases = {}
 
-cases["Content: Prologue and Chapter 1 bosses are fully defined"] = function()
+cases["Content: chapter boss lists (the Ashen Valley has none)"] = function()
 	local count = 0
 	for chapter = 0, ChapterConfig.FinalChapter do
 		count += #ChapterConfig.Chapters[chapter].bosses
 	end
-	expectEq(count, 20, "total bosses (the Prologue boss was removed for now)")
+	expectEq(count, 16, "total bosses (Prologue and Chapter 1 have none)")
+	expectEq(#ChapterConfig.Chapters[0].bosses + #ChapterConfig.Chapters[1].bosses, 0)
 	for chapter = 0, 1 do
 		for _, bossId in ChapterConfig.Chapters[chapter].bosses do
 			expectTrue(BossConfig.Bosses[bossId] ~= nil, "missing boss " .. bossId)
@@ -176,7 +177,6 @@ end
 
 cases["World boss rotation references World-kind bosses"] = function()
 	local WorldBossConfig = require(Config.WorldBossConfig)
-	expectTrue(#WorldBossConfig.Rotation > 0)
 	for _, id in WorldBossConfig.Rotation do
 		local def = BossConfig.Bosses[id]
 		expectTrue(def ~= nil, id)

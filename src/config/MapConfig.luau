@@ -117,10 +117,7 @@ MapConfig.EnemySpawns = {
 }
 
 -- Boss shrines (pads; the fight happens in an instanced arena).
-MapConfig.BossArenas = {
-	{ name = "SableCraneArena", bossId = "sable_crane", at = { -320, -800 } },
-	{ name = "HollowAbbotArena", bossId = "hollow_abbot", at = { 330, -1060 } },
-}
+MapConfig.BossArenas = {} :: { { name: string, bossId: string, at: XZ } } -- the Ashen Valley has no bosses
 
 -- One-way shortcut gates (Souls-style): barred from one side; open them from `openFrom`'s
 -- side and they stay open for you (saved). ExplorationService builds them across the road.
@@ -165,8 +162,6 @@ MapConfig.Landmarks = {
 	elderTreeHeight = 42,
 }
 
--- World boss spawn (open-world encounter in the gorge clearing).
-MapConfig.WorldBossSpawn = { 440, -330 }
 
 -- Compatibility: the hub -> crossroads road (some systems want "the" route).
 MapConfig.Route = MapConfig.Roads[1]

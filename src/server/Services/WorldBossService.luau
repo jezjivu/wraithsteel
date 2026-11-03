@@ -98,6 +98,11 @@ function WorldBossService.Init() end
 
 function WorldBossService.Start()
 	if #WorldBossConfig.Rotation == 0 then
+		-- No world bosses: clear spawn points left in older saved worlds.
+		local old = workspace:FindFirstChild(WorldBossConfig.SpawnFolderName)
+		if old then
+			old:Destroy()
+		end
 		return
 	end
 	task.spawn(function()

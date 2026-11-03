@@ -140,13 +140,13 @@ SagaConfig.Quests = {
 		id = "duelists_debt", title = "The Duelist's Debt", realm = "japan", giver = "sabaki",
 		intro = {
 			"You fight well. Then fight her students first: the Ashen Duelists. They deflect everything. Break their posture, not their skin.",
-			"Then, if you still stand, challenge their teacher at the village shrine. Sable Crane. Tell her Sabaki sends his regards.",
+			"Then, if you still stand, put down Gravelord Ishiki in the Lantern Graveyard. He buried my brothers alive.",
 		},
 		steps = {
 			{ kind = "Kill", enemies = { "ashen_duelist" }, count = 3, text = "Defeat Ashen Duelists" },
-			{ kind = "Boss", bossId = "sable_crane", text = "Defeat Sable Crane at the Ashen Village shrine" },
+			{ kind = "Kill", enemies = { "gravelord" }, count = 1, text = "Defeat Gravelord Ishiki (Lantern Graveyard)" },
 		},
-		outro = { "She fell? ...Then my debt is paid. Thank you, bell-bearer.", "Elder Shirane will want to hear of this. The Warden stirs." },
+		outro = { "Ishiki is dust? ...Then my debt is paid. Thank you, bell-bearer.", "Elder Shirane will want to hear of this. The Warden stirs." },
 		rewards = { ember = 300, xp = 350, jade = 10 },
 	},
 	{

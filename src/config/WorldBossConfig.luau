@@ -5,7 +5,7 @@
 
 local WorldBossConfig = {}
 
-WorldBossConfig.Rotation = { "hollow_carillon" } -- spawns cycle through this list
+WorldBossConfig.Rotation = {} :: { string } -- spawns cycle through this list (none: no world bosses for now)
 WorldBossConfig.FirstSpawnSeconds = 120 -- after server start
 WorldBossConfig.IntervalSeconds = 15 * 60 -- between the end of one and the next spawn
 WorldBossConfig.WarningSeconds = 30 -- "awakens soon" announcement lead time
