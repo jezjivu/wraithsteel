@@ -10,6 +10,7 @@
 --   DataService.WaitForData(player, timeout?) -> ProfileData?
 --   DataService.Changed(player, ...keys)                 replicate top-level keys after mutating
 --   DataService.SaveAndWait(player, predicate, timeout) -> boolean
+--   DataService.AddLoadHook(fn(player, data))            runs (may yield) before the snapshot
 --   DataService.SetMessageHandler(kind, fn(player, data, message) -> boolean)
 --   DataService.MessageAsync(userId, message) -> boolean
 --   DataService.ProfileLoaded: Signal(player, data)
@@ -41,6 +42,8 @@ local PRIVATE_KEYS = {
 	giftMessagesSeen = true,
 	funnelSteps = true,
 	codesRedeemed = true,
+	tradesApplied = true,
+	tradeOrder = true,
 	robuxSpent = true,
 }
 
@@ -54,6 +57,7 @@ local DataService = {
 local store: any
 local profiles: { [Player]: any } = {}
 local messageHandlers: { [string]: (Player, ProfileData, { [string]: any }) -> boolean } = {}
+local loadHooks: { (Player, ProfileData) -> () } = {}
 
 local function publicSnapshot(data: ProfileData): { [string]: any }
 	local out = {}
@@ -133,6 +137,12 @@ function DataService.SaveAndWait(player: Player, predicate: (any) -> boolean, ti
 	return done
 end
 
+-- Registers fn(player, data) to run after a profile loads and migrates, before the snapshot is
+-- sent and before ProfileLoaded fires. May yield. Register in Init().
+function DataService.AddLoadHook(fn: (Player, ProfileData) -> ())
+	table.insert(loadHooks, fn)
+end
+
 function DataService.SetMessageHandler(kind: string, fn: (Player, ProfileData, { [string]: any }) -> boolean)
 	messageHandlers[kind] = fn
 end
@@ -190,6 +200,17 @@ local function onPlayerAdded(player: Player)
 			processed()
 		end
 	end)
+
+	-- Load hooks run (and may yield) before anyone sees the data, e.g. trade recovery.
+	for _, hook in loadHooks do
+		local okHook: boolean, hookErr: any = pcall(hook, player, profile.Data)
+		if not okHook then
+			warn("[DataService] load hook failed for", player.UserId, hookErr)
+		end
+	end
+	if player.Parent ~= Players or profiles[player] ~= profile then
+		return
+	end
 
 	Net.Server.Fire("ProfileSnapshot", player, publicSnapshot(profile.Data))
 	DataService.ProfileLoaded:Fire(player, profile.Data)

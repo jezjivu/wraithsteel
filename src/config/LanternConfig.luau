@@ -2,8 +2,10 @@
 -- LanternConfig: Spirit Lanterns (the game's eggs). Owner: Agent B.
 -- Compliance: odds for every lantern are computed by Shared/Odds from exactly these weights,
 -- shown in the UI before purchase, and used by the server roll. Pity rules are shown too.
--- `paid = true` means the lantern can be bought with Robux-purchasable currency (Jade):
--- it is hidden/blocked for players where PolicyService says paid random items are restricted.
+-- `paid = true` forces a lantern to count as a paid random item. Lanterns priced in a currency
+-- that is sold for Robux (MonetizationConfig) count as paid automatically - see
+-- Shared/LanternOdds.IsPaid. Paid lanterns are blocked (except free opens) where PolicyService
+-- restricts paid random items.
 
 export type LanternEntry = { spirit: string, weight: number }
 

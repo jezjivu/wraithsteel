@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Net"))
 
 local SpiritLogic = require(script.Parent.Parent:WaitForChild("Logic"):WaitForChild("SpiritLogic"))
+local TradeLock = require(script.Parent.Parent:WaitForChild("Logic"):WaitForChild("TradeLock"))
 local DataService = require(script.Parent.DataService)
 local ProgressionService = require(script.Parent.ProgressionService)
 local QuestService = require(script.Parent.QuestService)
@@ -19,6 +20,9 @@ local AnalyticsService = require(script.Parent.AnalyticsService)
 local FusionService = { Name = "FusionService", Priority = 22 }
 
 function FusionService.Fuse(player: Player, uids: { string }): (any, string?)
+	if TradeLock.IsLocked(player.UserId) then
+		return nil, TradeLock.Message
+	end
 	local data = DataService.GetData(player)
 	if data == nil then
 		return nil, "Loading..."

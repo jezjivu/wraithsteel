@@ -2,14 +2,23 @@
 -- TradeService: player-to-player Spirit trading (rules in Logic/TradeLogic).
 -- Flow: A requests B -> B requests A back (or accepts from the Trade panel) -> session opens ->
 -- both pick Spirits (any change clears confirmations) -> both confirm -> countdown -> server
--- re-validates and swaps in one synchronous step -> both profiles are saved right away.
--- Compliance: if EITHER player's policy disallows paid item trading, trading is refused.
+-- re-validates -> escrow record committed to the trade ledger (Logic/TradeLedger) -> each
+-- profile applies its side in one synchronous step -> both profiles are saved right away.
+-- Crash safety: a profile that missed its side (server died before it saved) gets it on its
+-- next load via a DataService load hook (TradeLedger.Recover). Spirits of both players are
+-- frozen (Logic/TradeLock) while the ledger is written.
+-- Compliance (paid-flag rule): Spirits with `paid = true` can only be offered when BOTH players'
+-- policy allows paid item trading. Free Spirits trade for everyone.
 --
 -- API:
---   TradeService.CanTrade(player) -> boolean
+--   TradeService.CanTrade(player) -> boolean            any trading at all (always true now)
+--   TradeService.CanTradePaid(a, b) -> boolean          paid Spirits allowed between a and b
 
+local DataStoreService = game:GetService("DataStoreService")
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = ReplicatedStorage:WaitForChild("Config")
@@ -17,7 +26,10 @@ local Net = require(Shared:WaitForChild("Net"))
 local NetValidate = require(Shared:WaitForChild("NetValidate"))
 local TradeConfig = require(Config:WaitForChild("TradeConfig"))
 
-local TradeLogic = require(script.Parent.Parent:WaitForChild("Logic"):WaitForChild("TradeLogic"))
+local Logic = script.Parent.Parent:WaitForChild("Logic")
+local TradeLogic = require(Logic:WaitForChild("TradeLogic"))
+local TradeLedger = require(Logic:WaitForChild("TradeLedger"))
+local TradeLock = require(Logic:WaitForChild("TradeLock"))
 local DataService = require(script.Parent.DataService)
 local PolicyService = require(script.Parent.PolicyService)
 local ProgressionService = require(script.Parent.ProgressionService)
@@ -28,8 +40,78 @@ local TradeService = { Name = "TradeService", Priority = 51 }
 local requests: { [number]: { [number]: number } } = {} -- target -> { from -> expiresAt }
 local sessions: { [number]: TradeLogic.Session } = {} -- userId -> session (both sides point to it)
 
-function TradeService.CanTrade(player: Player): boolean
-	return PolicyService.CanTradePaidItems(player)
+local ledger: TradeLedger.Store
+
+function TradeService.CanTrade(_player: Player): boolean
+	return true
+end
+
+function TradeService.CanTradePaid(a: Player, b: Player): boolean
+	return PolicyService.CanTradePaidItems(a) and PolicyService.CanTradePaidItems(b)
+end
+
+-- In-memory store: Studio without API access only (nothing persists, warns once).
+local function memoryStore(): TradeLedger.Store
+	local mem: { [string]: any } = {}
+	return {
+		update = function(key, fn)
+			local new = fn(mem[key])
+			if new ~= nil then
+				mem[key] = new
+			end
+			return true, mem[key]
+		end,
+		get = function(key)
+			return true, mem[key]
+		end,
+	}
+end
+
+local function dataStore(ds: DataStore): TradeLedger.Store
+	return {
+		update = function(key, fn)
+			local ok, value = pcall(function()
+				return ds:UpdateAsync(key, function(old)
+					return fn(old)
+				end)
+			end)
+			if not ok then
+				warn("[TradeService] ledger update failed", key, value)
+			end
+			return ok, value
+		end,
+		get = function(key)
+			local ok, value = pcall(function()
+				return ds:GetAsync(key)
+			end)
+			if not ok then
+				warn("[TradeService] ledger read failed", key, value)
+			end
+			return ok, value
+		end,
+	}
+end
+
+local function makeLedger(): TradeLedger.Store
+	local ok, ds = pcall(function()
+		return DataStoreService:GetDataStore(TradeConfig.LedgerStoreName)
+	end)
+	if ok and ds and RunService:IsStudio() then
+		local probeOk = pcall(function()
+			return ds:GetAsync("probe")
+		end)
+		if not probeOk then
+			warn("[TradeService] Studio without DataStore access: trade ledger is in memory only")
+			return memoryStore()
+		end
+	end
+	if not ok or ds == nil then
+		if RunService:IsStudio() then
+			return memoryStore()
+		end
+		error("[TradeService] trade ledger DataStore unavailable: " .. tostring(ds))
+	end
+	return dataStore(ds)
 end
 
 local function summary(data: any, uids: { string }): { any }
@@ -58,7 +140,12 @@ local function push(player: Player)
 		end
 	end
 	if s == nil then
-		Net.Server.Fire("TradeEvent", player, { active = false, incoming = incoming, allowed = TradeService.CanTrade(player) })
+		Net.Server.Fire("TradeEvent", player, {
+			active = false,
+			incoming = incoming,
+			allowed = TradeService.CanTrade(player),
+			paidAllowed = PolicyService.CanTradePaidItems(player),
+		})
 		return
 	end
 	local mine, theirs = TradeLogic.SideOf(s, me)
@@ -69,6 +156,8 @@ local function push(player: Player)
 	Net.Server.Fire("TradeEvent", player, {
 		active = true,
 		allowed = true,
+		paidAllowed = s.allowPaid,
+		executing = s.executing,
 		partnerName = if partner then partner.DisplayName else "?",
 		myOffer = summary(DataService.GetData(player), mine.offer),
 		theirOffer = summary(partner and DataService.GetData(partner), theirs.offer),
@@ -129,7 +218,7 @@ local function requestTrade(player: Player, targetUserId: number): (boolean, str
 	local theirRequest = requests[player.UserId] and requests[player.UserId][targetUserId]
 	if theirRequest and theirRequest > now then
 		requests[player.UserId][targetUserId] = nil
-		local s = TradeLogic.New(targetUserId, player.UserId)
+		local s = TradeLogic.New(targetUserId, player.UserId, TradeService.CanTradePaid(player, target))
 		sessions[player.UserId] = s
 		sessions[targetUserId] = s
 		pushBoth(s)
@@ -169,10 +258,42 @@ local function update(player: Player, msg: { [string]: any }): (boolean, string?
 		pushBoth(s)
 		return true, nil
 	elseif op == "cancel" then
+		if s.executing then
+			return false, "Trade is being completed"
+		end
 		close(s, player.DisplayName .. " cancelled the trade")
 		return true, nil
 	end
 	return false, "Unknown action"
+end
+
+-- Saves the profile, then drops settled ids from the user's ledger index.
+local function saveAndPrune(player: Player, applied: { string }, settled: { string })
+	task.spawn(function()
+		local saved = DataService.SaveAndWait(player, function(last)
+			for _, id in applied do
+				if not (last.tradesApplied and last.tradesApplied[id]) then
+					return false
+				end
+			end
+			return true
+		end, 30)
+		if saved then
+			TradeLedger.Prune(ledger, player.UserId, settled)
+		end
+	end)
+end
+
+local function applyLive(p: Player?, userId: number, record: TradeLedger.Record)
+	local data = p and DataService.GetData(p)
+	if p == nil or data == nil then
+		return -- left mid-commit: their next load applies it (TradeLedger.Recover)
+	end
+	if TradeLedger.Apply(data :: any, record, userId, os.time()) then
+		DataService.Changed(p, "spirits", "equippedSpirits")
+		ProgressionService.RefreshPower(p)
+	end
+	saveAndPrune(p, { record.id }, { record.id })
 end
 
 local function execute(s: TradeLogic.Session)
@@ -184,28 +305,66 @@ local function execute(s: TradeLogic.Session)
 		close(s, "Trade cancelled")
 		return
 	end
-	if not TradeService.CanTrade(pa) or not TradeService.CanTrade(pb) then
-		close(s, "Trading is not available for one of these accounts.")
-		return
-	end
-	local ok, err = TradeLogic.Execute(s, da :: any, db :: any, os.time())
+	-- Policy can only get stricter mid-session (PolicyService refreshes); re-check paid items.
+	s.allowPaid = s.allowPaid and TradeService.CanTradePaid(pa, pb)
+	local ok, err = TradeLogic.Validate(s, da :: any, db :: any)
 	if not ok then
 		close(s, "Trade failed: " .. (err or "?"))
 		return
 	end
-	for _, p in { pa, pb } do
-		DataService.Changed(p, "spirits")
-		ProgressionService.RefreshPower(p)
-		local profile = DataService.GetProfile(p)
-		if profile then
-			profile:Save() -- persist both sides as soon as possible (see PROGRESS risks)
+	s.executing = true
+	TradeLock.Set(s.a.userId, true)
+	TradeLock.Set(s.b.userId, true)
+	pushBoth(s)
+	local record = TradeLedger.BuildRecord(HttpService:GenerateGUID(false), s.a.userId, da :: any, s.a.offer, s.b.userId, db :: any, s.b.offer, os.time())
+	local result = TradeLedger.Commit(ledger, record) -- yields (DataStore)
+	if result == "committed" then
+		applyLive(Players:GetPlayerByUserId(s.a.userId), s.a.userId, record)
+		applyLive(Players:GetPlayerByUserId(s.b.userId), s.b.userId, record)
+	end
+	TradeLock.Set(s.a.userId, false)
+	TradeLock.Set(s.b.userId, false)
+	if result == "committed" then
+		AnalyticsService.Custom(pa, "TradeCompleted", #s.a.offer + #s.b.offer)
+		close(s, "Trade complete!")
+	elseif result == "aborted" then
+		close(s, "Trade could not be saved. Nothing changed - please try again.")
+	else
+		-- Outcome unknown: leave profiles untouched and let the ledger settle it on rejoin.
+		close(s, nil)
+		for _, p in { pa, pb } do
+			if p.Parent == Players then
+				p:Kick("Your trade could not be confirmed. Please rejoin - your Spirits are safe.")
+			end
 		end
 	end
-	AnalyticsService.Custom(pa, "TradeCompleted", #s.a.offer + #s.b.offer)
-	close(s, "Trade complete!")
 end
 
-function TradeService.Init() end
+local function recover(player: Player, data: any)
+	TradeLock.Set(player.UserId, true)
+	local okRecover, applied, settled = pcall(TradeLedger.Recover, ledger, data, player.UserId, os.time())
+	TradeLock.Set(player.UserId, false)
+	if not okRecover then
+		warn("[TradeService] trade recovery failed for", player.UserId, applied)
+		return
+	end
+	if #applied > 0 then
+		AnalyticsService.Custom(player, "TradeRecovered", #applied)
+		task.delay(3, function()
+			if player.Parent == Players then
+				Net.Server.Fire("Notify", player, "Trade", "A trade from your last session was completed.")
+			end
+		end)
+	end
+	if #settled > 0 then
+		saveAndPrune(player, applied, settled)
+	end
+end
+
+function TradeService.Init()
+	ledger = makeLedger()
+	DataService.AddLoadHook(recover)
+end
 
 function TradeService.Start()
 	Net.Server.OnInvoke("TradeRequest", requestTrade)
@@ -217,7 +376,7 @@ function TradeService.Start()
 	Players.PlayerRemoving:Connect(function(player)
 		requests[player.UserId] = nil
 		local s = sessions[player.UserId]
-		if s then
+		if s and not s.executing then
 			close(s, "Trade cancelled: player left")
 		end
 	end)
@@ -228,8 +387,8 @@ function TradeService.Start()
 			for _, s in sessions do
 				if not seen[s] then
 					seen[s] = true
-					if TradeLogic.Ready(s, os.clock()) then
-						execute(s)
+					if not s.executing and TradeLogic.Ready(s, os.clock()) then
+						task.spawn(execute, s) -- sets s.executing before its first yield
 					end
 				end
 			end

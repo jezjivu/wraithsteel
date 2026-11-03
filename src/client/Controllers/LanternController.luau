@@ -17,6 +17,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = ReplicatedStorage:WaitForChild("Config")
 local Net = require(Shared:WaitForChild("Net"))
 local FormatNumber = require(Shared:WaitForChild("FormatNumber"))
+local LanternOdds = require(Shared:WaitForChild("LanternOdds"))
 local LanternConfig = require(Config:WaitForChild("LanternConfig"))
 local SpiritConfig = require(Config:WaitForChild("SpiritConfig"))
 
@@ -31,7 +32,13 @@ function LanternController.IsVisible(lanternId: string): boolean
 	if def == nil then
 		return false
 	end
-	return not (def.paid and DataController.PolicyFlags.paidRandomItemsRestricted)
+	if LanternOdds.IsPaid(lanternId) and DataController.PolicyFlags.paidRandomItemsRestricted then
+		-- Restricted accounts only see a paid lantern while they hold free opens for it.
+		local freeLanterns = DataController.Get("freeLanterns")
+		local free = if type(freeLanterns) == "table" then freeLanterns[lanternId] or 0 else 0
+		return free > 0
+	end
+	return true
 end
 
 function LanternController.FetchOdds(lanternId: string): any

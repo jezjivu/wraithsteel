@@ -38,6 +38,8 @@ function ProfileTemplate.New(): Types.ProfileData
 		saga = { quest = 1, step = 1, progress = 0, started = false },
 
 		spirits = {},
+		tradesApplied = {},
+		tradeOrder = {},
 		equippedSpirits = {},
 		spiritSlots = EconomyConfig.StartingSpiritSlots,
 		spiritStorage = EconomyConfig.StartingSpiritStorage,

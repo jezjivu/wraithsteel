@@ -108,6 +108,15 @@ Migrations.Steps = {
 			end
 		end
 	end,
+	-- v11 -> v12: trade escrow ledger ids (TradeLedger). Spirit `paid` flags default to nil.
+	[12] = function(data: { [string]: any })
+		if type(data.tradesApplied) ~= "table" then
+			data.tradesApplied = {}
+		end
+		if type(data.tradeOrder) ~= "table" then
+			data.tradeOrder = {}
+		end
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server

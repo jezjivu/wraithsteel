@@ -6,6 +6,7 @@ local BossConfig = require(Config.BossConfig)
 local ChapterConfig = require(Config.ChapterConfig)
 local EnemyConfig = require(Config.EnemyConfig)
 local LanternConfig = require(Config.LanternConfig)
+local LanternOdds = require(game:GetService("ReplicatedStorage").Shared.LanternOdds)
 local SpiritConfig = require(Config.SpiritConfig)
 local WeaponConfig = require(Config.WeaponConfig)
 local RewardConfig = require(Config.RewardConfig)
@@ -60,6 +61,10 @@ cases["Content: lanterns, spirits, quests, weapons reference valid ids"] = funct
 			expectTrue(SpiritConfig.Rarities[l.pity.minRarity] ~= nil, id .. " pity rarity")
 		end
 		expectEq(l.paid, l.currency == "Jade", id .. " paid flag must match Jade currency")
+		-- Any lantern priced in a Robux-purchasable currency must count as a paid random item.
+		if LanternOdds.IsPurchasableCurrency(l.currency) then
+			expectTrue(LanternOdds.IsPaid(id), id .. " is bought with Robux-purchasable currency")
+		end
 	end
 	for id, s in SpiritConfig.Spirits do
 		expectTrue(SpiritConfig.Rarities[s.rarity] ~= nil, id)

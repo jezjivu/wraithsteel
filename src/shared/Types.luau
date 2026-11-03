@@ -32,6 +32,10 @@ export type SpiritInstance = {
 	fusedCount: number, -- how many fusions produced this spirit lineage (cosmetic star)
 	locked: boolean, -- locked spirits cannot be fused/traded/released
 	obtainedAt: number,
+	-- true when this Spirit (or any Spirit fused into it) came from a lantern opened with
+	-- Robux-purchasable currency. Paid Spirits move only between accounts whose policy allows
+	-- paid item trading (TradeLogic). Added in night 2; missing = false.
+	paid: boolean?,
 }
 
 export type QuestState = {
@@ -78,6 +82,8 @@ export type ProfileData = {
 
 	-- Spirits
 	spirits: { [string]: SpiritInstance }, -- uid -> instance
+	tradesApplied: { [string]: number }, -- trade escrow ids already applied -> os.time (v12)
+	tradeOrder: { string }, -- FIFO used to cap `tradesApplied` (v12)
 	equippedSpirits: { string }, -- uids
 	spiritSlots: number,
 	spiritStorage: number,
