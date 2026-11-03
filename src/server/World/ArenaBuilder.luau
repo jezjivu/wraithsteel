@@ -153,6 +153,70 @@ local function courtyard(m: Model, center: Vector3, R: number, accent: Color3)
 	local _ = accent
 end
 
+-- Castle layout: a walled bailey. Crenellations on the wall ring, four broken siege
+-- barricades as cover, a fallen portcullis, rubble.
+local function castle(m: Model, center: Vector3, R: number, accent: Color3)
+	local stone = Color3.fromRGB(110, 106, 100)
+	local wood = Color3.fromRGB(80, 55, 40)
+	local H = ArenaConfig.WallHeight
+	for i = 0, 47 do
+		if i % 2 == 0 then
+			local a = i / 48 * math.pi * 2
+			local dir = Vector3.new(math.cos(a), 0, math.sin(a))
+			local pos = center + dir * (R + 4) + Vector3.new(0, H + 2, 0)
+			part(m, "Merlon", Vector3.new(4, 4, 5), CFrame.lookAt(pos, pos + dir), stone, Enum.Material.Cobblestone)
+		end
+	end
+	for i = 0, 3 do
+		local a = i / 4 * math.pi * 2 + math.pi / 4
+		local p = center + Vector3.new(math.cos(a) * R * 0.5, 0, math.sin(a) * R * 0.5)
+		local cf = CFrame.new(p) * CFrame.Angles(0, a + math.pi / 2, 0)
+		part(m, "Barricade", Vector3.new(14, 6, 2), cf * CFrame.new(0, 3, 0), wood, Enum.Material.WoodPlanks)
+		for _, x in { -5, 0, 5 } do
+			part(m, "Stake", Vector3.new(1, 8, 1), cf * CFrame.new(x, 4, -1.5) * CFrame.Angles(math.rad(-25), 0, 0), wood, Enum.Material.Wood)
+		end
+	end
+	-- Fallen portcullis across the north side.
+	local gate = center + Vector3.new(0, 0.6, -R * 0.75)
+	for x = -4, 4 do
+		part(m, "GateBar", Vector3.new(0.8, 0.8, 16), CFrame.new(gate + Vector3.new(x * 2, 0, 0)) * CFrame.Angles(0, 0, 0), Color3.fromRGB(60, 60, 66), Enum.Material.Metal)
+	end
+	for z = -2, 2 do
+		part(m, "GateCross", Vector3.new(18, 0.8, 0.8), CFrame.new(gate + Vector3.new(0, 0.4, z * 3.5)), Color3.fromRGB(60, 60, 66), Enum.Material.Metal)
+	end
+	for i = 1, 10 do
+		local a = i * 2.4
+		local r = R * (0.25 + (i % 5) * 0.12)
+		local s = 1.5 + (i % 3)
+		part(m, "Rubble", Vector3.new(s, s * 0.6, s), CFrame.new(center + Vector3.new(math.cos(a) * r, s * 0.3, math.sin(a) * r)) * CFrame.Angles(0, a, 0.3), stone, Enum.Material.Rock)
+	end
+	local _ = accent
+end
+
+-- Throne layout: the regent's hall. A raised dais and throne at the back, two rows of
+-- lacquered pillars, long red carpet, hanging lanterns.
+local function throne(m: Model, center: Vector3, R: number, accent: Color3)
+	local lacquer = Color3.fromRGB(120, 25, 25)
+	local gold = Color3.fromRGB(220, 175, 80)
+	local back = center + Vector3.new(0, 0, -R * 0.8)
+	part(m, "Dais", Vector3.new(30, 2, 14), CFrame.new(back + Vector3.new(0, 1, 0)), Color3.fromRGB(50, 30, 30), Enum.Material.Marble)
+	part(m, "DaisStep", Vector3.new(34, 1, 4), CFrame.new(back + Vector3.new(0, 0.5, 9)), Color3.fromRGB(60, 36, 34), Enum.Material.Marble)
+	part(m, "ThroneSeat", Vector3.new(6, 3, 5), CFrame.new(back + Vector3.new(0, 3.5, -2)), lacquer, Enum.Material.Wood)
+	part(m, "ThroneBack", Vector3.new(6, 10, 1.2), CFrame.new(back + Vector3.new(0, 8, -4.4)), lacquer, Enum.Material.Wood)
+	part(m, "ThroneCrest", Vector3.new(7, 1.2, 1.4), CFrame.new(back + Vector3.new(0, 13.4, -4.4)), gold, Enum.Material.Metal)
+	local carpet = part(m, "Carpet", Vector3.new(10, 0.15, R * 1.5), CFrame.new(center + Vector3.new(0, 0.12, -R * 0.05)), Color3.fromRGB(140, 30, 30), Enum.Material.Fabric)
+	carpet.CanCollide = false
+	for _, x in { -1, 1 } do
+		for k = 0, 3 do
+			local p = center + Vector3.new(x * R * 0.42, 0, R * 0.45 - k * R * 0.32)
+			part(m, "HallPillar", Vector3.new(3.2, 30, 3.2), CFrame.new(p + Vector3.new(0, 15, 0)), lacquer, Enum.Material.Wood)
+			part(m, "PillarCap", Vector3.new(4, 1, 4), CFrame.new(p + Vector3.new(0, 30.5, 0)), gold, Enum.Material.Metal)
+			local lantern = part(m, "HallLantern", Vector3.new(2, 2.6, 2), CFrame.new(p + Vector3.new(-x * 3, 20, 0)), accent, Enum.Material.Neon)
+			lantern.CanCollide = false
+		end
+	end
+end
+
 function ArenaBuilder.Build(center: Vector3, theme: { floor: { number }, wall: { number }, accent: { number }, layout: string? }): Model
 	local m = Instance.new("Model")
 	m.Name = "BossArena"
@@ -233,6 +297,10 @@ function ArenaBuilder.Build(center: Vector3, theme: { floor: { number }, wall: {
 		foundry(m, center, R, accent)
 	elseif theme.layout == "Courtyard" then
 		courtyard(m, center, R, accent)
+	elseif theme.layout == "Castle" then
+		castle(m, center, R, accent)
+	elseif theme.layout == "Throne" then
+		throne(m, center, R, accent)
 	end
 	m:SetAttribute("Radius", R)
 	return m

@@ -1,6 +1,7 @@
 --!strict
 -- RealmService: the three realms (RealmConfig) and the portals between them.
---   * Builds Neon Verge (World/NeonBuilder) and Aeloria (World/AeloriaBuilder) into
+--   * Builds Neon Verge (World/NeonBuilder), Aeloria (World/AeloriaBuilder) and Ironcrow Keep
+--     (World/KeepBuilder) into
 --     Workspace.Realms unless that already exists (EditTools can build it in edit mode).
 --   * Adds each realm's enemy spawns (Workspace.EnemySpawns), boss shrines
 --     (Workspace.BossArenas) and waystones (WaystoneService).
@@ -23,6 +24,7 @@ local BossConfig = require(Config:WaitForChild("BossConfig"))
 local World = script.Parent.Parent:WaitForChild("World")
 local NeonBuilder = require(World:WaitForChild("NeonBuilder"))
 local AeloriaBuilder = require(World:WaitForChild("AeloriaBuilder"))
+local KeepBuilder = require(World:WaitForChild("KeepBuilder"))
 local K = require(World:WaitForChild("BuildKit"))
 
 local DataService = require(script.Parent.DataService)
@@ -86,6 +88,12 @@ function RealmService.Build()
 	end)
 	if not ok2 then
 		warn("[RealmService] Aeloria build failed:", err2)
+	end
+	local ok3, err3 = pcall(function()
+		KeepBuilder.Build(origin("keep"), folder)
+	end)
+	if not ok3 then
+		warn("[RealmService] Ironcrow Keep build failed:", err3)
 	end
 end
 
@@ -267,6 +275,21 @@ function RealmService.Start()
 					local realm = if player:GetAttribute("InArena") == true then player:GetAttribute("Realm") else RealmConfig.At(root.Position)
 					if player:GetAttribute("Realm") ~= realm then
 						player:SetAttribute("Realm", realm)
+					end
+					-- Fell off a realm (Ironcrow Keep's chasm): back to the nearest waystone there.
+					local r = RealmConfig.Realms[realm]
+					if r and realm ~= "japan" and root.Position.Y < r.origin[2] - RealmConfig.FallRespawnDepth then
+						local best, bestD = nil, math.huge
+						for _, w in r.waystones do
+							local wp = WaystoneService.Position(w.id)
+							if wp and (wp - root.Position).Magnitude < bestD then
+								best, bestD = wp, (wp - root.Position).Magnitude
+							end
+						end
+						if best then
+							root.AssemblyLinearVelocity = Vector3.zero
+							ch:PivotTo(CFrame.new(best + Vector3.new(0, 4, 4)))
+						end
 					end
 				end
 			end

@@ -13,7 +13,7 @@ local DataController = require(UI.Parent:WaitForChild("Controllers"):WaitForChil
 
 local C = Kit.Colors
 
-local REALM_NAMES = { japan = "Ashen Valley", neon = "Neon Verge", greek = "Aeloria" }
+local REALM_NAMES = { japan = "Ashen Valley", neon = "Neon Verge", greek = "Aeloria", keep = "Ironcrow Keep" }
 
 local Panel: PanelTypes.Panel = {
 	Title = "Waystones",

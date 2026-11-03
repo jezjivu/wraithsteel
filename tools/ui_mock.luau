@@ -19,7 +19,16 @@ local function newSignal()
 	end
 	function s:Fire(...)
 		for _, h in self.handlers do
-			h(...)
+			if __asyncSignals then
+				-- like Roblox: each handler runs in its own thread and may yield
+				local co = coroutine.create(h)
+				local ok, err = coroutine.resume(co, ...)
+				if not ok and __onThreadError then
+					__onThreadError(co, err)
+				end
+			else
+				h(...)
+			end
 		end
 	end
 	return s
@@ -34,7 +43,8 @@ local EVENTS = {
 	ChildRemoved = true, DescendantAdded = true, DescendantRemoving = true, Triggered = true,
 	PromptTriggered = true, Touched = true, Died = true, HealthChanged = true, StateChanged = true,
 	Completed = true, ReturnPressedFromOnScreenKeyboard = true, SelectionGained = true, SelectionLost = true,
-	AttributeChanged = true,
+	AttributeChanged = true, Chatted = true, Idled = true, OnServerEvent = true, OnClientEvent = true,
+	Heartbeat = true, PlaybackEnded = true, Ended = true, Played = true, KeyframeReached = true,
 }
 
 local GUI_DEFAULTS = {
@@ -141,6 +151,29 @@ function methods.Clone(self)
 	return c
 end
 function methods.SetNetworkOwner() end
+function methods.SetExperimentalFeatures() end
+function methods.AddTag(self, tag)
+	local t = rawget(self, "__tags") or {}
+	t[tag] = true
+	rawset(self, "__tags", t)
+end
+function methods.RemoveTag(self, tag)
+	local t = rawget(self, "__tags")
+	if t then
+		t[tag] = nil
+	end
+end
+function methods.HasTag(self, tag)
+	local t = rawget(self, "__tags")
+	return t ~= nil and t[tag] == true
+end
+function methods.GetTags(self)
+	local out = {}
+	for k in rawget(self, "__tags") or {} do
+		table.insert(out, k)
+	end
+	return out
+end
 function methods.CaptureFocus() end
 function methods.ReleaseFocus() end
 function methods.TweenSize() end
