@@ -88,7 +88,11 @@ MapConfig.Areas = {
 
 MapConfig.HealAreas = { springs = 0.15 }
 
--- Enemy spawns: few, small groups with lots of room between them.
+MapConfig.MinSpawnGap = 80 -- studs between ground enemy groups (day)
+MapConfig.MinSentryGap = 30 -- studs between a tower sentry and a ground group
+
+-- Enemy spawns: few, small groups with lots of room between them. tests/world.spec.luau keeps
+-- ground groups >= MapConfig.MinSpawnGap apart (sentries on towers >= MinSentryGap).
 MapConfig.EnemySpawns = {
 	{ name = "ToriiBandits", enemyId = "rustbound_bandit", count = 2, respawn = 25, at = { 0, -180 } },
 	{ name = "BambooBandits", enemyId = "rustbound_bandit", count = 2, respawn = 25, at = { 40, -300 } },
@@ -98,15 +102,14 @@ MapConfig.EnemySpawns = {
 	{ name = "GraveGhouls", enemyId = "lantern_ghoul", count = 2, respawn = 25, at = { -400, -270 } },
 	{ name = "GraveWisps", enemyId = "lantern_wisp", count = 2, respawn = 25, at = { -460, -330 } },
 	{ name = "VillageRoadSpear", enemyId = "spear_ronin", count = 1, respawn = 30, at = { -470, -520 } },
-	{ name = "VillageDuelists", enemyId = "ashen_duelist", count = 2, respawn = 30, at = { -350, -730 } },
-	{ name = "VillageBandits", enemyId = "rustbound_bandit", count = 2, respawn = 25, at = { -420, -800 } },
+	{ name = "VillageDuelists", enemyId = "ashen_duelist", count = 2, respawn = 30, at = { -340, -700 } },
 	{ name = "CliffMonk", enemyId = "ash_monk", count = 1, respawn = 30, at = { -330, -880 } },
 	{ name = "EastRoadArcher", enemyId = "kite_archer", count = 1, respawn = 30, at = { 220, -360 } },
-	{ name = "GorgeStalkers", enemyId = "rustwood_stalker", count = 2, respawn = 30, at = { 400, -330 } },
-	{ name = "GorgeHounds", enemyId = "rust_hound", count = 2, respawn = 30, at = { 450, -400 } },
+	{ name = "GorgeStalkers", enemyId = "rustwood_stalker", count = 2, respawn = 30, at = { 480, -300 } },
+	{ name = "GorgeHounds", enemyId = "rust_hound", count = 2, respawn = 30, at = { 460, -470 } },
 	{ name = "StairSentinel", enemyId = "rust_eaten_sentinel", count = 1, respawn = 40, at = { 470, -560 } },
 	{ name = "TempleMonks", enemyId = "ash_monk", count = 2, respawn = 30, at = { 280, -970 } },
-	{ name = "TempleSpears", enemyId = "spear_ronin", count = 1, respawn = 30, at = { 330, -1030 } },
+	{ name = "TempleSpears", enemyId = "spear_ronin", count = 1, respawn = 30, at = { 250, -1060 } },
 	{ name = "GateShinobi", enemyId = "shadow_shinobi", count = 2, respawn = 30, at = { -40, -1030 } },
 	{ name = "PassBrute", enemyId = "mire_brute", count = 1, respawn = 45, at = { 0, -760 } },
 	-- Night only (ValleyClock): the dead walk after dusk and fade at dawn.
@@ -120,10 +123,10 @@ MapConfig.EnemySpawns = {
 	{ name = "TowerArcherGorge", enemyId = "kite_archer", count = 1, respawn = 45, at = { 320, -290 }, lookout = 8 },
 	{ name = "TowerArcherTemple", enemyId = "kite_archer", count = 1, respawn = 45, at = { 225, -945 }, lookout = 10 },
 	-- Elites (super enemies): one per wing, long respawn.
-	{ name = "EliteGravelord", enemyId = "gravelord", count = 1, respawn = 180, at = { -440, -320 } },
-	{ name = "EliteMatriarch", enemyId = "gorge_matriarch", count = 1, respawn = 180, at = { 440, -380 } },
-	{ name = "EliteOniCaptain", enemyId = "oni_captain", count = 1, respawn = 180, at = { -380, -780 } },
-	{ name = "EliteRetainer", enemyId = "masked_retainer", count = 1, respawn = 180, at = { 300, -1020 } },
+	{ name = "EliteGravelord", enemyId = "gravelord", count = 1, respawn = 180, at = { -490, -250 } },
+	{ name = "EliteMatriarch", enemyId = "gorge_matriarch", count = 1, respawn = 180, at = { 430, -380 } },
+	{ name = "EliteOniCaptain", enemyId = "oni_captain", count = 1, respawn = 180, at = { -410, -800 } },
+	{ name = "EliteRetainer", enemyId = "masked_retainer", count = 1, respawn = 180, at = { 380, -1050 } },
 }
 
 -- Boss shrines (pads; the fight happens in an instanced arena).
@@ -193,6 +196,15 @@ MapConfig.Route = MapConfig.Roads[1]
 MapConfig.Ridge = { minRadius = 55, maxRadius = 95, spacing = 55, snowAbove = 85 }
 
 MapConfig.PetalRate = 25
+
+-- Decoration density (less clutter = calmer roads, clearer fights).
+MapConfig.Clutter = {
+	toriiRoadFrom = 40, -- first torii of Torii Road (z)
+	toriiRoadCount = 5, -- was a tunnel of 22
+	toriiRoadSpacing = 42,
+	stairTorii = true, -- one gate halfway up each stair (was one every 10 steps)
+	gatesPerZone = 1, -- named entrance gates per zone (was one per road)
+}
 
 -- Terrain material colors (Japanese palette: moss, earth, white gravel).
 MapConfig.MaterialColors = {

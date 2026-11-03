@@ -439,10 +439,11 @@ local function buildZones(world: Model)
 		local m = K.model(a.name, world)
 		local c = ground(a.center[1], a.center[2])
 		if a.theme == "ToriiRoad" then
-			-- Senbon torii tunnel along the road.
-			for z = 40, -150, -9 do
-				local p = ground(0, z)
-				torii(m, p, 0, 13, 13, if z == 40 then "TORII ROAD" else nil)
+			-- A short procession of torii along the road (spaced out so the road stays open).
+			local first = MapConfig.Clutter.toriiRoadFrom
+			for i = 0, MapConfig.Clutter.toriiRoadCount - 1 do
+				local z = first - i * MapConfig.Clutter.toriiRoadSpacing
+				torii(m, ground(0, z), 0, 13, 13, if i == 0 then "TORII ROAD" else nil)
 			end
 		elseif a.theme == "Bamboo" then
 			scatterIn(a, 10, a.radius, 260, 9, function(p)
@@ -636,7 +637,8 @@ local function buildStair(world: Model, a: RP, b: RP, index: number)
 		local y = a.y + (s + 1) * stepRise
 		local cf = CFrame.new(ax + ux * d, y - 4, az + uz * d) * CFrame.Angles(0, yaw, 0)
 		K.part(stair, "Step", Vector3.new(width, 8, stepRun + 0.2), cf, col(C.Flagstone), Enum.Material.Slate)
-		if s % 10 == 5 then
+		if MapConfig.Clutter.stairTorii and s == math.floor(count / 2) then
+			-- One gate halfway up each stair.
 			torii(stair, Vector3.new(ax + ux * d, y, az + uz * d), yaw, width + 2, 13)
 		end
 		if s % 5 == 0 then
@@ -704,9 +706,11 @@ local function buildRoad(world: Model)
 			end
 		end
 	end
-	-- Zone entrance gates (where each road crosses a zone edge), with the zone name on the plaque.
+	-- Zone entrance gates (where a road crosses a zone edge), with the zone name on the plaque.
+	-- Only the first entrance of each zone gets one, so the valley is not a forest of gates.
 	local gates: { Vector3 } = {}
 	for _, area in MapConfig.Areas do
+		local gated = 0
 		if area.theme ~= "ToriiRoad" and area.theme ~= "Stairs" and area.theme ~= "Springs" then
 			for r = 1, #MapConfig.Roads do
 				local best, bestD = nil, math.huge
@@ -727,7 +731,8 @@ local function buildRoad(world: Model)
 							dup = true
 						end
 					end
-					if not dup then
+					if not dup and gated < MapConfig.Clutter.gatesPerZone then
+						gated += 1
 						table.insert(gates, pos)
 						torii(world, pos, math.atan2(-best[3], -best[4]), 16, 17, string.upper(area.name))
 					end

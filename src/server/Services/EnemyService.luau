@@ -35,6 +35,7 @@ local AIScheduler = require(Logic:WaitForChild("AIScheduler"))
 local AttackDirector = require(Logic:WaitForChild("AttackDirector"))
 local CombatRules = require(Logic:WaitForChild("CombatRules"))
 local Posture = require(Logic:WaitForChild("Posture"))
+local EnemyMovement = require(Logic:WaitForChild("EnemyMovement"))
 
 local RigBuilder = require(script.Parent.Parent:WaitForChild("World"):WaitForChild("RigBuilder"))
 local CreatureBuilder = require(script.Parent.Parent:WaitForChild("World"):WaitForChild("CreatureBuilder"))
@@ -65,6 +66,10 @@ type Brain = {
 	patrolTo: Vector3?,
 	sentry: boolean, -- stands its post (archers on lookout towers): never walks
 	alertUntil: number, -- a nearby ally shouted: aware of players for a few seconds
+	attackedAt: number, -- when the last attack sequence started
+	attackHandled: number, -- attackedAt value whose aftermath (step back?) was decided
+	retreatUntil: number, -- stepping back to the ring until then
+	driftSign: number, -- +1/-1: which way this enemy's ring slot drifts
 }
 
 local EnemyService = {
@@ -328,6 +333,7 @@ local function startAttack(b: Brain, attackId: string, now: number)
 		end
 	end
 	b.busyUntil = now + t
+	b.attackedAt = now
 	task.delay(t, function()
 		director:Release(b.c.id, os.clock())
 	end)
@@ -449,13 +455,51 @@ local function think(b: Brain, _dt: number, now: number)
 		end
 	end
 	local tp = target.root.Position
+	local me = b.c.root.Position
+	local M = EnemyConfig.Movement
+	-- Everyone fighting this target (for ring slots) and every ally close by (for separation).
+	local sameTarget: { string } = {}
+	local near: { { number } } = {}
+	for _, other in brains do
+		if not other.c.dead then
+			if other.target == target then
+				table.insert(sameTarget, other.c.id)
+			end
+			if other ~= b then
+				local op = other.c.root.Position
+				if math.abs(op.X - me.X) < M.separationRadius and math.abs(op.Z - me.Z) < M.separationRadius then
+					table.insert(near, { op.X, op.Z })
+				end
+			end
+		end
+	end
+	local sx, sz = EnemyMovement.Separation(me.X, me.Z, near, M.separationRadius)
+	local push = Vector3.new(sx, 0, sz)
+	-- Just finished an attack: maybe step back to the ring and let someone else go.
+	if b.attackHandled ~= b.attackedAt then
+		b.attackHandled = b.attackedAt
+		if b.attackedAt > 0 and EnemyMovement.WantsStepBack(#sameTarget, rng:NextNumber()) then
+			b.retreatUntil = now + M.stepBackSeconds
+			b.nextAttackAt = math.max(b.nextAttackAt, b.retreatUntil)
+		end
+	end
+	if now < b.retreatUntil then
+		local rx, rz = EnemyMovement.StepBack(me.X, me.Z, tp.X, tp.Z, b.def.preferredRange)
+		humanoid:MoveTo(Vector3.new(rx, me.Y, rz) + push)
+		face(b, tp)
+		return
+	end
 	if dist > b.def.preferredRange + 2 then
-		humanoid:MoveTo(tp)
+		humanoid:MoveTo(tp + push)
 	else
-		-- Circle at preferred range while waiting for a token / cooldown.
-		b.circleAngle += 0.35
-		local offset = Vector3.new(math.cos(b.circleAngle), 0, math.sin(b.circleAngle)) * b.def.preferredRange
-		humanoid:MoveTo(tp + offset)
+		-- Wait on a ring slot at preferred range (spread out around the target).
+		local index, count = EnemyMovement.SlotIndex(b.c.id, sameTarget)
+		local bias = math.atan2(me.Z - tp.Z, me.X - tp.X)
+		-- The ring's phase is shared by everyone on this target (same clock), so slots never
+		-- collide; a lone enemy drifts around its own side instead.
+		local phase = if count > 1 then now * M.ringDrift else b.driftSign * M.loneStrafe
+		local px, pz = EnemyMovement.RingPoint(tp.X, tp.Z, index, count, b.def.preferredRange, phase, if count > 1 then 0 else bias)
+		humanoid:MoveTo(Vector3.new(px, me.Y, pz) + push)
 		face(b, tp)
 	end
 end
@@ -550,6 +594,10 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 		patrolTo = nil,
 		sentry = opts ~= nil and opts.sentry == true,
 		alertUntil = 0,
+		attackedAt = 0,
+		attackHandled = 0,
+		retreatUntil = 0,
+		driftSign = if rng:NextNumber() < 0.5 then -1 else 1,
 	}
 	brains[id] = brain
 	-- Sekiro-style: an aware enemy that isn't swinging or stunned can deflect your strikes.
@@ -612,17 +660,38 @@ local function runSpawner(spawnPart: BasePart)
 	local scatter = tonumber(spawnPart:GetAttribute("Scatter")) or EnemyConfig.DefaultSpawnScatter
 	local sentry = spawnPart:GetAttribute("Sentry") == true
 	local nightOnly = spawnPart:GetAttribute("NightOnly") == true
+	local members: { Combatant } = {}
 	local function spawnOne()
+		for i = #members, 1, -1 do
+			if members[i].dead then
+				table.remove(members, i)
+			end
+		end
 		if nightOnly then
 			-- The dead only walk at night: wait for dusk.
 			while not ValleyClock.IsNight() do
 				task.wait(5)
 			end
 		end
-		local offset = Vector3.new(rng:NextNumber(-scatter, scatter), if sentry then 0.5 else 3, rng:NextNumber(-scatter, scatter))
+		-- Keep pack members apart: pick a spot at least packGap from the living members.
+		local existing: { { number } } = {}
+		for _, m in members do
+			if not m.dead then
+				local mp = m.root.Position - spawnPart.Position
+				table.insert(existing, { mp.X, mp.Z })
+			end
+		end
+		local M = EnemyConfig.Movement
+		local ox, oz = EnemyMovement.PackOffset(existing, scatter, M.packGap, M.packTries, function(lo, hi)
+			return rng:NextNumber(lo, hi)
+		end)
+		local offset = Vector3.new(ox, if sentry then 0.5 else 3, oz)
 		local c = EnemyService.Spawn(enemyId, spawnPart.CFrame + offset, function()
 			task.delay(respawn, spawnOne)
 		end, { sentry = sentry })
+		if c then
+			table.insert(members, c)
+		end
 		if c and nightOnly then
 			-- ...and fade away at dawn (no reward; it comes back next night).
 			task.spawn(function()

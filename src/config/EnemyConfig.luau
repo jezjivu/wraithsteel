@@ -82,13 +82,13 @@ local EnemyConfig = {}
 -- AI scheduler / director ------------------------------------------------------------------
 EnemyConfig.AITickRate = 10 -- Hz, batched across all enemies
 EnemyConfig.MaxEnemiesPerTickSlice = 40 -- spread work over frames if more are alive
-EnemyConfig.AttackTokensPerPlayer = 3 -- at most N enemies attack the same player at once
+EnemyConfig.AttackTokensPerPlayer = 2 -- at most N enemies attack the same player at once (others wait on the ring)
 EnemyConfig.AttackTokenDuration = 2.5 -- seconds a token is held before it must be returned
 EnemyConfig.AttackTokenCooldown = 0.6 -- seconds before a returned token can be re-granted
 EnemyConfig.StateReplicationRate = 10 -- Hz, batched EnemyState remote
 EnemyConfig.DespawnAfterDeath = 4
 EnemyConfig.DefaultRespawnSeconds = 20
-EnemyConfig.DefaultSpawnScatter = 22 -- studs; enemies spread out around their spawn (attribute Scatter overrides)
+EnemyConfig.DefaultSpawnScatter = 26 -- studs; enemies spread out around their spawn (attribute Scatter overrides)
 EnemyConfig.PostureBrokenSeconds = 2.5
 EnemyConfig.DefaultStep = 2.5 -- studs every enemy strike steps forward
 EnemyConfig.HitKnockback = 10 -- studs/s pushback when an enemy hit lands
@@ -117,6 +117,20 @@ EnemyConfig.Stealth = { viewDegrees = 120, closeRange = 7 }
 EnemyConfig.Alert = { radius = 30, seconds = 6 }
 -- Idle patrols: unaware enemies wander slowly around their post, so you can time a sneak.
 EnemyConfig.Patrol = { radius = 16, pauseMin = 2.5, pauseMax = 6, speedFactor = 0.4 }
+-- Fight spacing (Logic/EnemyMovement): ring slots around the player, no stacking, take turns.
+EnemyConfig.Movement = {
+	separationRadius = 7, -- allies closer than this push apart
+	maxSlotDegrees = 70, -- widest gap between neighbouring ring slots
+	ringDrift = 0.22, -- radians/s the shared waiting ring slowly turns
+	loneStrafe = 0.35, -- radians: a lone enemy side-steps this far along its ring each think
+	stepBackChance = 0.25, -- base chance to back off after an attack
+	stepBackPerAlly = 0.15, -- + per other enemy fighting the same player
+	stepBackMax = 0.6,
+	stepBackExtra = 6, -- studs beyond preferred range
+	stepBackSeconds = 0.9,
+	packGap = 12, -- studs between members of one spawn group
+	packTries = 8,
+}
 EnemyConfig.SpawnFolderName = "EnemySpawns" -- TODO(Studio/Agent D): Workspace folder of spawn Parts
 EnemyConfig.TemplateFolderName = "Enemies" -- TODO(Studio/Agent C): ServerStorage folder of rigs
 
