@@ -117,7 +117,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.45,
 		rewards = { ember = 450, xp = 500, jadeFirstClear = 20 },
 		modelId = 0, -- TODO(Studio/Agent C): Sable Crane rig
-		look = { skin = { 225, 200, 180 }, body = { 30, 28, 34 }, legs = { 25, 22, 28 }, headwear = "Hair", accent = { 230, 60, 50 }, glow = { 255, 120, 90 }, weapon = "jian_ninth_bell", scale = 1.15 },
+		look = { skin = { 225, 200, 180 }, body = { 30, 28, 34 }, legs = { 25, 22, 28 }, headwear = "Hair", accent = { 230, 60, 50 }, glow = { 255, 120, 90 }, weapon = "jian_ninth_bell", outfit = "Ronin", mask = "Menpo", scale = 1.15 },
 	},
 	-- Neon Verge boss: a cyber-samurai warden. Katana strings she deflects with, plasma orbs
 	-- you can send back, EMP rings to jump, orbital strikes to outrun.
@@ -150,7 +150,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.45,
 		rewards = { ember = 1200, xp = 1400, jadeFirstClear = 40 },
 		modelId = 0,
-		look = { skin = { 220, 215, 225 }, body = { 30, 30, 40 }, legs = { 20, 20, 28 }, headwear = "Visor", accent = { 200, 200, 215 }, glow = { 255, 60, 200 }, weapon = "jian_ninth_bell", scale = 1.35 },
+		look = { skin = { 220, 215, 225 }, body = { 30, 30, 40 }, legs = { 20, 20, 28 }, headwear = "Visor", accent = { 200, 200, 215 }, glow = { 255, 60, 200 }, weapon = "jian_ninth_bell", outfit = "Cyber", scale = 1.35 },
 	},
 	-- Aeloria boss: the bronze Sun-Archon. Slow, enormous, fights with the sun itself.
 	archon_helion = {
@@ -183,7 +183,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.6,
 		rewards = { ember = 2500, xp = 2800, jadeFirstClear = 60 },
 		modelId = 0,
-		look = { skin = { 200, 150, 80 }, body = { 190, 130, 60 }, legs = { 170, 110, 50 }, headwear = "Laurel", accent = { 230, 200, 120 }, glow = { 255, 205, 90 }, weapon = "spear_skypiercer", scale = 2.4 },
+		look = { skin = { 200, 150, 80 }, body = { 190, 130, 60 }, legs = { 170, 110, 50 }, headwear = "Laurel", accent = { 230, 200, 120 }, glow = { 255, 205, 90 }, weapon = "spear_skypiercer", outfit = "Hoplite", scale = 2.4 },
 	},
 	-- Chapter 1: Rustwood Pass
 	hollow_abbot = {
@@ -214,7 +214,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.7,
 		rewards = { ember = 1200, xp = 1500, jadeFirstClear = 30 },
 		modelId = 0, -- TODO(Studio/Agent C)
-		look = { skin = { 170, 165, 160 }, body = { 90, 90, 100 }, legs = { 70, 70, 80 }, headwear = "Hood", accent = { 200, 190, 170 }, weapon = "staff_bellringer", scale = 1.9 },
+		look = { skin = { 170, 165, 160 }, body = { 90, 90, 100 }, legs = { 70, 70, 80 }, headwear = "Hood", accent = { 200, 190, 170 }, weapon = "staff_bellringer", outfit = "Monk", scale = 1.9 },
 	},
 	twin_cinder_sisters = {
 		name = "Twin Cinder Sisters",
@@ -240,7 +240,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.7,
 		rewards = { ember = 1400, xp = 1700, jadeFirstClear = 30 },
 		modelId = 0, -- TODO(Studio/Agent C)
-		look = { skin = { 230, 190, 160 }, body = { 170, 40, 35 }, legs = { 90, 25, 25 }, headwear = "Hair", accent = { 255, 140, 60 }, weapon = "fan_iron_lotus", glow = { 255, 120, 50 }, scale = 1.7 },
+		look = { skin = { 230, 190, 160 }, body = { 170, 40, 35 }, legs = { 90, 25, 25 }, headwear = "Hair", accent = { 255, 140, 60 }, weapon = "fan_iron_lotus", glow = { 255, 120, 50 }, outfit = "Noble", mask = "Kitsune", scale = 1.7 },
 	},
 	rustwood_matriarch = {
 		name = "Rustwood Matriarch",
@@ -266,7 +266,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.7,
 		rewards = { ember = 1700, xp = 2000, jadeFirstClear = 35 },
 		modelId = 0, -- TODO(Studio/Agent C)
-		look = { skin = { 110, 130, 80 }, body = { 80, 70, 45 }, legs = { 60, 50, 35 }, headwear = "Horns", accent = { 140, 160, 90 }, weapon = "spear_crimson_tassel", scale = 2.5 },
+		look = { skin = { 110, 130, 80 }, body = { 80, 70, 45 }, legs = { 60, 50, 35 }, headwear = "Horns", accent = { 140, 160, 90 }, weapon = "spear_crimson_tassel", outfit = "Shinobi", scale = 2.5 },
 	},
 	gatekeeper_of_rust = {
 		name = "Gatekeeper of Rust",
@@ -294,7 +294,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.7,
 		rewards = { ember = 2600, xp = 3000, jadeFirstClear = 50 },
 		modelId = 0, -- TODO(Studio/Agent C)
-		look = { skin = { 90, 90, 100 }, body = { 60, 60, 70 }, legs = { 45, 45, 55 }, headwear = "Helm", accent = { 160, 80, 40 }, weapon = "gb_gatebreaker", scale = 2.7 },
+		look = { skin = { 90, 90, 100 }, body = { 60, 60, 70 }, legs = { 45, 45, 55 }, headwear = "Helm", accent = { 160, 80, 40 }, weapon = "gb_gatebreaker", outfit = "Samurai", mask = "Oni", scale = 2.7 },
 	},
 	-- World bosses (WorldBossService) ---------------------------------------------------------
 	hollow_carillon = {
@@ -323,7 +323,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.9,
 		rewards = { ember = 1500, xp = 1200, jadeFirstClear = 40 },
 		modelId = 0, -- TODO(Studio/Agent C): giant bell construct rig
-		look = { skin = { 150, 115, 60 }, body = { 130, 95, 45 }, legs = { 90, 65, 35 }, headwear = "Bell", accent = { 255, 200, 120 }, weapon = "staff_bellringer", glow = { 255, 190, 110 }, scale = 3.4 },
+		look = { skin = { 150, 115, 60 }, body = { 130, 95, 45 }, legs = { 90, 65, 35 }, headwear = "Bell", accent = { 255, 200, 120 }, weapon = "staff_bellringer", glow = { 255, 190, 110 }, outfit = "Monk", scale = 3.4 },
 	},
 } :: { [string]: BossDef }
 

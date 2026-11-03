@@ -55,54 +55,54 @@ SagaConfig.Npcs = {
 	-- Ashen Valley ---------------------------------------------------------------------------
 	{
 		id = "shirane", name = "Elder Shirane", title = "Keeper of the Cracked Bell", realm = "japan", hub = true, at = { -10, -26 }, facing = 180,
-		look = { skin = { 220, 190, 160 }, body = { 90, 60, 110 }, legs = { 60, 45, 70 }, headwear = "Hair", accent = { 230, 230, 230 }, scale = 1 },
+		look = { skin = { 220, 190, 160 }, body = { 90, 60, 110 }, legs = { 60, 45, 70 }, headwear = "Hair", accent = { 230, 230, 230 }, outfit = "Noble", face = "Calm", scale = 1 },
 		chatter = { "The bell still hums at night. Listen, and you will hear it counting.", "Nine gates. One bell. And you, carrying its echo." },
 	},
 	{
 		id = "oto", name = "Gravekeeper Oto", title = "Lantern-tender", realm = "japan", at = { -445, -275 }, facing = 90,
-		look = { skin = { 200, 175, 150 }, body = { 60, 60, 55 }, legs = { 45, 45, 40 }, headwear = "Hood", accent = { 80, 75, 65 }, glow = { 255, 190, 90 }, scale = 1 },
+		look = { skin = { 200, 175, 150 }, body = { 60, 60, 55 }, legs = { 45, 45, 40 }, headwear = "Hood", accent = { 80, 75, 65 }, glow = { 255, 190, 90 }, outfit = "Monk", face = "Calm", scale = 1 },
 		chatter = { "The dead keep their lanterns lit. I just make sure they stay where they are." },
 	},
 	{
 		id = "sabaki", name = "Sabaki", title = "Ronin of the Ashen Village", realm = "japan", at = { -340, -720 }, facing = 200,
-		look = { skin = { 210, 180, 150 }, body = { 50, 40, 40 }, legs = { 35, 30, 30 }, headwear = "Hair", accent = { 160, 40, 40 }, weapon = "dao_rustcutter", scale = 1 },
+		look = { skin = { 210, 180, 150 }, body = { 50, 40, 40 }, legs = { 35, 30, 30 }, headwear = "Hair", accent = { 160, 40, 40 }, weapon = "dao_rustcutter", outfit = "Ronin", face = "Calm", scale = 1 },
 		chatter = { "I owe a debt to a woman with a crane on her sleeve. One day I'll pay it in steel." },
 	},
 	{
 		id = "hana", name = "Hana", title = "Noodle seller", realm = "japan", hub = true, at = { 22, -30 }, facing = 200,
-		look = { skin = { 230, 200, 175 }, body = { 200, 80, 80 }, legs = { 60, 50, 50 }, headwear = "Hair", accent = { 240, 200, 120 }, scale = 0.95 },
+		look = { skin = { 230, 200, 175 }, body = { 200, 80, 80 }, legs = { 60, 50, 50 }, headwear = "Hair", accent = { 240, 200, 120 }, outfit = "Ronin", face = "Calm", scale = 0.95 },
 		chatter = { "Broth's warm, prices are fair, and I don't ask where you got the rust on your boots.", "They say the gate by the plaza glows blue now. Spooky." },
 	},
 	-- Neon Verge -----------------------------------------------------------------------------
 	{
 		id = "juno", name = "Juno-7", title = "Fixer of Circuit Square", realm = "neon", at = { -14, 22 }, facing = 160,
-		look = { skin = { 190, 160, 140 }, body = { 40, 30, 60 }, legs = { 25, 25, 35 }, headwear = "Visor", accent = { 60, 230, 255 }, glow = { 60, 230, 255 }, scale = 1 },
+		look = { skin = { 190, 160, 140 }, body = { 40, 30, 60 }, legs = { 25, 25, 35 }, headwear = "Visor", accent = { 60, 230, 255 }, glow = { 60, 230, 255 }, outfit = "Cyber", face = "Calm", scale = 1 },
 		chatter = { "Everything has a price in the Verge. Even silence. Especially silence.", "You came through a bell-gate? Cute. Don't tell the Spire." },
 	},
 	{
 		id = "pell", name = "Pell", title = "Rail mechanic", realm = "neon", at = { 110, 80 }, facing = 90,
-		look = { skin = { 160, 120, 100 }, body = { 200, 150, 40 }, legs = { 60, 60, 70 }, headwear = "Helm", accent = { 90, 90, 100 }, scale = 1.05 },
+		look = { skin = { 160, 120, 100 }, body = { 200, 150, 40 }, legs = { 60, 60, 70 }, headwear = "Helm", accent = { 90, 90, 100 }, outfit = "Cyber", face = "Calm", scale = 1.05 },
 		chatter = { "Mag-rails don't sleep. Neither do I. Coincidence? Absolutely not." },
 	},
 	{
 		id = "kiri", name = "Kiri", title = "Street hacker", realm = "neon", at = { -130, 70 }, facing = 0,
-		look = { skin = { 220, 195, 175 }, body = { 255, 60, 200 }, legs = { 30, 30, 40 }, headwear = "Hair", accent = { 60, 230, 255 }, scale = 0.95 },
+		look = { skin = { 220, 195, 175 }, body = { 255, 60, 200 }, legs = { 30, 30, 40 }, headwear = "Hair", accent = { 60, 230, 255 }, outfit = "Cyber", face = "Calm", scale = 0.95 },
 		chatter = { "Drones run on bell-frequency firmware. Funny, right? No? Okay.", "Kagura-9 used to protect this city. Now she just protects the Spire." },
 	},
 	-- Aeloria ----------------------------------------------------------------------------------
 	{
 		id = "ithea", name = "Oracle Ithea", title = "Voice of the Three Flames", realm = "greek", at = { 0, -28 }, facing = 0,
-		look = { skin = { 225, 200, 175 }, body = { 245, 240, 230 }, legs = { 230, 225, 215 }, headwear = "Laurel", accent = { 200, 170, 90 }, glow = { 255, 215, 120 }, scale = 1 },
+		look = { skin = { 225, 200, 175 }, body = { 245, 240, 230 }, legs = { 230, 225, 215 }, headwear = "Laurel", accent = { 200, 170, 90 }, glow = { 255, 215, 120 }, outfit = "Robe", face = "Calm", scale = 1 },
 		chatter = { "I saw you before you arrived. You were taller in the vision.", "The sun here is not a star. It is a prisoner. Remember that." },
 	},
 	{
 		id = "dorian", name = "Captain Dorian", title = "Last of the Harbor Guard", realm = "greek", at = { -120, -10 }, facing = 90,
-		look = { skin = { 210, 170, 130 }, body = { 170, 40, 35 }, legs = { 180, 120, 60 }, headwear = "Crest", accent = { 40, 40, 140 }, weapon = "spear_reedline", scale = 1.05 },
+		look = { skin = { 210, 170, 130 }, body = { 170, 40, 35 }, legs = { 180, 120, 60 }, headwear = "Crest", accent = { 40, 40, 140 }, weapon = "spear_reedline", outfit = "Hoplite", face = "Calm", scale = 1.05 },
 		chatter = { "My men marched into the olive groves. Their armor marched back out. Without them." },
 	},
 	{
 		id = "lysander", name = "Lysander", title = "Philosopher (unpaid)", realm = "greek", at = { 30, 26 }, facing = 200,
-		look = { skin = { 215, 185, 155 }, body = { 220, 210, 190 }, legs = { 200, 190, 170 }, headwear = "Hair", accent = { 120, 110, 100 }, scale = 1 },
+		look = { skin = { 215, 185, 155 }, body = { 220, 210, 190 }, legs = { 200, 190, 170 }, headwear = "Hair", accent = { 120, 110, 100 }, outfit = "Robe", face = "Calm", scale = 1 },
 		chatter = { "If a bell cracks and no one hears it, does the world still end? I have a pamphlet.", "The statues argue at night. I've been taking notes." },
 	},
 } :: { NpcDef }

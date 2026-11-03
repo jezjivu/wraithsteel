@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = ReplicatedStorage:WaitForChild("Config")
 local WeaponModels = require(Shared:WaitForChild("WeaponModels"))
+local Outfits = require(script.Parent.Outfits)
 local EnemyConfig = require(Config:WaitForChild("EnemyConfig"))
 
 type RigLook = EnemyConfig.RigLook
@@ -139,6 +140,7 @@ function RigBuilder.Build(look: RigLook, name: string): Model?
 	local model = result :: Model
 	model.Name = name
 
+	Outfits.Apply(model, look :: any, attach)
 	local head = model:FindFirstChild("Head")
 	if head and head:IsA("BasePart") and look.headwear then
 		local build = headwear[look.headwear]

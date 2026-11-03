@@ -43,6 +43,11 @@ export type RigLook = {
 	glow: { number }?,
 	weapon: string?,
 	scale: number,
+	-- Part-built clothing / armor (World/Outfits): Ronin | Samurai | Monk | Shinobi | Bandit |
+	-- Archer | Hoplite | Cyber | Robe | Noble
+	outfit: string?,
+	mask: string?, -- Oni | Menpo | Kitsune | Cloth | Skull
+	face: string?, -- Grim (default) | Calm | Glow | None (stock face)
 }
 
 export type EnemyDef = {
@@ -157,7 +162,7 @@ EnemyConfig.Enemies = {
 		deflectChance = 0.5,
 		modelId = 0,
 		training = true,
-		look = { skin = { 215, 185, 150 }, body = { 235, 225, 205 }, legs = { 60, 50, 45 }, headwear = "Hair", accent = { 140, 40, 35 }, weapon = "staff_pilgrim", scale = 1.05 },
+		look = { skin = { 215, 185, 150 }, body = { 235, 225, 205 }, legs = { 60, 50, 45 }, headwear = "Hair", accent = { 140, 40, 35 }, weapon = "staff_pilgrim", outfit = "Noble", scale = 1.05 },
 	},
 	rustbound_bandit = {
 		name = "Rustbound Bandit",
@@ -182,7 +187,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.25,
 		deflectChance = 0.5,
 		modelId = 0,
-		look = { skin = { 200, 160, 130 }, body = { 120, 60, 40 }, legs = { 60, 50, 45 }, headwear = "Hood", accent = { 150, 80, 40 }, weapon = "dao_rustcutter", scale = 1 },
+		look = { skin = { 200, 160, 130 }, body = { 120, 60, 40 }, legs = { 60, 50, 45 }, headwear = "Hood", accent = { 150, 80, 40 }, weapon = "dao_rustcutter", outfit = "Bandit", mask = "Cloth", scale = 1 },
 	},
 	lantern_ghoul = {
 		name = "Lantern Ghoul",
@@ -203,7 +208,7 @@ EnemyConfig.Enemies = {
 		xpReward = 14,
 		flinch = true,
 		modelId = 0,
-		look = { skin = { 120, 140, 120 }, body = { 50, 55, 50 }, legs = { 40, 40, 40 }, headwear = "Lantern", accent = { 255, 190, 90 }, glow = { 255, 170, 70 }, scale = 1.1 },
+		look = { skin = { 120, 140, 120 }, body = { 50, 55, 50 }, legs = { 40, 40, 40 }, headwear = "Lantern", accent = { 255, 190, 90 }, glow = { 255, 170, 70 }, outfit = "Monk", mask = "Skull", scale = 1.1 },
 	},
 	-- Chapter 1: Rustwood Pass
 	rustwood_stalker = {
@@ -229,7 +234,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.2,
 		deflectChance = 0.6,
 		modelId = 0,
-		look = { skin = { 150, 120, 90 }, body = { 70, 85, 50 }, legs = { 60, 50, 35 }, headwear = "Hood", accent = { 90, 110, 60 }, weapon = "spear_reedline", scale = 1.05 },
+		look = { skin = { 150, 120, 90 }, body = { 70, 85, 50 }, legs = { 60, 50, 35 }, headwear = "Hood", accent = { 90, 110, 60 }, weapon = "spear_reedline", outfit = "Shinobi", scale = 1.05 },
 	},
 	rust_eaten_sentinel = {
 		name = "Rust-Eaten Sentinel",
@@ -253,7 +258,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.4,
 		deflectChance = 0.7,
 		modelId = 0,
-		look = { skin = { 120, 90, 70 }, body = { 110, 70, 45 }, legs = { 90, 60, 40 }, headwear = "Helm", accent = { 150, 85, 45 }, weapon = "staff_pilgrim", scale = 1.45 },
+		look = { skin = { 120, 90, 70 }, body = { 110, 70, 45 }, legs = { 90, 60, 40 }, headwear = "Helm", accent = { 150, 85, 45 }, weapon = "staff_pilgrim", outfit = "Samurai", mask = "Menpo", scale = 1.45 },
 	},
 	-- Duelists: few hit points, iron posture, deflect strings and punish with thrusts.
 	ashen_duelist = {
@@ -279,7 +284,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.55,
 		deflectChance = 0.75,
 		modelId = 0,
-		look = { skin = { 210, 175, 150 }, body = { 60, 55, 60 }, legs = { 40, 38, 42 }, headwear = "Hair", accent = { 200, 70, 50 }, weapon = "jian_moonwater", scale = 1 },
+		look = { skin = { 210, 175, 150 }, body = { 60, 55, 60 }, legs = { 40, 38, 42 }, headwear = "Hair", accent = { 200, 70, 50 }, weapon = "jian_moonwater", outfit = "Ronin", scale = 1 },
 	},
 	-- Brutes: slow, huge posture, sweeping and grabbing. Jump the sweeps, dash from the grabs.
 	mire_brute = {
@@ -305,7 +310,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.15,
 		deflectChance = 0.3,
 		modelId = 0,
-		look = { skin = { 110, 120, 90 }, body = { 70, 80, 55 }, legs = { 55, 60, 40 }, headwear = "Horns", accent = { 120, 160, 90 }, glow = { 150, 255, 120 }, weapon = "gb_gatebreaker", scale = 1.55 },
+		look = { skin = { 110, 120, 90 }, body = { 70, 80, 55 }, legs = { 55, 60, 40 }, headwear = "Horns", accent = { 120, 160, 90 }, glow = { 150, 255, 120 }, weapon = "gb_gatebreaker", outfit = "Bandit", scale = 1.55 },
 	},
 	-- Ashen Valley: more variety ------------------------------------------------------------
 	-- Rust Hound: a lean rusted beast. Fast bites, a pounce you dash into.
@@ -354,7 +359,7 @@ EnemyConfig.Enemies = {
 		xpReward = 18,
 		flinch = true,
 		modelId = 0,
-		look = { skin = { 205, 170, 140 }, body = { 90, 100, 70 }, legs = { 60, 55, 45 }, headwear = "Helm", accent = { 120, 110, 80 }, weapon = "fan_paper_crane", scale = 1 },
+		look = { skin = { 205, 170, 140 }, body = { 90, 100, 70 }, legs = { 60, 55, 45 }, headwear = "Helm", accent = { 120, 110, 80 }, weapon = "fan_paper_crane", outfit = "Archer", scale = 1 },
 	},
 	-- Ash Monk: staff and palms. Guards a lot; his palm strike sends a short shockwave.
 	ash_monk = {
@@ -381,7 +386,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.55,
 		deflectChance = 0.55,
 		modelId = 0,
-		look = { skin = { 210, 180, 150 }, body = { 200, 110, 50 }, legs = { 150, 80, 40 }, headwear = "Sack", accent = { 120, 60, 30 }, weapon = "staff_pilgrim", scale = 1.05 },
+		look = { skin = { 210, 180, 150 }, body = { 200, 110, 50 }, legs = { 150, 80, 40 }, headwear = "Sack", accent = { 120, 60, 30 }, weapon = "staff_pilgrim", outfit = "Monk", scale = 1.05 },
 	},
 	-- Shadow Shinobi: fragile, very fast. Shuriken fans and a dashing cut.
 	shadow_shinobi = {
@@ -407,7 +412,7 @@ EnemyConfig.Enemies = {
 		flinch = true,
 		deflectChance = 0.3,
 		modelId = 0,
-		look = { skin = { 190, 160, 140 }, body = { 25, 25, 30 }, legs = { 20, 20, 25 }, headwear = "Hood", accent = { 30, 30, 36 }, weapon = "dao_rustcutter", scale = 0.95 },
+		look = { skin = { 190, 160, 140 }, body = { 25, 25, 30 }, legs = { 20, 20, 25 }, headwear = "Hood", accent = { 30, 30, 36 }, weapon = "dao_rustcutter", outfit = "Shinobi", mask = "Cloth", scale = 0.95 },
 	},
 	-- Lantern Wisp: a floating paper lantern that spits fire.
 	lantern_wisp = {
@@ -456,7 +461,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.3,
 		deflectChance = 0.4,
 		modelId = 0,
-		look = { skin = { 210, 180, 150 }, body = { 60, 60, 90 }, legs = { 40, 40, 60 }, headwear = "Helm", accent = { 140, 140, 160 }, weapon = "spear_reedline", scale = 1.05 },
+		look = { skin = { 210, 180, 150 }, body = { 60, 60, 90 }, legs = { 40, 40, 60 }, headwear = "Helm", accent = { 140, 140, 160 }, weapon = "spear_reedline", outfit = "Samurai", scale = 1.05 },
 	},
 	-- ELITES: super enemies. Each guards a zone and hits like a mini boss.
 	oni_captain = {
@@ -487,7 +492,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.3,
 		deflectChance = 0.45,
 		modelId = 0,
-		look = { skin = { 170, 50, 40 }, body = { 90, 30, 30 }, legs = { 50, 25, 25 }, headwear = "Horns", accent = { 235, 225, 205 }, glow = { 255, 80, 40 }, weapon = "gb_ashen_colossus", scale = 2 },
+		look = { skin = { 170, 50, 40 }, body = { 90, 30, 30 }, legs = { 50, 25, 25 }, headwear = "Horns", accent = { 235, 225, 205 }, glow = { 255, 80, 40 }, weapon = "gb_ashen_colossus", outfit = "Samurai", mask = "Oni", scale = 2 },
 	},
 	gravelord = {
 		name = "Gravelord Ishiki",
@@ -516,7 +521,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.2,
 		deflectChance = 0.3,
 		modelId = 0,
-		look = { skin = { 140, 160, 150 }, body = { 30, 35, 40 }, legs = { 25, 28, 30 }, headwear = "Lantern", accent = { 140, 220, 255 }, glow = { 140, 220, 255 }, weapon = "staff_bellringer", scale = 1.6 },
+		look = { skin = { 140, 160, 150 }, body = { 30, 35, 40 }, legs = { 25, 28, 30 }, headwear = "Lantern", accent = { 140, 220, 255 }, glow = { 140, 220, 255 }, weapon = "staff_bellringer", outfit = "Monk", mask = "Skull", scale = 1.6 },
 	},
 	gorge_matriarch = {
 		name = "Gorge Matriarch",
@@ -577,7 +582,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.5,
 		deflectChance = 0.75,
 		modelId = 0,
-		look = { skin = { 230, 225, 220 }, body = { 40, 30, 50 }, legs = { 30, 25, 35 }, headwear = "Visor", accent = { 200, 60, 60 }, glow = { 255, 60, 60 }, weapon = "jian_ninth_bell", scale = 1.2 },
+		look = { skin = { 230, 225, 220 }, body = { 40, 30, 50 }, legs = { 30, 25, 35 }, headwear = "Visor", accent = { 200, 60, 60 }, glow = { 255, 60, 60 }, weapon = "jian_ninth_bell", outfit = "Samurai", mask = "Kitsune", scale = 1.2 },
 	},
 	-- Neon Verge ---------------------------------------------------------------------------
 	-- Cyber-samurai: fast katana strings, deflects a lot, a plasma thrust you must dash into.
@@ -604,7 +609,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.5,
 		deflectChance = 0.7,
 		modelId = 0,
-		look = { skin = { 200, 200, 210 }, body = { 35, 35, 45 }, legs = { 25, 25, 32 }, headwear = "Visor", accent = { 170, 170, 185 }, glow = { 255, 60, 200 }, weapon = "jian_moonwater", scale = 1.05 },
+		look = { skin = { 200, 200, 210 }, body = { 35, 35, 45 }, legs = { 25, 25, 32 }, headwear = "Visor", accent = { 170, 170, 185 }, glow = { 255, 60, 200 }, weapon = "jian_moonwater", outfit = "Cyber", scale = 1.05 },
 	},
 	-- Hovering drone: keeps its distance and fires bolts (guard them, or dash through).
 	drone_sentry = {
@@ -654,7 +659,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.2,
 		deflectChance = 0.25,
 		modelId = 0,
-		look = { skin = { 150, 150, 160 }, body = { 200, 150, 40 }, legs = { 60, 60, 70 }, headwear = "Visor", accent = { 90, 90, 100 }, glow = { 255, 190, 60 }, weapon = "gb_gatebreaker", scale = 1.6 },
+		look = { skin = { 150, 150, 160 }, body = { 200, 150, 40 }, legs = { 60, 60, 70 }, headwear = "Visor", accent = { 90, 90, 100 }, glow = { 255, 190, 60 }, weapon = "gb_gatebreaker", outfit = "Cyber", scale = 1.6 },
 	},
 	-- Aeloria -------------------------------------------------------------------------------
 	-- Bronze Hoplite: shield wall (guards a lot), spear thrusts, a perilous charge.
@@ -681,7 +686,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.7,
 		deflectChance = 0.55,
 		modelId = 0,
-		look = { skin = { 215, 175, 140 }, body = { 170, 40, 35 }, legs = { 180, 120, 60 }, headwear = "Crest", accent = { 180, 30, 30 }, weapon = "spear_crimson_tassel", scale = 1.1 },
+		look = { skin = { 215, 175, 140 }, body = { 170, 40, 35 }, legs = { 180, 120, 60 }, headwear = "Crest", accent = { 180, 30, 30 }, weapon = "spear_crimson_tassel", outfit = "Hoplite", scale = 1.1 },
 	},
 	-- Siren Archer: shoots from range; her charged song-arrow can be deflected back.
 	siren_archer = {
@@ -705,7 +710,7 @@ EnemyConfig.Enemies = {
 		xpReward = 65,
 		flinch = true,
 		modelId = 0,
-		look = { skin = { 225, 200, 175 }, body = { 240, 235, 220 }, legs = { 200, 190, 170 }, headwear = "Laurel", accent = { 100, 160, 200 }, glow = { 200, 230, 255 }, weapon = "fan_paper_crane", scale = 1 },
+		look = { skin = { 225, 200, 175 }, body = { 240, 235, 220 }, legs = { 200, 190, 170 }, headwear = "Laurel", accent = { 100, 160, 200 }, glow = { 200, 230, 255 }, weapon = "fan_paper_crane", outfit = "Robe", scale = 1 },
 	},
 	-- Marble Sentinel: a walking statue. Slow, huge posture, ground-shaking stomps.
 	marble_sentinel = {
@@ -729,7 +734,7 @@ EnemyConfig.Enemies = {
 		guardChance = 0.2,
 		deflectChance = 0.2,
 		modelId = 0,
-		look = { skin = { 236, 232, 222 }, body = { 225, 220, 210 }, legs = { 205, 198, 186 }, headwear = "Laurel", accent = { 205, 198, 186 }, glow = { 255, 215, 120 }, weapon = "staff_bellringer", scale = 1.8 },
+		look = { skin = { 236, 232, 222 }, body = { 225, 220, 210 }, legs = { 205, 198, 186 }, headwear = "Laurel", accent = { 205, 198, 186 }, glow = { 255, 215, 120 }, weapon = "staff_bellringer", outfit = "Robe", scale = 1.8 },
 	},
 } :: { [string]: EnemyDef }
 
