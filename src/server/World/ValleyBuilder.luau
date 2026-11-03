@@ -861,6 +861,9 @@ local function buildFolders()
 				p:SetAttribute("Sentry", true)
 				p:SetAttribute("Scatter", 0)
 			end
+			if (s :: any).night then
+				p:SetAttribute("NightOnly", true)
+			end
 			p.Transparency = 1
 			p.CanCollide = false
 			p.CanQuery = false

@@ -195,4 +195,16 @@ cases["NetSchema entries are well formed"] = function()
 	end
 end
 
+cases["ValleyClock: hours wrap and night spans midnight"] = function()
+	local ValleyClock = require(game:GetService("ReplicatedStorage").Shared.ValleyClock)
+	for _, t in { 0, 100, 12345, 987654 } do
+		local h = ValleyClock.HourAt(t)
+		expectTrue(h >= 0 and h < 24, "hour in range")
+	end
+	expectEq(ValleyClock.IsNightAt(22), true)
+	expectEq(ValleyClock.IsNightAt(2), true)
+	expectEq(ValleyClock.IsNightAt(12), false)
+	expectEq(ValleyClock.IsNightAt(17.4), false)
+end
+
 return cases

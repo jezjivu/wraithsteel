@@ -109,6 +109,10 @@ MapConfig.EnemySpawns = {
 	{ name = "TempleSpears", enemyId = "spear_ronin", count = 1, respawn = 30, at = { 330, -1030 } },
 	{ name = "GateShinobi", enemyId = "shadow_shinobi", count = 2, respawn = 30, at = { -40, -1030 } },
 	{ name = "PassBrute", enemyId = "mire_brute", count = 1, respawn = 45, at = { 0, -760 } },
+	-- Night only (ValleyClock): the dead walk after dusk and fade at dawn.
+	{ name = "NightGraveWisps", enemyId = "lantern_wisp", count = 3, respawn = 40, at = { -420, -335 }, night = true },
+	{ name = "NightBambooGhouls", enemyId = "lantern_ghoul", count = 2, respawn = 40, at = { 35, -365 }, night = true },
+	{ name = "NightVillageWisps", enemyId = "lantern_wisp", count = 2, respawn = 40, at = { -385, -720 }, night = true },
 	-- Sentry archers on lookout towers (`lookout` = index in MapConfig.Lookouts): they never
 	-- come down. Hook up behind them, or shoot back... or just run.
 	{ name = "TowerArcherBamboo", enemyId = "kite_archer", count = 1, respawn = 45, at = { 75, -255 }, lookout = 1 },

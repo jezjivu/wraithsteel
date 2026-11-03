@@ -34,6 +34,9 @@ LightingConfig.SunRays = { Intensity = 0.06, Spread = 0.7 }
 LightingConfig.DayNight = {
 	enabled = true,
 	cycleMinutes = 24, -- one full day
+	startHour = 17, -- offset so the hour is the same on every server at a given time
+	nightFrom = 20, -- hours counted as night (night-only spawns walk)
+	nightTo = 5.5,
 	keys = {
 		{ hour = 0, brightness = 0.9, ambient = { 45, 48, 80 }, outdoor = { 70, 78, 120 } },
 		{ hour = 5.5, brightness = 1.2, ambient = { 70, 60, 80 }, outdoor = { 110, 95, 120 } },

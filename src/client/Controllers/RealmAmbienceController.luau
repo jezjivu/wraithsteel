@@ -12,6 +12,8 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local LightingConfig = require(ReplicatedStorage:WaitForChild("Config"):WaitForChild("LightingConfig"))
+local ValleyClock = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("ValleyClock"))
+local Fx = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Fx"))
 
 local RealmAmbienceController = { Name = "RealmAmbienceController", Priority = 60 }
 
@@ -103,9 +105,7 @@ end
 -- Valley sky at the current server time (hours 0-24 + blended lighting values).
 local function valleySky(): (number, number, Color3, Color3)
 	local D = LightingConfig.DayNight
-	local cycle = D.cycleMinutes * 60
-	-- Offset so a fresh server starts at dusk (the valley's signature look).
-	local hour = ((workspace:GetServerTimeNow() / cycle) * 24 + 17) % 24
+	local hour = ValleyClock.Hour()
 	local keys = D.keys
 	for i = 1, #keys - 1 do
 		local a, b = keys[i], keys[i + 1]
@@ -134,8 +134,14 @@ function RealmAmbienceController.Start()
 	if LightingConfig.DayNight.enabled then
 		task.spawn(function()
 			task.wait(3) -- after the realm mood tween
+			local wasNight = ValleyClock.IsNight()
 			while true do
 				if current == "japan" then
+					local night = ValleyClock.IsNight()
+					if night ~= wasNight then
+						wasNight = night
+						Fx.CenterText(if night then "NIGHT FALLS  ·  the dead walk the valley" else "DAWN  ·  the dead return to their graves", if night then Color3.fromRGB(170, 190, 255) else Color3.fromRGB(255, 215, 150), 26, 2.5)
+					end
 					local hour, brightness, ambient, outdoor = valleySky()
 					Lighting.ClockTime = hour
 					Lighting.Brightness = brightness

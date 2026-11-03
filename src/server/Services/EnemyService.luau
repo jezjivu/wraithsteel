@@ -24,6 +24,7 @@ local Config = ReplicatedStorage:WaitForChild("Config")
 local Net = require(Shared:WaitForChild("Net"))
 local Odds = require(Shared:WaitForChild("Odds"))
 local Signal = require(Shared:WaitForChild("Signal"))
+local ValleyClock = require(Shared:WaitForChild("ValleyClock"))
 local EnemyConfig = require(Config:WaitForChild("EnemyConfig"))
 local CombatConfig = require(Config:WaitForChild("CombatConfig"))
 local EconomyConfig = require(Config:WaitForChild("EconomyConfig"))
@@ -596,11 +597,29 @@ local function runSpawner(spawnPart: BasePart)
 	local respawn = tonumber(spawnPart:GetAttribute("RespawnSeconds")) or EnemyConfig.DefaultRespawnSeconds
 	local scatter = tonumber(spawnPart:GetAttribute("Scatter")) or EnemyConfig.DefaultSpawnScatter
 	local sentry = spawnPart:GetAttribute("Sentry") == true
+	local nightOnly = spawnPart:GetAttribute("NightOnly") == true
 	local function spawnOne()
+		if nightOnly then
+			-- The dead only walk at night: wait for dusk.
+			while not ValleyClock.IsNight() do
+				task.wait(5)
+			end
+		end
 		local offset = Vector3.new(rng:NextNumber(-scatter, scatter), if sentry then 0.5 else 3, rng:NextNumber(-scatter, scatter))
-		EnemyService.Spawn(enemyId, spawnPart.CFrame + offset, function()
+		local c = EnemyService.Spawn(enemyId, spawnPart.CFrame + offset, function()
 			task.delay(respawn, spawnOne)
 		end, { sentry = sentry })
+		if c and nightOnly then
+			-- ...and fade away at dawn (no reward; it comes back next night).
+			task.spawn(function()
+				while not c.dead and c.humanoid.Health > 0 do
+					task.wait(5)
+					if not ValleyClock.IsNight() and not c.dead then
+						c.humanoid.Health = 0
+					end
+				end
+			end)
+		end
 	end
 	for _ = 1, count do
 		spawnOne()
