@@ -17,5 +17,6 @@ TradeConfig.MaxDistance = 40 -- studs between the two players to start a trade
 TradeConfig.LedgerStoreName = "WraithsteelTradeLedger_v1"
 TradeConfig.LedgerRetries = 3 -- attempts per ledger step before giving up
 TradeConfig.LedgerHistoryLimit = 200 -- trade ids remembered per profile (idempotency)
+TradeConfig.RecoverRetrySeconds = 20 -- ledger unreachable at join: Spirits stay frozen, retry
 
 return TradeConfig

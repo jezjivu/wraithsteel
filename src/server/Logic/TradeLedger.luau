@@ -238,41 +238,50 @@ function TradeLedger.Commit(store: Store, record: Record): CommitResult
 	return "unknown"
 end
 
--- Called after a profile loads: applies every committed-but-unapplied trade for this user and
--- returns the applied ids plus the ids that can be dropped from the index (settled).
--- Records still pending are aborted first (see header).
-function TradeLedger.Recover(store: Store, data: LedgerData, userId: number, now: number): ({ string }, { string })
+-- Called after a profile loads: applies every committed-but-unapplied trade for this user.
+-- Returns (applied ids, settled ids that can be dropped from the index, complete). Records
+-- still pending are aborted first (see header). `complete` is false when the ledger could not
+-- be read or a record is still undecided: the caller must keep the player's Spirits frozen
+-- (TradeLock) and call Recover again later, or a committed trade could be applied after the
+-- player already traded those Spirits away.
+function TradeLedger.Recover(store: Store, data: LedgerData, userId: number, now: number): ({ string }, { string }, boolean)
 	local applied, settled = {}, {}
 	local ok, list = store.get(TradeLedger.IndexKey(userId))
-	if not ok or type(list) ~= "table" then
-		return applied, settled
+	if not ok then
+		return applied, settled, false
 	end
+	if type(list) ~= "table" then
+		return applied, settled, true -- never traded
+	end
+	local complete = true
 	for _, id in list do
 		local gotRecord, record = store.get(TradeLedger.RecordKey(id))
-		if gotRecord then
-			if type(record) ~= "table" then
-				table.insert(settled, id) -- record never written
-			else
-				if record.status == "pending" then
-					local tok, status = transition(store, id, "pending", "aborted")
-					if tok and status then
-						record.status = status
-					end
+		if not gotRecord then
+			complete = false
+		elseif type(record) ~= "table" then
+			table.insert(settled, id) -- record never written
+		else
+			if record.status == "pending" then
+				local tok, status = transition(store, id, "pending", "aborted")
+				if tok and status then
+					record.status = status
 				end
-				if record.status == "committed" then
-					if TradeLedger.Apply(data, record, userId, now) then
-						table.insert(applied, id)
-					end
-					if data.tradesApplied[id] then
-						table.insert(settled, id)
-					end
-				elseif record.status == "aborted" then
+			end
+			if record.status == "committed" then
+				if TradeLedger.Apply(data, record, userId, now) then
+					table.insert(applied, id)
+				end
+				if data.tradesApplied[id] then
 					table.insert(settled, id)
 				end
+			elseif record.status == "aborted" then
+				table.insert(settled, id)
+			else
+				complete = false -- still pending (abort answer lost): try again later
 			end
 		end
 	end
-	return applied, settled
+	return applied, settled, complete
 end
 
 -- Removes settled ids from a user's index (call after the profile containing them saved).

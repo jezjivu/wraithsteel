@@ -211,6 +211,9 @@ local function requestTrade(player: Player, targetUserId: number): (boolean, str
 	if sessions[player.UserId] or sessions[targetUserId] then
 		return false, "Someone is already trading"
 	end
+	if TradeLock.IsLocked(player.UserId) or TradeLock.IsLocked(targetUserId) then
+		return false, TradeLock.Message
+	end
 	if not near(player, target) then
 		return false, "Stand closer to trade"
 	end
@@ -340,15 +343,15 @@ local function execute(s: TradeLogic.Session)
 	end
 end
 
-local function recover(player: Player, data: any)
-	TradeLock.Set(player.UserId, true)
-	local okRecover, applied, settled = pcall(TradeLedger.Recover, ledger, data, player.UserId, os.time())
-	TradeLock.Set(player.UserId, false)
+-- One recovery attempt. Returns true when the ledger answered completely.
+local function recoverOnce(player: Player, data: any): boolean
+	local okRecover, applied, settled, complete = pcall(TradeLedger.Recover, ledger, data, player.UserId, os.time())
 	if not okRecover then
 		warn("[TradeService] trade recovery failed for", player.UserId, applied)
-		return
+		return false
 	end
 	if #applied > 0 then
+		DataService.Changed(player, "spirits", "equippedSpirits")
 		AnalyticsService.Custom(player, "TradeRecovered", #applied)
 		task.delay(3, function()
 			if player.Parent == Players then
@@ -359,6 +362,26 @@ local function recover(player: Player, data: any)
 	if #settled > 0 then
 		saveAndPrune(player, applied, settled)
 	end
+	return complete
+end
+
+-- DataService load hook. Spirits stay frozen (TradeLock) until the ledger answered completely,
+-- retrying in the background so a DataStore outage never blocks the join.
+local function recover(player: Player, data: any)
+	TradeLock.Set(player.UserId, true)
+	if recoverOnce(player, data) then
+		TradeLock.Set(player.UserId, false)
+		return
+	end
+	task.spawn(function()
+		while player.Parent == Players and DataService.GetData(player) == data do
+			task.wait(TradeConfig.RecoverRetrySeconds)
+			if recoverOnce(player, data) then
+				break
+			end
+		end
+		TradeLock.Set(player.UserId, false)
+	end)
 end
 
 function TradeService.Init()

@@ -219,6 +219,16 @@ cases["Ledger: a party reloading mid-commit aborts the trade (no dupe)"] = funct
 	expectEq(speciesOf(b), "reed_fox")
 end
 
+cases["Ledger: unreadable ledger reports incomplete recovery"] = function()
+	local a = setup()
+	local store = newStore()
+	expectEq(select(3, TradeLedger.Recover(store, a, 1, 0)), true, "no index = nothing to do")
+	store.get = function()
+		return false, "down"
+	end
+	expectEq(select(3, TradeLedger.Recover(store, a, 1, 0)), false)
+end
+
 cases["Trade: paid-flag rule"] = function()
 	local a, b, sa, sb = setup() -- sb is paid
 	local s = TradeLogic.New(1, 2, false)
