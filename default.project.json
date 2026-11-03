@@ -1,0 +1,25 @@
+{
+  "name": "Wraithsteel",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "src/shared"
+      },
+      "Config": {
+        "$path": "src/config"
+      }
+    },
+    "ServerScriptService": {
+      "$path": "src/server"
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "$path": "src/client"
+      }
+    },
+    "ReplicatedFirst": {
+      "$path": "src/first"
+    }
+  }
+}
