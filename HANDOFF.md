@@ -207,3 +207,21 @@ The guide is **still not in the repo**; this run followed the task brief + night
 - **Content**: `BossConfig.kurozuma` (Raid), Tidewater Spirits + abilities in `SpiritConfig`,
   `LanternConfig.tidewater_lantern` (added to `HubConfig.ShrineLanterns`, so the generated hub
   now has 4 pedestals), Night Market `crab_ashen` / `kite_gilded`.
+
+## Night 4 (same branch)
+- **Bell Dice** (`Shared/DiceLogic`, `DiceConfig`, `DiceService` priority 25, `DiceController`,
+  panel `BellDice` in the Market dock group). Remotes `DiceState()`, `DiceBet(betId, amount)`,
+  `DiceExchange(amount)`, `DiceEvent` (broadcast). Profile v15: `chips`, `chipsDay`,
+  `chipsExchangedDay`, `chipsExchanged`. **Compliance:** chips must never get a Robux, Ember or
+  Jade path in, never be tradeable, never be a code/bundle reward (tests/dice.spec.luau checks
+  products and codes). It is refused where PolicyService restricts paid random items. Real-
+  money/Robux gambling is not allowed on Roblox; this is simulated gambling with free chips and
+  must be declared in the experience questionnaire.
+- **Enemy AI**: `Logic/EnemyMovement` (ring slots, separation, step back, pack offsets,
+  anti-guard weight), knobs in `EnemyConfig.Movement`. EnemyService brains gained
+  `attackedAt`, `attackHandled`, `retreatUntil`, `driftSign`.
+- **World**: `MapConfig.Clutter` (gate counts), `MapConfig.MinSpawnGap` / `MinSentryGap`
+  (enforced by tests/world.spec.luau). The map itself was not scaled: Saga NPCs, waystones,
+  the river and the waterfall cave are hand-placed and would need moving together.
+- **Party frames**: `PartyFramesController` (reads PartyController.State + characters).
+  The dock now sits at 60% height so the frames fit above it.

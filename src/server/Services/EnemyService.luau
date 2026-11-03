@@ -172,9 +172,11 @@ end
 
 local function chooseAttack(b: Brain, dist: number): string?
 	local entries = {}
+	local t = b.target
+	local guarding = t ~= nil and t.rules ~= nil and os.clock() < t.rules.blockUntil
 	for id, a in b.def.attacks do
 		if dist <= a.range + 1 then
-			table.insert(entries, { id = id, weight = a.weight })
+			table.insert(entries, { id = id, weight = EnemyMovement.AttackWeight(a.weight, a.perilous == true, guarding) })
 		end
 	end
 	if #entries == 0 then

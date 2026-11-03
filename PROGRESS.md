@@ -217,6 +217,15 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [ ] Studio: look at the real UI on PC + phone (fonts render differently from the preview), Kurozuma rig/anims + flooded belfry arena, Tidewater Lantern model
 - [ ] Remaining panels still use the generic Kit look only (Map, Travel, Arts, Styles, Trade, Party, Codes) - fine, but could get bespoke layouts like Spirits/Lanterns
 
+## Night 4 (cloud run, code only): calmer world, smarter enemies, Bell Dice, party HUD
+- [x] Less clutter: Torii Road 5 gates (was a 22-gate tunnel), one torii per stair, one named gate per zone (`MapConfig.Clutter`)
+- [x] Enemy groups spread out: elites no longer stacked on groups, one village group removed; test keeps ground groups >= 80 studs apart
+- [x] Enemy AI (`Logic/EnemyMovement`): shared ring slots around the player, separation (no stacking), step back after attacks (take turns), pack spawn spacing, perilous attacks likelier vs. a guarding player; 2 attackers per player at once (was 3)
+- [x] Bell Dice: shared table per server (everyone sees rounds, bets, winners), free Fortune Chips only, exact odds + 97.22% return shown, capped chip -> Ember exchange, policy-gated; profile v15
+- [x] Party frames on the HUD (names, health, distance, leader); top right on phones
+- [ ] Studio: playtest enemy spacing/turn-taking feel and tune `EnemyConfig.Movement`; look at the thinner Torii Road
+- [ ] Before launch: answer "simulated gambling" in the Roblox experience questionnaire (Bell Dice)
+
 ## Playtesting
 - `rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` -> open in Studio -> Play.
   You spawn in the hub (south). The valley (north, through the red gate): Torii Road to the

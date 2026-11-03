@@ -128,6 +128,7 @@ EnemyConfig.Movement = {
 	stepBackMax = 0.6,
 	stepBackExtra = 6, -- studs beyond preferred range
 	stepBackSeconds = 0.9,
+	antiGuardWeight = 3, -- perilous attacks this much likelier while the player holds guard
 	packGap = 12, -- studs between members of one spawn group
 	packTries = 8,
 }

@@ -91,4 +91,10 @@ cases["Pack offsets keep members apart when there is room"] = function()
 	end
 end
 
+cases["AI answers a turtling player with perilous attacks"] = function()
+	expectEq(EnemyMovement.AttackWeight(2, true, false), 2)
+	expectEq(EnemyMovement.AttackWeight(2, false, true), 2)
+	expectEq(EnemyMovement.AttackWeight(2, true, true), 2 * EnemyConfig.Movement.antiGuardWeight)
+end
+
 return cases

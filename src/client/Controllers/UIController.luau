@@ -199,7 +199,7 @@ local function buildDock(gui: ScreenGui)
 	local rail = Instance.new("Frame")
 	rail.Name = "Dock"
 	rail.AnchorPoint = Vector2.new(0, 0.5)
-	rail.Position = UDim2.new(0, 12, 0.5, 0)
+	rail.Position = UDim2.new(0, 12, 0.6, 0) -- a bit low: party frames sit above it
 	rail.Size = UDim2.fromOffset(ITEM + 12, (ITEM + GAP) * #GROUPS - GAP + 12)
 	rail.BackgroundColor3 = C.Ink
 	rail.BackgroundTransparency = 0.25

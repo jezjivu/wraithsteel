@@ -92,4 +92,13 @@ function EnemyMovement.PackOffset(existing: { { number } }, scatter: number, gap
 	return bestX, bestZ
 end
 
+-- Attack choice weight: against a player who is holding guard, perilous attacks (which a block
+-- cannot stop) become likelier, so turtling is answered instead of rewarded.
+function EnemyMovement.AttackWeight(weight: number, perilous: boolean, targetGuarding: boolean): number
+	if targetGuarding and perilous then
+		return weight * EnemyConfig.Movement.antiGuardWeight
+	end
+	return weight
+end
+
 return EnemyMovement
