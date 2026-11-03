@@ -112,4 +112,10 @@ CombatConfig.Deflect = {
 CombatConfig.PowerToDamageScale = 100
 CombatConfig.DamageVariance = 0.05
 
+-- Skill-tree mechanics (amounts come from SkillConfig stats).
+CombatConfig.SkillMechanics = {
+	bloodRushSeconds = 8,
+	ringingSteelRadius = 10,
+}
+
 return CombatConfig

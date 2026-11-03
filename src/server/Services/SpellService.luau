@@ -285,6 +285,15 @@ function SpellService.Start()
 			SpellLogic.AddQi(st, SpellConfig.Qi.onParry)
 			syncQi(target, st)
 		end
+		-- Vanishing Step (skill): dodging through an attack restores Qi.
+		if target.player and res.outcome == "Dodged" then
+			local q = CombatService.PlayerStats(target.player).DodgeQi or 0
+			if q > 0 then
+				local st = stateFor(target.player, target)
+				SpellLogic.AddQi(st, q)
+				syncQi(target, st)
+			end
+		end
 	end)
 
 	CombatService.Died:Connect(function(target: Combatant, contributions: { [Player]: number })

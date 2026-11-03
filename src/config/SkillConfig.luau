@@ -5,7 +5,8 @@
 -- so every bonus here is applied by the existing combat code:
 --   Attack, Posture, Health, Guard, Lifesteal, CritChance, CritDamage, Haste, QiRegen
 --   ParryWindow (s), Riposte (x), Flask (charges), FlaskHeal, ExecutionHeal (fraction of
---   max HP), SecondBreathHeal, ArtPower, Stealth (enemies notice you later), Execution (x)
+--   max HP), SecondBreathHeal, ArtPower, Stealth (enemies notice you later), Execution (x),
+--   BloodRush (damage after a Severing Blow), DodgeQi, RingingSteel (deflect shockwave posture)
 -- `art` = a blade art (SpellConfig) this skill unlocks for your art slots.
 -- All names are original to WRAITHSTEEL.
 
@@ -62,6 +63,10 @@ SkillConfig.Skills = {
 		name = "Moon Severance", text = "New art: a giant, slow crescent that splits everything in a wide line.",
 		path = "steel", tier = 4, col = 0, maxRank = 1, cost = 2, requires = { "executioner", "answering_steel" }, art = "moon_severance", minLevel = 6,
 	},
+	blood_rush = {
+		name = "Blood Rush", text = "After a Severing Blow, deal +30% damage for 8 seconds.",
+		path = "steel", tier = 4, col = 1, maxRank = 1, cost = 2, requires = { "answering_steel" }, stats = { BloodRush = 0.3 },
+	},
 	red_harvest = {
 		name = "Red Harvest", text = "+25% critical damage per rank.",
 		path = "steel", tier = 5, col = 0, maxRank = 2, requires = { "moon_severance" }, stats = { CritDamage = 0.25 },
@@ -92,6 +97,10 @@ SkillConfig.Skills = {
 		name = "Phantom Rush", text = "New art: blink between up to five enemies, cutting each one.",
 		path = "shadow", tier = 4, col = 0, maxRank = 1, cost = 2, requires = { "shadow_harvest", "drinking_blade" }, art = "phantom_rush", minLevel = 6,
 	},
+	vanishing_step = {
+		name = "Vanishing Step", text = "Dodging through an attack restores 8 Qi per rank.",
+		path = "shadow", tier = 4, col = 1, maxRank = 2, requires = { "drinking_blade" }, stats = { DodgeQi = 8 },
+	},
 	honed_arts = {
 		name = "Honed Arts", text = "Blade arts deal +15% damage per rank.",
 		path = "shadow", tier = 5, col = 0, maxRank = 2, requires = { "phantom_rush" }, stats = { ArtPower = 0.15 },
@@ -121,6 +130,10 @@ SkillConfig.Skills = {
 	crimson_lotus = {
 		name = "Crimson Lotus", text = "New art: a whirling bloom of blades that pulls enemies in and shreds their guard.",
 		path = "resolve", tier = 4, col = 0, maxRank = 1, cost = 2, requires = { "deep_gourd", "healing_draught" }, art = "crimson_lotus", minLevel = 6,
+	},
+	ringing_steel = {
+		name = "Ringing Steel", text = "Perfect deflects ring out: every enemy within 10 studs takes 18 posture damage per rank.",
+		path = "resolve", tier = 4, col = -1, maxRank = 2, requires = { "deep_gourd" }, stats = { RingingSteel = 18 },
 	},
 	unbroken = {
 		name = "Unbroken", text = "Second Breath brings you back with +25% more health per rank.",

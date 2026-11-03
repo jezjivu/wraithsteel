@@ -432,6 +432,31 @@ function SpellController.Start()
 	CombatController.EventReceived:Connect(function(e)
 		if e.kind == "Spell" then
 			onSpell(e)
+		elseif e.kind == "SkillFx" then
+			-- Skill-tree mechanics (SkillConfig): visible to everyone nearby.
+			if e.fx == "RingingSteel" and typeof(e.pos) == "Vector3" then
+				SpellFx.Nova(e.pos, Color3.fromRGB(255, 215, 130), 10, 0.4)
+				SpellFx.Sound(EffectsConfig.Sounds.cast, e.pos, 1.8)
+			elseif e.fx == "BloodRush" then
+				local model = EffectsController.ModelFor(e.sourceId)
+				local root = model and model:FindFirstChild("HumanoidRootPart")
+				if model and root and root:IsA("BasePart") then
+					local aura = Instance.new("ParticleEmitter")
+					aura.Texture = Fx.Textures.Sparkle
+					aura.Color = ColorSequence.new(Color3.fromRGB(255, 50, 60))
+					aura.LightEmission = 1
+					aura.Size = NumberSequence.new(0.6, 0)
+					aura.Lifetime = NumberRange.new(0.3, 0.6)
+					aura.Rate = 40
+					aura.Speed = NumberRange.new(1, 3)
+					aura.SpreadAngle = Vector2.new(180, 180)
+					aura.Parent = root
+					game:GetService("Debris"):AddItem(aura, tonumber(e.seconds) or 8)
+				end
+				if model == localPlayer.Character then
+					Fx.CenterText("BLOOD RUSH", Color3.fromRGB(255, 70, 70), 32, 0.9)
+				end
+			end
 		elseif e.kind == "SpellRejected" then
 			readyAt[e.spell or ""] = 0
 			if e.reason and e.reason ~= "Cooling down" then

@@ -71,6 +71,7 @@ export type Combatant = {
 	dodgeDir: Vector3?,
 	flask: number?, -- players: Spring Flask charges left
 	breath: boolean?, -- players: Second Breath still available this life
+	rushUntil: number?, -- players: Blood Rush (skill) active until
 	unaware: boolean?, -- enemies: hasn't noticed any player yet (Shadow Strike possible)
 	deflectChance: number?, -- enemies/bosses: chance to deflect a strike while canDeflect()
 	canDeflect: (() -> boolean)?,
@@ -460,6 +461,19 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		if target.player then
 			QuestService.Increment(target.player, "PerfectParries", 1)
 			AnalyticsService.Onboarding(target.player, "FirstParry")
+			-- Ringing Steel (skill): the deflect rings out and staggers everyone close by.
+			local ring = CombatService.PlayerStats(target.player).RingingSteel or 0
+			if ring > 0 and res.outcome == "Parried" then
+				local center = target.root.Position
+				broadcast({ kind = "SkillFx", fx = "RingingSteel", pos = center, sourceId = target.id })
+				task.defer(function()
+					for _, e in CombatService.All() do
+						if e.team == "Enemies" and not e.dead and (e.root.Position - center).Magnitude <= CombatConfig.SkillMechanics.ringingSteelRadius then
+							CombatService.ApplyHit(target, e, { damage = 0, postureDamage = ring, moveId = "ringing_steel", source = "skill" })
+						end
+					end
+				end)
+			end
 		end
 	end
 
@@ -644,7 +658,10 @@ local function onCombatAction(player: Player, req: { [string]: any })
 		local mult = if riposte then CombatConfig.RiposteMultiplier + style.riposteBonus + (skillStats.Riposte or 0) else 1
 		local hitAny = false
 		local executed = false
-		local attackMult = 1 + (CombatService.PlayerStats(player).Attack or 0)
+		local attackMult = 1 + (skillStats.Attack or 0)
+		if c.rushUntil and os.clock() < c.rushUntil then
+			attackMult *= 1 + (skillStats.BloodRush or 0)
+		end
 		for _, target in CombatService.TargetsInArc(c, move.range + (move.step or 0) * 0.5, move.arcDegrees, aim) do
 			hitAny = true
 			-- Severing Blow: an enemy with broken posture is finished (bosses lose a big chunk).
@@ -653,6 +670,10 @@ local function onCombatAction(player: Player, req: { [string]: any })
 				local sever = if target.kind == "Boss" then target.humanoid.MaxHealth * CombatConfig.Severing.bossFraction * (1 + (skillStats.Execution or 0)) else target.humanoid.Health + 1
 				if (skillStats.ExecutionHeal or 0) > 0 then
 					CombatService.Heal(c, c.humanoid.MaxHealth * skillStats.ExecutionHeal)
+				end
+				if (skillStats.BloodRush or 0) > 0 then
+					c.rushUntil = os.clock() + CombatConfig.SkillMechanics.bloodRushSeconds
+					broadcast({ kind = "SkillFx", fx = "BloodRush", sourceId = c.id, seconds = CombatConfig.SkillMechanics.bloodRushSeconds })
 				end
 				target.posture.value = 0
 				target.model:SetAttribute("Broken", false)
