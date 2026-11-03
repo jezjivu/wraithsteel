@@ -87,7 +87,7 @@ end
 
 -- Spawns the next world boss right away (Studio debug command); no-op while one is active.
 function WorldBossService.SpawnNow(): boolean
-	if activeBoss then
+	if activeBoss or #WorldBossConfig.Rotation == 0 then
 		return false
 	end
 	task.spawn(cycle, true)

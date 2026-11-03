@@ -92,7 +92,7 @@ local commands: { [string]: (Player, string?) -> () } = {
 		say(player, msg)
 	end,
 	["/worldboss"] = function(player)
-		say(player, if WorldBossService.SpawnNow() then "World boss summoned in the Wilds (north)!" else "A world boss is already up")
+		say(player, if WorldBossService.SpawnNow() then "World boss summoned!" else "No world boss available (none in the rotation, or one is already up)")
 	end,
 	["/chapter"] = function(player, arg)
 		local data = DataService.GetData(player)
