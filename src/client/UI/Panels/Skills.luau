@@ -86,6 +86,20 @@ local Panel: PanelTypes.Panel = {
 		canvas.Size = UDim2.fromOffset(COL_W * #SkillConfig.Paths, TOP + 5 * ROW_H)
 		canvas.BackgroundTransparency = 1
 		canvas.Parent = tree
+		-- Shrink the whole tree to fit narrow windows.
+		local fullW, fullH = COL_W * #SkillConfig.Paths, TOP + 5 * ROW_H
+		local fit = Instance.new("UIScale")
+		fit.Parent = canvas
+		local function refit()
+			local w = tree.AbsoluteSize.X
+			if w > 0 then
+				local k = math.clamp(w / fullW, 0.5, 1)
+				fit.Scale = k
+				tree.Size = UDim2.new(1, -8, 0, math.ceil(fullH * k))
+			end
+		end
+		tree:GetPropertyChangedSignal("AbsoluteSize"):Connect(refit)
+		task.defer(refit)
 
 		for pi, path in SkillConfig.Paths do
 			local color = rgb(path.color)
