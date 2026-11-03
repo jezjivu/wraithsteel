@@ -466,3 +466,9 @@ function __dumpGui(root)
 	dumpNode(root or playerGui, out)
 	print("GUI" .. table.concat(out))
 end
+
+-- Color3:ToHex / ToHSV for UI code.
+local C3MT = getmetatable(Color3.new(0, 0, 0))
+C3MT.ToHex = function(c)
+	return string.format("%02X%02X%02X", math.floor(c.R * 255 + 0.5), math.floor(c.G * 255 + 0.5), math.floor(c.B * 255 + 0.5))
+end

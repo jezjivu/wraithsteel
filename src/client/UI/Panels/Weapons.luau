@@ -26,7 +26,7 @@ local Panel: PanelTypes.Panel = {
 		local owned = DataController.Get("weapons") or {}
 		local equipped = DataController.Get("equippedWeapon")
 		local chapter = DataController.Get("chapter") or 0
-		Kit.Label(body, string.format("Ember <b>%s</b>   Jade <b>%s</b>", FormatNumber.Short(DataController.Get("ember") or 0), FormatNumber.Short(DataController.Get("jade") or 0)), { color = C.Gold })
+		Kit.Wallet(body, FormatNumber.Short(DataController.Get("ember") or 0), FormatNumber.Short(DataController.Get("jade") or 0))
 		if not ctx.atStation then
 			Kit.Label(body, "Visit the Weapon Smith in Ninefold Crossing to buy new weapons.", { color = C.Muted, size = 14 })
 		end
@@ -58,7 +58,7 @@ local Panel: PanelTypes.Panel = {
 				end, 130)
 			elseif ctx.atStation then
 				local label = if def.price == 0 then "Take" else FormatNumber.Short(def.price) .. " " .. def.currency
-				Kit.Button(row, "Buy  " .. label, if def.currency == "Jade" then C.Jade else C.Accent, function()
+				Kit.Button(row, "Buy  " .. label, if def.currency == "Jade" then C.Jade else C.Gold, function()
 					local ok, msg = Net.Client.Invoke("BuyWeapon", id)
 					ctx.notify(msg or "Try again", not ok)
 				end, 130)

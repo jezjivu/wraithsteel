@@ -58,6 +58,31 @@ function __client(opts)
 		end
 		return f
 	end
+	-- Server answers the panels ask for, computed with the real shared logic.
+	local LanternOdds = __require(RS.Shared.LanternOdds)
+	local NightMarketLogic = __require(RS.Shared.NightMarketLogic)
+	local MonetizationConfig = __require(RS.Config.MonetizationConfig)
+	__invokes.GetLanternOdds = function(id)
+		return LanternOdds.Sheet(id, 1.25, 12)
+	end
+	__invokes.GetNightMarket = function()
+		local w = NightMarketLogic.Window(1700000000)
+		local stock = {}
+		for i, e in NightMarketLogic.Stock(w) do
+			table.insert(stock, { slot = e.slot, itemId = e.itemId, bought = if i == 2 then 1 else 0 })
+		end
+		return { window = w, endsAt = NightMarketLogic.WindowEndsAt(w), stock = stock }
+	end
+	__invokes.GetStoreInfo = function()
+		local passes, products = {}, {}
+		for key, def in MonetizationConfig.Passes do
+			passes[key] = { name = def.name, description = def.description, available = true, owned = key == "DoubleEmber", price = def.price, giftable = def.giftProduct ~= nil }
+		end
+		for key, def in MonetizationConfig.Products do
+			products[key] = { name = def.name, kind = def.kind, amount = def.amount, bundle = def.bundle, available = true, price = def.price }
+		end
+		return { passes = passes, products = products, testMode = false }
+	end
 	local Controllers = game.StarterPlayer.StarterPlayerScripts.Controllers
 	local DataController = __require(Controllers.DataController)
 	DataController.Init()

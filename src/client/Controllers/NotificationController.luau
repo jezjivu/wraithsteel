@@ -103,6 +103,7 @@ function NotificationController.Init()
 	frame.Position = UDim2.new(0.5, 0, 0, 12)
 	frame.Size = UDim2.new(0.6, 0, 0, 180)
 	frame.Parent = gui
+	Kit.AutoScale(frame, nil, 0.75)
 	local layout = Instance.new("UIListLayout")
 	layout.Padding = UDim.new(0, 6)
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center

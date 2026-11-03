@@ -42,7 +42,7 @@ local Panel: PanelTypes.Panel = {
 			local realm = tostring(entry:GetAttribute("Realm") or "japan")
 			if realm ~= lastRealm then
 				lastRealm = realm
-				Kit.Label(body, REALM_NAMES[realm] or realm, { bold = true, color = C.Gold })
+				Kit.Section(body, REALM_NAMES[realm] or realm)
 			end
 			local id = entry.Name
 			local open = attuned[id] == true

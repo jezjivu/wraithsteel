@@ -107,6 +107,31 @@ local function nextOrder(): number
 	return order
 end
 
+-- Responsive size: 1 on 720p and up, smaller on short screens (phones), never below `min`.
+function Kit.ScaleFor(viewportHeight: number, base: number?, min: number?): number
+	return math.clamp(viewportHeight / (base or 720), min or 0.62, 1)
+end
+
+local function viewportHeight(): number
+	local cam = workspace.CurrentCamera
+	return if cam then cam.ViewportSize.Y else 720
+end
+
+-- Adds a UIScale to `target` that follows the screen height (HUD clusters scale around their
+-- AnchorPoint, so anchor them at the screen edge they belong to).
+function Kit.AutoScale(target: GuiObject, base: number?, min: number?): UIScale
+	local scale = Instance.new("UIScale")
+	scale.Scale = Kit.ScaleFor(viewportHeight(), base, min)
+	scale.Parent = target
+	local cam = workspace.CurrentCamera
+	if cam then
+		cam:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+			scale.Scale = Kit.ScaleFor(viewportHeight(), base, min)
+		end)
+	end
+	return scale
+end
+
 function Kit.Screen(parent: Instance, name: string, displayOrder: number?): ScreenGui
 	local gui = Instance.new("ScreenGui")
 	gui.Name = name
@@ -295,7 +320,8 @@ export type WindowOpts = {
 -- Centered window: seal + serif title, optional tabs, a scrolling body.
 function Kit.Window(parent: Instance, titleText: string, opts: WindowOpts?): Window
 	local o: WindowOpts = opts or {}
-	local root = frame(parent, UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.72, 0.82), C.Panel, 0.03)
+	local small = viewportHeight() < 520
+	local root = frame(parent, UDim2.fromScale(0.5, 0.5), if small then UDim2.fromScale(0.82, 0.96) else UDim2.fromScale(0.72, 0.82), C.Panel, 0.03)
 	root.Name = "Window"
 	root.AnchorPoint = Vector2.new(0.5, 0.5)
 	corner(root, Kit.WindowRadius)
@@ -411,11 +437,12 @@ function Kit.Window(parent: Instance, titleText: string, opts: WindowOpts?): Win
 	list.SortOrder = Enum.SortOrder.LayoutOrder
 	list.Parent = body
 
-	-- Open: rise and fade in.
+	-- Open: rise in. On short screens the window is drawn a bit smaller but stays readable.
+	local target = Kit.ScaleFor(viewportHeight(), 600, 0.8)
 	local scale = Instance.new("UIScale")
-	scale.Scale = 0.96
+	scale.Scale = target * 0.96
 	scale.Parent = root
-	TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = target }):Play()
 
 	return { root = root, body = body, title = title, close = close, tabs = tabButtons }
 end
@@ -571,6 +598,49 @@ function Kit.Currency(parent: Instance, kind: "ember" | "jade" | "power" | "leve
 	l.AutomaticSize = Enum.AutomaticSize.X
 	l.LayoutOrder = nextOrder()
 	return f, l
+end
+
+-- A strip of currency pills (top of shop panels).
+function Kit.Wallet(parent: Instance, ember: string, jade: string): Frame
+	local strip = Kit.Strip(parent, 32)
+	Kit.Currency(strip, "ember", ember)
+	Kit.Currency(strip, "jade", jade)
+	return strip
+end
+
+-- A label + value line with the value pushed to the right (odds tables, stat sheets).
+function Kit.KeyValue(parent: Instance, key: string, value: string, keyColor: Color3?, valueColor: Color3?, size: number?): Frame
+	local h = (size or 15) + 8
+	local f = frame(parent, UDim2.new(), UDim2.new(1, 0, 0, h), C.Ink, 1)
+	f.LayoutOrder = nextOrder()
+	local k = text(f, key, Kit.BodyFont, size or 15, keyColor or C.Text)
+	k.Size = UDim2.new(1, -90, 1, 0)
+	k.TextXAlignment = Enum.TextXAlignment.Left
+	local v = text(f, value, Kit.BoldFont, size or 15, valueColor or C.Text)
+	v.AnchorPoint = Vector2.new(1, 0)
+	v.Position = UDim2.fromScale(1, 0)
+	v.Size = UDim2.new(0, 90, 1, 0)
+	v.TextXAlignment = Enum.TextXAlignment.Right
+	return f
+end
+
+-- An odds/stat line: label left, value right, a hairline-thin bar of `frac` underneath.
+function Kit.BarLine(parent: Instance, key: string, value: string, frac: number, color: Color3?): Frame
+	local f = frame(parent, UDim2.new(), UDim2.new(1, 0, 0, 28), C.Ink, 1)
+	f.LayoutOrder = nextOrder()
+	local k = text(f, key, Kit.BodyFont, 15, C.Text)
+	k.Size = UDim2.new(1, -90, 0, 22)
+	k.TextXAlignment = Enum.TextXAlignment.Left
+	local v = text(f, value, Kit.BoldFont, 15, C.Gold)
+	v.AnchorPoint = Vector2.new(1, 0)
+	v.Position = UDim2.fromScale(1, 0)
+	v.Size = UDim2.new(0, 90, 0, 22)
+	v.TextXAlignment = Enum.TextXAlignment.Right
+	local track = frame(f, UDim2.new(0, 0, 1, -3), UDim2.new(1, 0, 0, 3), C.Ink, 0.1)
+	corner(track, 999)
+	local fill = frame(track, UDim2.new(), UDim2.fromScale(math.clamp(frac, 0, 1), 1), color or C.Gold, 0, track.ZIndex + 1)
+	corner(fill, 999)
+	return f
 end
 
 -- Friendly empty state.

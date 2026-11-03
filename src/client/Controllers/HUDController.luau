@@ -308,6 +308,7 @@ function HUDController.Init()
 	plate.AutomaticSize = Enum.AutomaticSize.X
 	plate.BackgroundTransparency = 1
 	plate.Parent = gui
+	Kit.AutoScale(plate)
 	local row = Instance.new("UIListLayout")
 	row.FillDirection = Enum.FillDirection.Horizontal
 	row.VerticalAlignment = Enum.VerticalAlignment.Center
@@ -335,22 +336,32 @@ function HUDController.Init()
 	chip.TextColor3 = C.Gold
 	chip.Visible = false
 	chip.Parent = gui
+	Kit.AutoScale(chip)
 	Kit.Corner(chip, 999)
 	Kit.Stroke(chip, C.Gold, 0.5, 1)
 	Kit.Pad(chip, 12, 0)
 	pointsChip = chip
 
 	-- Player meters (bottom center, above the default toolbar area).
-	health = meter(gui, UDim2.new(0.5, -170, 1, -70), UDim2.fromOffset(340, 14), Color3.fromRGB(196, 62, 52), "Health")
+	-- Bottom cluster (health, flask, ultimate, posture) scales as one block on small screens.
+	local cluster = Instance.new("Frame")
+	cluster.Name = "Vitals"
+	cluster.AnchorPoint = Vector2.new(0.5, 1)
+	cluster.Position = UDim2.new(0.5, 0, 1, -14)
+	cluster.Size = UDim2.fromOffset(700, 80)
+	cluster.BackgroundTransparency = 1
+	cluster.Parent = gui
+	Kit.AutoScale(cluster)
+	health = meter(cluster, UDim2.new(0.5, -170, 0, 24), UDim2.fromOffset(340, 14), Color3.fromRGB(196, 62, 52), "Health")
 	local flaskPill = Instance.new("Frame")
 	flaskPill.AnchorPoint = Vector2.new(1, 0.5)
-	flaskPill.Position = UDim2.new(0.5, -182, 1, -63)
+	flaskPill.Position = UDim2.new(0.5, -182, 0, 31)
 	flaskPill.Size = UDim2.fromOffset(0, 28)
 	flaskPill.AutomaticSize = Enum.AutomaticSize.X
 	flaskPill.BackgroundColor3 = C.Ink
 	flaskPill.BackgroundTransparency = 0.25
 	flaskPill.BorderSizePixel = 0
-	flaskPill.Parent = gui
+	flaskPill.Parent = cluster
 	Kit.Corner(flaskPill, 999)
 	Kit.Stroke(flaskPill, C.Line, 0.75, 1)
 	Kit.Pad(flaskPill, 12, 0)
@@ -374,10 +385,10 @@ function HUDController.Init()
 	sf.ZIndex = 1
 	sf.Parent = (health :: Meter).frame
 	shieldFill = sf
-	local pm = meter(gui, UDim2.new(0.5, -110, 1, -38), UDim2.fromOffset(220, 7), Color3.fromRGB(232, 186, 82), "Posture", true)
+	local pm = meter(cluster, UDim2.new(0.5, -110, 0, 56), UDim2.fromOffset(220, 7), Color3.fromRGB(232, 186, 82), "Posture", true)
 	pm.label.Visible = false -- the centered bar explains itself; the label shows only when high
 	posture = pm
-	local um = meter(gui, UDim2.new(0.5, -170, 1, -50), UDim2.fromOffset(340, 4), Color3.fromRGB(120, 168, 240), "")
+	local um = meter(cluster, UDim2.new(0.5, -170, 0, 44), UDim2.fromOffset(340, 4), Color3.fromRGB(120, 168, 240), "")
 	um.label.Visible = false
 	ultimate = um
 
@@ -389,6 +400,7 @@ function HUDController.Init()
 	bf.BackgroundTransparency = 1
 	bf.Visible = false
 	bf.Parent = gui
+	Kit.AutoScale(bf)
 	local name = Instance.new("TextLabel")
 	name.Size = UDim2.new(1, 0, 0, 24)
 	name.BackgroundTransparency = 1

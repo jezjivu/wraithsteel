@@ -159,13 +159,14 @@ def text_size(node, width):
 # ------------------------------------------------------------------------------------------
 # Layout
 class Box:
-    __slots__ = ("node", "x", "y", "w", "h", "kids", "clip", "z")
+    __slots__ = ("node", "x", "y", "w", "h", "kids", "clip", "z", "ts")
 
     def __init__(self, node, x, y, w, h):
         self.node, self.x, self.y, self.w, self.h = node, x, y, w, h
         self.kids = []
         self.clip = None
         self.z = node.get("ZIndex", 1)
+        self.ts = 1.0
 
 
 def padding_of(node, w, h):
@@ -232,7 +233,25 @@ def layout(node, x, y, pw, ph, placed=None):
     if placed is None and (box.w != w or box.h != h):
         a = node.get("AnchorPoint") or {"x": 0, "y": 0}
         shift(box, -(box.w - w) * a["x"], -(box.h - h) * a["y"])
+    us = first(node, "UIScale")
+    sc = us.get("Scale", 1) if us else 1
+    if sc and abs(sc - 1) > 1e-6:
+        a = node.get("AnchorPoint") or {"x": 0, "y": 0}
+        scale_box(box, box.x + a["x"] * box.w, box.y + a["y"] * box.h, sc)
     return box
+
+
+def scale_box(b, ox, oy, sc):
+    b.x = ox + (b.x - ox) * sc
+    b.y = oy + (b.y - oy) * sc
+    b.w *= sc
+    b.h *= sc
+    b.ts *= sc
+    if b.clip:
+        x, y, w, h = b.clip
+        b.clip = (ox + (x - ox) * sc, oy + (y - oy) * sc, w * sc, h * sc)
+    for k in b.kids:
+        scale_box(k, ox, oy, sc)
 
 
 def sorted_kids(node, kids):
@@ -372,6 +391,7 @@ def draw_box(canvas, b, clip):
         pad = int(max(b.w, b.h)) + 4
         tmp = Image.new("RGBA", (int(b.w) + 2 * pad, int(b.h) + 2 * pad))
         local = Box(n, pad, pad, b.w, b.h)
+        local.ts = b.ts
         draw_core(tmp, local, None)
         tmp = tmp.rotate(-rot, resample=Image.BICUBIC, center=(pad + b.w / 2, pad + b.h / 2))
         paste(canvas, tmp, b.x - pad, b.y - pad, clip)
@@ -387,6 +407,9 @@ def draw_core(canvas, b, clip):
     grad = first(n, "UIGradient")
     grad = grad if grad and grad.get("Enabled", True) is not False else None
     r = radius_of(n, w, h)
+    c0 = first(n, "UICorner")
+    if c0 and isinstance(c0.get("CornerRadius"), dict) and c0["CornerRadius"]["s"] == 0:
+        r = min(r * b.ts, min(w, h) / 2)
     bt = n.get("BackgroundTransparency", 0)
     if n["cls"] == "ViewportFrame":
         bt = min(bt, 0.0) if n.get("BackgroundTransparency") is None else bt
@@ -444,9 +467,9 @@ def draw_text(canvas, b, clip, grad):
     tt = n.get("TextTransparency", 0) or 0
     if not text or tt >= 1:
         return
-    pl, pt, pr, pb = padding_of(n, b.w, b.h)
+    pl, pt, pr, pb = (v * b.ts for v in padding_of(n, b.w, b.h))
     aw, ah = b.w - pl - pr, b.h - pt - pb
-    size = n.get("TextSize", 14)
+    size = n.get("TextSize", 14) * b.ts
     if n.get("TextScaled"):
         size = max(6, min(n.get("MaxTextSize") or 100, ah * 0.8))
         while size > 6:

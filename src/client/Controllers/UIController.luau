@@ -202,6 +202,7 @@ local function buildDock(gui: ScreenGui)
 	rail.BackgroundTransparency = 0.25
 	rail.BorderSizePixel = 0
 	rail.Parent = gui
+	Kit.AutoScale(rail)
 	Kit.Corner(rail, 14)
 	Kit.Stroke(rail, C.Line, 0.78, 1)
 	Kit.Pad(rail, 6)

@@ -174,6 +174,7 @@ local function buildBar()
 	bar.Size = UDim2.fromOffset(4 * 58 + 3 * 10 + 16, 72)
 	bar.BackgroundTransparency = 1
 	bar.Parent = gui
+	Kit.AutoScale(bar)
 	for i = 1, SpellConfig.Slots do
 		table.insert(slotUi, makeSlot(bar, (i - 1) * 68, SpellConfig.KeyLabels[i]))
 	end

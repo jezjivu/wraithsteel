@@ -326,6 +326,7 @@ function GuideController.Init()
 	box.BackgroundTransparency = 0.22
 	box.BorderSizePixel = 0
 	box.Parent = gui
+	Kit.AutoScale(box)
 	Kit.Corner(box, 10)
 	Kit.Stroke(box, C.Line, 0.75, 1)
 	Kit.Pad(box, 14, 12)
@@ -380,6 +381,7 @@ function GuideController.Init()
 	card.BackgroundTransparency = 0.18
 	card.BorderSizePixel = 0
 	card.Parent = gui
+	Kit.AutoScale(card)
 	Kit.Corner(card, 10)
 	Kit.Stroke(card, C.Line, 0.75, 1)
 	Kit.Pad(card, 14, 12)
