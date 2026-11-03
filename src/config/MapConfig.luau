@@ -142,6 +142,9 @@ MapConfig.Relics = {
 	{ id = "relic_stair", at = { 470, -770 } },
 	{ id = "relic_temple", at = { 360, -1060 } },
 	{ id = "relic_gate", at = { 70, -1100 } },
+	-- Secrets: only the grappling hook gets you there. `y` = height above the ground there.
+	{ id = "relic_belfry", at = { 0, -1125 }, y = 5 + 5 * (110 / 5.4) - 1.4 + 3.2 },
+	{ id = "relic_ledge", at = { -140, -460 }, y = 3.8, secret = true }, -- off the map: hook only
 }
 
 -- Lookout towers: wooden platforms with a grappling-hook point on top (vertical routes,
@@ -166,7 +169,14 @@ MapConfig.Landmarks = {
 	belfryHeight = 110,
 	elderTree = { -55, -285 }, -- the Elder Sakura over the crossroads
 	elderTreeHeight = 42,
+	belfryHooks = { 2, 4, 5 }, -- tiers with a grappling-hook point (climb it ring by ring)
+	ledge = { -140, -460 }, -- a hidden rock ledge, reached by hook from the bamboo lookout
 }
+
+-- Height (above the belfry's base) of the top of tier `tier`'s floor.
+function MapConfig.BelfryFloorY(tier: number): number
+	return 5 + tier * (MapConfig.Landmarks.belfryHeight / 5.4) - 1.4
+end
 
 
 -- Compatibility: the hub -> crossroads road (some systems want "the" route).

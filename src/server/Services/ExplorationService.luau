@@ -133,7 +133,7 @@ local function buildGate(folder: Instance, def: any)
 end
 
 local function buildRelic(folder: Instance, def: any)
-	local pos = ground(def.at[1], def.at[2]) + Vector3.new(0, 3.2, 0)
+	local pos = ground(def.at[1], def.at[2]) + Vector3.new(0, def.y or 3.2, 0)
 	local model = Instance.new("Model")
 	model.Name = def.id
 	model:SetAttribute("Relic", def.id)

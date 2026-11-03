@@ -760,6 +760,29 @@ local function buildLandmarks(world: Model)
 	local bell = K.decor(m, "GreatBell", Vector3.new(13, 11, 11), CFrame.new(bx, bellY, bz) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(120, 88, 48), Enum.Material.CorrodedMetal, Enum.PartType.Cylinder)
 	local seam = K.decor(m, "GreatBellCrack", Vector3.new(11, 0.5, 0.8), bell.CFrame * CFrame.new(0, 0, -5.4), Color3.fromRGB(255, 120, 40), Enum.Material.Neon)
 	K.light(seam, Color3.fromRGB(255, 120, 40), 60, 3)
+	-- Hook points up the belfry (climb ring by ring to the top floor).
+	for _, tier in L.belfryHooks do
+		local floorY = base.Y + MapConfig.BelfryFloorY(tier)
+		local hook = K.decor(m, "GrapplePoint", Vector3.new(0.3, 2.2, 2.2), CFrame.new(bx + 10, floorY + 6, bz - 10) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 205, 110), Enum.Material.Neon, Enum.PartType.Cylinder)
+		hook:SetAttribute("LandAt", Vector3.new(bx + 7, floorY + 3, bz - 7))
+		hook:SetAttribute("IgnoreLOS", true) -- the floors in between would block the line
+		pcall(function()
+			game:GetService("CollectionService"):AddTag(hook, "GrapplePoint")
+		end)
+	end
+	-- The hidden ledge: a weathered platform on the rocks with a tiny shrine and a hook back.
+	local lx, lz = L.ledge[1], L.ledge[2]
+	local lb = ground(lx, lz)
+	K.part(m, "LedgeFloor", Vector3.new(26, 1.2, 26), CFrame.new(lb + Vector3.new(0, 0.2, 0)), col(C.Stone), Enum.Material.Slate)
+	K.part(m, "LedgeShrine", Vector3.new(4, 5, 3), CFrame.new(lb + Vector3.new(-7, 3, -7)), col(C.DarkWood), Enum.Material.Wood)
+	K.part(m, "LedgeShrineRoof", Vector3.new(6, 0.8, 5), CFrame.new(lb + Vector3.new(-7, 5.9, -7)), col(C.Roof), Enum.Material.Slate)
+	stoneLantern(m, lb + Vector3.new(7, 0.8, -7), 1)
+	local ledgeHook = K.decor(m, "GrapplePoint", Vector3.new(0.3, 2.2, 2.2), CFrame.new(lb + Vector3.new(0, 9, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 205, 110), Enum.Material.Neon, Enum.PartType.Cylinder)
+	ledgeHook:SetAttribute("LandAt", lb + Vector3.new(0, 4, 4))
+	ledgeHook:SetAttribute("IgnoreLOS", true) -- the cliff lip hides the line from below
+	pcall(function()
+		game:GetService("CollectionService"):AddTag(ledgeHook, "GrapplePoint")
+	end)
 	local beacon = K.decor(m, "Beacon", Vector3.new(3, 3, 3), CFrame.new(bx, base.Y + 5 + H + 4, bz), Color3.fromRGB(255, 150, 70), Enum.Material.Neon, Enum.PartType.Ball)
 	K.light(beacon, Color3.fromRGB(255, 150, 70), 60, 4)
 

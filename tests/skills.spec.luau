@@ -120,7 +120,7 @@ cases["Exploration: relics and shortcut gates sit on the playable map"] = functi
 	end
 	local ids = {}
 	for _, r in MapConfig.Relics do
-		expectTrue(reachable(r.at[1], r.at[2]), "relic off the map: " .. r.id)
+		expectTrue(r.secret or reachable(r.at[1], r.at[2]), "relic off the map: " .. r.id)
 		expectTrue(ids[r.id] == nil, "duplicate relic " .. r.id)
 		ids[r.id] = true
 	end

@@ -56,7 +56,7 @@ local function findTarget(): BasePart?
 			if d > 6 and d <= CFG.range then
 				local dot = (inst.Position - cam.CFrame.Position).Unit:Dot(look)
 				if dot > bestDot then
-					local hit = workspace:Raycast(root.Position + Vector3.new(0, 2, 0), to, params)
+					local hit = if inst:GetAttribute("IgnoreLOS") == true then nil else workspace:Raycast(root.Position + Vector3.new(0, 2, 0), to, params)
 					-- Hitting the tower itself near the hook still counts as a clear line.
 					if hit == nil or (hit.Position - inst.Position).Magnitude < 9 then
 						best, bestDot = inst, dot

@@ -30,7 +30,7 @@ MovementConfig.Plunge = { speed = 70, shockRadius = 14 }
 
 -- Grappling hook (V): pull yourself to a glowing hook point (lookout towers, gates).
 MovementConfig.Grapple = {
-	range = 95, -- studs to the hook point
+	range = 120, -- studs to the hook point
 	minDot = 0.82, -- how close to the screen center the point must be
 	speed = 120, -- studs per second while being pulled
 	minSeconds = 0.35,
