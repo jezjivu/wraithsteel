@@ -153,6 +153,14 @@ MapConfig.Lookouts = {
 	{ 27, -560, 24 }, { -27, -800, 24 },
 }
 
+-- Landmarks (ValleyBuilder.buildLandmarks): seen from far away, they tell you where you are.
+MapConfig.Landmarks = {
+	belfry = { 0, -1125 }, -- the Great Belfry at the back of the Gate of the Cracked Bell
+	belfryHeight = 110,
+	elderTree = { -55, -285 }, -- the Elder Sakura over the crossroads
+	elderTreeHeight = 42,
+}
+
 -- World boss spawn (open-world encounter in the gorge clearing).
 MapConfig.WorldBossSpawn = { 440, -330 }
 

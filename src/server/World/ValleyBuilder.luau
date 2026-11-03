@@ -716,6 +716,67 @@ local function buildRoad(world: Model)
 	end
 end
 
+-- Landmarks: huge silhouettes you can see from across the valley (Souls-style orientation).
+local function buildLandmarks(world: Model)
+	local m = K.model("Landmarks", world)
+	local stone, dark, roof = col(C.Stone), col(C.DarkWood), col(C.Roof)
+	-- The Great Belfry: a ruined five-storey bell tower at the back of the Gate of the Cracked Bell.
+	local L = MapConfig.Landmarks
+	local bx, bz = L.belfry[1], L.belfry[2]
+	local base = ground(bx, bz)
+	K.part(m, "BelfryBase", Vector3.new(34, 6, 34), CFrame.new(base + Vector3.new(0, 2, 0)), stone, Enum.Material.Slate)
+	local H = L.belfryHeight
+	for _, dx in { -12, 12 } do
+		for _, dz in { -12, 12 } do
+			K.part(m, "BelfryPillar", Vector3.new(4, H, 4), CFrame.new(base + Vector3.new(dx, 5 + H / 2, dz)), col(C.ToriiRed), Enum.Material.Wood)
+		end
+	end
+	for tier = 1, 5 do
+		local y = base.Y + 5 + tier * (H / 5.4)
+		local w = 40 - tier * 3
+		K.part(m, "BelfryFloor", Vector3.new(w - 8, 1.2, w - 8), CFrame.new(bx, y - 2, bz), dark, Enum.Material.WoodPlanks)
+		-- Flared roof: four sloped slabs.
+		for k = 0, 3 do
+			local cf = CFrame.new(bx, y, bz) * CFrame.Angles(0, math.rad(90 * k), 0) * CFrame.new(0, 0, w / 2 - 4) * CFrame.Angles(math.rad(22), 0, 0)
+			K.part(m, "BelfryRoof", Vector3.new(w + 6, 1, 12), cf, roof, Enum.Material.Slate)
+		end
+		-- The top tier is broken open on one side.
+		if tier == 5 then
+			K.decor(m, "BelfryBreak", Vector3.new(12, 8, 1), CFrame.new(bx + 9, y + 3, bz - 9) * CFrame.Angles(0, math.rad(45), math.rad(30)), dark, Enum.Material.Wood)
+		end
+	end
+	-- The great bell hanging inside, its crack glowing like the one that fell.
+	local bellY = base.Y + 5 + H * 0.72
+	local bell = K.decor(m, "GreatBell", Vector3.new(13, 11, 11), CFrame.new(bx, bellY, bz) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(120, 88, 48), Enum.Material.CorrodedMetal, Enum.PartType.Cylinder)
+	local seam = K.decor(m, "GreatBellCrack", Vector3.new(11, 0.5, 0.8), bell.CFrame * CFrame.new(0, 0, -5.4), Color3.fromRGB(255, 120, 40), Enum.Material.Neon)
+	K.light(seam, Color3.fromRGB(255, 120, 40), 60, 3)
+	local beacon = K.decor(m, "Beacon", Vector3.new(3, 3, 3), CFrame.new(bx, base.Y + 5 + H + 4, bz), Color3.fromRGB(255, 150, 70), Enum.Material.Neon, Enum.PartType.Ball)
+	K.light(beacon, Color3.fromRGB(255, 150, 70), 60, 4)
+
+	-- The Elder Sakura: a giant ancient tree over the crossroads.
+	local tx, tz = L.elderTree[1], L.elderTree[2]
+	local tb = ground(tx, tz)
+	local th = L.elderTreeHeight
+	K.part(m, "ElderTrunk", Vector3.new(th, 9, 9), CFrame.new(tb + Vector3.new(0, th / 2 - 2, 0)) * CFrame.Angles(0, 0, math.rad(90)), col(C.DarkWood), Enum.Material.Wood, Enum.PartType.Cylinder)
+	for k = 0, 4 do
+		local a = k / 5 * math.pi * 2
+		-- Roots and branches.
+		K.part(m, "ElderRoot", Vector3.new(14, 3, 3), CFrame.new(tb + Vector3.new(math.cos(a) * 6, 0.5, math.sin(a) * 6)) * CFrame.Angles(0, -a, math.rad(-20)), col(C.DarkWood), Enum.Material.Wood, Enum.PartType.Cylinder)
+		K.decor(m, "ElderBranch", Vector3.new(22, 2.4, 2.4), CFrame.new(tb + Vector3.new(math.cos(a) * 9, th - 6, math.sin(a) * 9)) * CFrame.Angles(0, -a, math.rad(28)), col(C.DarkWood), Enum.Material.Wood, Enum.PartType.Cylinder)
+	end
+	local first: Part? = nil
+	for k = 1, 9 do
+		local a = rng:NextNumber(0, math.pi * 2)
+		local r = rng:NextNumber(4, 18)
+		local size = rng:NextNumber(16, 24)
+		local c = K.decor(m, "ElderCanopy", Vector3.new(size, size * 0.7, size), CFrame.new(tb + Vector3.new(math.cos(a) * r, th + rng:NextNumber(-3, 6), math.sin(a) * r)), col(if k % 2 == 0 then C.SakuraDeep else C.Sakura), Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+		first = first or c
+	end
+	if first then
+		drifting(first, C.Sakura, 6)
+	end
+end
+
 -- Lookout towers with a grappling-hook point (CollectionService tag "GrapplePoint").
 local function buildLookouts(world: Model)
 	local folder = K.model("Lookouts", world)
@@ -809,6 +870,10 @@ function ValleyBuilder.Build(parent: Instance): Model
 	local ok2, err2 = pcall(buildZones :: any, world)
 	if not ok2 then
 		warn("[ValleyBuilder] zones:", err2)
+	end
+	local ok4, err4 = pcall(buildLandmarks :: any, world)
+	if not ok4 then
+		warn("[ValleyBuilder] landmarks:", err4)
 	end
 	local ok3, err3 = pcall(buildLookouts :: any, world)
 	if not ok3 then
