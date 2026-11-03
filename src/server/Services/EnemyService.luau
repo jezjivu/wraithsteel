@@ -453,6 +453,7 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 	if def.elite then
 		-- Super enemy: golden aura + glow so it reads from afar.
 		model:SetAttribute("Elite", true)
+		game:GetService("CollectionService"):AddTag(model, "Elite")
 		local e = Instance.new("ParticleEmitter")
 		e.Name = "EliteAura"
 		e.Texture = "rbxasset://textures/particles/fire_main.dds"

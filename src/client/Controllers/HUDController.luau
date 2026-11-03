@@ -430,7 +430,62 @@ function HUDController.Start()
 		task.spawn(bindCharacter, localPlayer.Character)
 	end
 
+	-- Elite (mini-boss) bar: the nearest elite that has noticed you gets the top bar while no
+	-- story boss is using it.
+	local bossActive = false
+	local bossSeenAt = 0
+	local eliteShown: Model? = nil
+	task.spawn(function()
+		local CollectionService = game:GetService("CollectionService")
+		while true do
+			task.wait(0.2)
+			local frame, nameL, hp, pos = bossFrame, bossName, bossHp, bossPosture
+			local ch = localPlayer.Character
+			local myRoot = ch and ch:FindFirstChild("HumanoidRootPart")
+			-- Boss updates stream while a fight runs; silence means it ended (left the arena etc.).
+			if bossActive and os.clock() - bossSeenAt > 3 then
+				bossActive = false
+				if frame then
+					frame.Visible = false
+				end
+			end
+			if frame and nameL and hp and pos and not bossActive and myRoot and myRoot:IsA("BasePart") then
+				local best, bestD = nil, 55
+				for _, m in CollectionService:GetTagged("Elite") do
+					if m:IsA("Model") and m:IsDescendantOf(workspace) and m:GetAttribute("Unaware") ~= true then
+						local r = m:FindFirstChild("HumanoidRootPart")
+						local h = m:FindFirstChildOfClass("Humanoid")
+						if r and r:IsA("BasePart") and h and h.Health > 0 then
+							local d = (r.Position - myRoot.Position).Magnitude
+							if d < bestD then
+								best, bestD = m, d
+							end
+						end
+					end
+				end
+				if best then
+					local h = best:FindFirstChildOfClass("Humanoid") :: Humanoid
+					if eliteShown ~= best then
+						eliteShown = best
+						nameL.Text = best.Name
+					end
+					frame.Visible = true
+					local frac = h.Health / math.max(1, h.MaxHealth)
+					setMeter(hp, frac, string.format("%d%%", math.ceil(frac * 100)))
+					local pf = tonumber(best:GetAttribute("Posture")) or 0
+					setMeter(pos, pf, if best:GetAttribute("Broken") == true then "BROKEN - strike now!" else "")
+				elseif eliteShown then
+					eliteShown = nil
+					frame.Visible = false
+				end
+			end
+		end
+	end)
+
 	Net.Client.On("BossState", function(st)
+		bossActive = st.state ~= "Dead" and st.hpFrac > 0
+		bossSeenAt = os.clock()
+		eliteShown = nil
 		local frame = bossFrame
 		if frame == nil or bossName == nil or bossHp == nil or bossPosture == nil then
 			return
