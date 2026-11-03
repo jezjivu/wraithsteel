@@ -130,30 +130,43 @@ function UIController.Open(name: string, opts: { atStation: boolean?, lanternId:
 end
 
 local function buildMenu(gui: ScreenGui)
+	local H, GAP = 30, 3
 	local bar = Instance.new("Frame")
 	bar.Name = "MenuBar"
 	bar.AnchorPoint = Vector2.new(0, 1)
-	bar.Position = UDim2.new(0, 10, 1, -10)
-	bar.Size = UDim2.fromOffset(120, 40 * #MENU + 6 * (#MENU - 1))
+	bar.Position = UDim2.new(0, 12, 1, -12)
+	bar.Size = UDim2.fromOffset(128, 26 + (H + GAP) * #MENU)
 	bar.BackgroundTransparency = 1
 	bar.Parent = gui
 	local list = Instance.new("UIListLayout")
-	list.Padding = UDim.new(0, 6)
+	list.Padding = UDim.new(0, GAP)
 	list.SortOrder = Enum.SortOrder.LayoutOrder
 	list.Parent = bar
-	for _, item in MENU do
-		local b = Kit.Button(bar, item.label, Kit.Colors.Panel, function()
+	local head = Instance.new("TextLabel")
+	head.Size = UDim2.fromOffset(128, 22)
+	head.BackgroundTransparency = 1
+	head.Font = Kit.TitleFont
+	head.TextSize = 18
+	head.TextColor3 = Kit.Colors.Gold
+	head.TextXAlignment = Enum.TextXAlignment.Left
+	head.Text = "  MENU"
+	head.LayoutOrder = -1
+	head.Parent = bar
+	for i, item in MENU do
+		local b = Kit.Button(bar, item.label, Kit.Colors.Steel, function()
 			if current and current.name == item.panel then
 				UIController.Close()
 			else
 				UIController.Open(item.panel)
 			end
-		end, 120)
-		b.Size = UDim2.fromOffset(120, 40)
-		local stroke = Instance.new("UIStroke")
-		stroke.Color = Kit.Colors.Gold
-		stroke.Transparency = 0.6
-		stroke.Parent = b
+		end, 128)
+		b.Size = UDim2.fromOffset(128, H)
+		b.TextXAlignment = Enum.TextXAlignment.Left
+		b.TextSize = 13
+		b.LayoutOrder = i
+		local p = Instance.new("UIPadding")
+		p.PaddingLeft = UDim.new(0, 14)
+		p.Parent = b
 	end
 end
 

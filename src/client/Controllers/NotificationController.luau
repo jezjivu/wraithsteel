@@ -21,13 +21,26 @@ function NotificationController.Show(kind: string, text: string)
 	end
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 28)
-	label.BackgroundTransparency = 0.35
-	label.BackgroundColor3 = if kind == "Error" then Color3.fromRGB(120, 30, 30) else Color3.fromRGB(25, 25, 30)
-	label.TextColor3 = Color3.new(1, 1, 1)
+	label.BackgroundTransparency = 0.2
+	label.BackgroundColor3 = Color3.fromRGB(14, 12, 16)
+	label.BorderSizePixel = 0
+	label.TextColor3 = if kind == "Error" then Color3.fromRGB(255, 140, 130) else Color3.fromRGB(240, 232, 220)
 	label.TextScaled = true
 	label.Font = Enum.Font.GothamMedium
 	label.Text = text
 	label.Parent = frame
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft = UDim.new(0, 14)
+	pad.PaddingRight = UDim.new(0, 8)
+	pad.PaddingTop = UDim.new(0, 4)
+	pad.PaddingBottom = UDim.new(0, 4)
+	pad.Parent = label
+	local edge = Instance.new("Frame")
+	edge.Size = UDim2.new(0, 3, 1, 8)
+	edge.Position = UDim2.fromOffset(-14, -4)
+	edge.BorderSizePixel = 0
+	edge.BackgroundColor3 = if kind == "Error" then Color3.fromRGB(200, 50, 45) else Color3.fromRGB(232, 196, 120)
+	edge.Parent = label
 	local labels = {}
 	for _, child in frame:GetChildren() do
 		if child:IsA("TextLabel") then

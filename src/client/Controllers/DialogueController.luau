@@ -187,14 +187,13 @@ function DialogueController.Init()
 	f.BackgroundColor3 = Kit.Colors.Ink
 	f.BackgroundTransparency = 0.08
 	f.Parent = gui
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 12)
-	corner.Parent = f
 	local stroke = Instance.new("UIStroke")
-	stroke.Color = Kit.Colors.Gold
-	stroke.Thickness = 2
-	stroke.Transparency = 0.3
+	stroke.Color = Kit.Colors.Steel
+	stroke.Thickness = 1
+	stroke.Transparency = 0.35
 	stroke.Parent = f
+	Kit.Brackets(f)
+	Kit.BladeLine(f, UDim2.fromOffset(18, 44), UDim.new(0.6, 0))
 	local n = Instance.new("TextLabel")
 	n.Position = UDim2.fromOffset(20, 12)
 	n.Size = UDim2.new(1, -40, 0, 28)

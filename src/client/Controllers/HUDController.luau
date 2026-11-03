@@ -63,43 +63,85 @@ local localPlayer = Players.LocalPlayer
 local stats: TextLabel? = nil
 local showDeathScreen: () -> ()
 
-type Meter = { frame: Frame, fill: Frame, label: TextLabel }
+type Meter = { frame: Frame, fill: Frame, ghost: Frame, label: TextLabel, centered: boolean, last: number }
 
-local function meter(parent: Instance, pos: UDim2, size: UDim2, color: Color3, text: string): Meter
+-- WRAITHSTEEL meters: a sharp steel-framed slot, a lit fill and a pale "ghost" that lingers
+-- where you just lost value, then drains after it. Centered meters (posture) grow from the
+-- middle outward.
+local function meter(parent: Instance, pos: UDim2, size: UDim2, color: Color3, text: string, centered: boolean?): Meter
 	local frame = Instance.new("Frame")
 	frame.Position = pos
 	frame.Size = size
 	frame.BackgroundColor3 = C.Ink
+	frame.BackgroundTransparency = 0.15
 	frame.BorderSizePixel = 0
+	frame.ClipsDescendants = true
 	frame.Parent = parent
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 6)
-	corner.Parent = frame
+	local st = Instance.new("UIStroke")
+	st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	st.Color = C.Steel
+	st.Transparency = 0.35
+	st.Parent = frame
+	local anchor = if centered then Vector2.new(0.5, 0) else Vector2.new(0, 0)
+	local at = if centered then UDim2.fromScale(0.5, 0) else UDim2.fromScale(0, 0)
+	local ghost = Instance.new("Frame")
+	ghost.AnchorPoint = anchor
+	ghost.Position = at
+	ghost.Size = UDim2.fromScale(if centered then 0 else 1, 1)
+	ghost.BackgroundColor3 = Color3.fromRGB(245, 235, 215)
+	ghost.BackgroundTransparency = 0.35
+	ghost.BorderSizePixel = 0
+	ghost.Parent = frame
 	local fill = Instance.new("Frame")
-	fill.Size = UDim2.fromScale(1, 1)
+	fill.AnchorPoint = anchor
+	fill.Position = at
+	fill.Size = UDim2.fromScale(if centered then 0 else 1, 1)
 	fill.BackgroundColor3 = color
 	fill.BorderSizePixel = 0
 	fill.Parent = frame
-	local c2 = Instance.new("UICorner")
-	c2.CornerRadius = UDim.new(0, 6)
-	c2.Parent = fill
+	local g = Instance.new("UIGradient")
+	g.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(150, 150, 150))
+	g.Rotation = 90
+	g.Parent = fill
+	-- Bright leading edge.
+	local tip = Instance.new("Frame")
+	tip.AnchorPoint = Vector2.new(1, 0)
+	tip.Position = UDim2.fromScale(1, 0)
+	tip.Size = UDim2.new(0, 2, 1, 0)
+	tip.BackgroundColor3 = color:Lerp(Color3.new(1, 1, 1), 0.6)
+	tip.BorderSizePixel = 0
+	tip.Visible = not centered
+	tip.Parent = fill
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.GothamBold
-	label.TextSize = 13
+	label.TextSize = 12
 	label.TextColor3 = C.Text
 	label.TextStrokeTransparency = 0.4
-	label.Text = text
+	label.Text = string.upper(text)
 	label.ZIndex = 2
 	label.Parent = frame
-	return { frame = frame, fill = fill, label = label }
+	return { frame = frame, fill = fill, ghost = ghost, label = label, centered = centered == true, last = if centered then 0 else 1 }
 end
 
 local function setMeter(m: Meter, frac: number, text: string?)
-	m.fill.Size = UDim2.fromScale(math.clamp(frac, 0, 1), 1)
+	local f = math.clamp(frac, 0, 1)
+	m.fill.Size = UDim2.fromScale(f, 1)
+	if f < m.last - 0.002 and not m.centered then
+		-- Lost value: the ghost waits a beat, then drains to the new value.
+		local target = UDim2.fromScale(f, 1)
+		task.delay(0.35, function()
+			if m.fill.Size == target then
+				TweenService:Create(m.ghost, TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = target }):Play()
+			end
+		end)
+	elseif f > m.last or m.centered then
+		m.ghost.Size = UDim2.fromScale(f, 1)
+	end
+	m.last = f
 	if text then
-		m.label.Text = text
+		m.label.Text = string.upper(text)
 	end
 end
 
@@ -248,11 +290,14 @@ function HUDController.Init()
 	s.BackgroundTransparency = 0.25
 	s.TextColor3 = C.Gold
 	s.Font = Enum.Font.GothamBold
-	s.TextSize = 16
+	s.TextSize = 15
 	s.Parent = gui
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 8)
-	corner.Parent = s
+	local sst = Instance.new("UIStroke")
+	sst.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	sst.Color = C.Steel
+	sst.Transparency = 0.5
+	sst.Parent = s
+	Kit.BladeLine(s, UDim2.new(0, 0, 1, 0), UDim.new(1, 0))
 	stats = s
 
 	-- Player meters (bottom center, above the default toolbar area).
@@ -267,8 +312,10 @@ function HUDController.Init()
 	fl.TextColor3 = Color3.fromRGB(150, 220, 255)
 	fl.Text = "Flask"
 	fl.Parent = gui
-	local flc = Instance.new("UICorner")
-	flc.CornerRadius = UDim.new(0, 6)
+	local flc = Instance.new("UIStroke")
+	flc.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	flc.Color = Color3.fromRGB(150, 220, 255)
+	flc.Transparency = 0.5
 	flc.Parent = fl
 	flaskLabel = fl
 	-- Shield overlay (pale jade over the health bar).
@@ -280,11 +327,8 @@ function HUDController.Init()
 	sf.Visible = false
 	sf.ZIndex = 1
 	sf.Parent = (health :: Meter).frame
-	local sc = Instance.new("UICorner")
-	sc.CornerRadius = UDim.new(0, 6)
-	sc.Parent = sf
 	shieldFill = sf
-	posture = meter(gui, UDim2.new(0.5, -160, 1, -66), UDim2.fromOffset(320, 14), Color3.fromRGB(235, 185, 70), "Posture")
+	posture = meter(gui, UDim2.new(0.5, -160, 1, -66), UDim2.fromOffset(320, 14), Color3.fromRGB(235, 185, 70), "Posture", true)
 	ultimate = meter(gui, UDim2.new(0.5, -160, 1, -48), UDim2.fromOffset(320, 10), Color3.fromRGB(120, 170, 255), "")
 
 	-- Boss bar (top center).
@@ -305,7 +349,7 @@ function HUDController.Init()
 	name.Parent = bf
 	bossName = name
 	bossHp = meter(bf, UDim2.fromOffset(0, 28), UDim2.new(1, 0, 0, 18), Color3.fromRGB(180, 40, 40), "")
-	bossPosture = meter(bf, UDim2.fromOffset(60, 50), UDim2.new(1, -120, 0, 10), Color3.fromRGB(240, 190, 70), "")
+	bossPosture = meter(bf, UDim2.fromOffset(60, 50), UDim2.new(1, -120, 0, 10), Color3.fromRGB(240, 190, 70), "", true)
 	bossFrame = bf
 
 	local combo = Instance.new("TextLabel")
