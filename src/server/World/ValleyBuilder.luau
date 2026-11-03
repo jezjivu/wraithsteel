@@ -191,8 +191,9 @@ local function sculpt()
 	-- Gorge river: a channel straight across the clearing.
 	local g = areaOf("Gorge")
 	if g then
-		local c = Vector3.new(g.center[1], 0, g.center[2])
-		local cf = CFrame.new(c) * CFrame.Angles(0, math.rad(80), 0)
+		local rv = MapConfig.GorgeRiver
+		local c = Vector3.new(rv.at[1], 0, rv.at[2])
+		local cf = CFrame.new(c) * CFrame.Angles(0, math.rad(rv.yaw), 0)
 		T:FillBlock(cf * CFrame.new(0, -3, 0), Vector3.new(16, 8, g.radius * 2.6), Enum.Material.Air)
 		T:FillBlock(cf * CFrame.new(0, -6.5, 0), Vector3.new(16, 3, g.radius * 2.6), Enum.Material.Mud)
 		T:FillBlock(cf * CFrame.new(0, -2.6, 0), Vector3.new(16, 3.2, g.radius * 2.6), Enum.Material.Water)
@@ -491,8 +492,11 @@ local function buildZones(world: Model)
 			end
 		elseif a.theme == "Gorge" then
 			-- Arched red bridge over the river, waterfall cliff upstream, maples everywhere.
-			local cf = CFrame.new(Vector3.new(a.center[1], 0, a.center[2])) * CFrame.Angles(0, math.rad(80), 0)
-			local road = CFrame.lookAt(c, c + (cf.RightVector))
+			-- The river crosses the road from the crossroads; the bridge carries that road over it.
+			local rv = MapConfig.GorgeRiver
+			local rc = Vector3.new(rv.at[1], MapConfig.RoadY(rv.at[1], rv.at[2]), rv.at[2])
+			local cf = CFrame.new(Vector3.new(rv.at[1], 0, rv.at[2])) * CFrame.Angles(0, math.rad(rv.yaw), 0)
+			local road = CFrame.lookAt(rc, rc + cf.RightVector)
 			for i = -5, 5 do
 				local y = 2.5 - (i / 5) ^ 2 * 2.2
 				K.part(m, "BridgeDeck", Vector3.new(14, 0.8, 3.2), road * CFrame.new(0, y, i * 3), col(C.Wood), Enum.Material.WoodPlanks)
@@ -646,6 +650,9 @@ local function buildRoad(world: Model)
 		for _, lane in { -1, 1 } do
 			local off = lane * 2.6 + (if i % 2 == 0 then 0.7 else -0.7)
 			local p = ground(x + sx * off, z + sz * off)
+			if p.Y < MapConfig.RoadY(p.X, p.Z) - 1.5 then
+				continue -- river bed (the bridge carries the road here)
+			end
 			local w, l = rng:NextNumber(3.4, 4.4), rng:NextNumber(2.6, 3.4)
 			local stone = K.part(road, "Flagstone", Vector3.new(w, 0.4, l), CFrame.new(p + Vector3.new(0, 0.12, 0)) * CFrame.Angles(0, math.atan2(ux, uz) + rng:NextNumber(-0.2, 0.2), 0), col(C.Flagstone), Enum.Material.Slate)
 			stone.CastShadow = false
@@ -659,7 +666,10 @@ local function buildRoad(world: Model)
 		end
 		local half = a.half
 		for _, side in { -1, 1 } do
-			stoneLantern(road, ground(x - uz * side * 7, z + ux * side * 7), 0.9)
+			local lp = ground(x - uz * side * 7, z + ux * side * 7)
+			if lp.Y >= MapConfig.RoadY(lp.X, lp.Z) - 1.5 then
+				stoneLantern(road, lp, 0.9)
+			end
 		end
 		for _, side in { -1, 1 } do
 			for k = 0, 1 do

@@ -135,7 +135,7 @@ MapConfig.Relics = {
 	{ id = "relic_graves", at = { -470, -250 } },
 	{ id = "relic_springs", at = { -575, -455 } },
 	{ id = "relic_village", at = { -455, -820 } },
-	{ id = "relic_gorge", at = { 360, -430 } },
+	{ id = "relic_gorge", at = { 480, -405 } },
 	{ id = "relic_stair", at = { 470, -770 } },
 	{ id = "relic_temple", at = { 360, -1060 } },
 	{ id = "relic_gate", at = { 70, -1100 } },
@@ -147,11 +147,15 @@ MapConfig.Lookouts = {
 	{ 75, -255, 22 }, { -85, -405, 22 },
 	{ -350, -375, 20 }, { -505, -235, 18 },
 	{ -300, -690, 24 }, { -470, -745, 20 }, { -395, -865, 22 },
-	{ 345, -295, 22 }, { 500, -320, 24 },
+	{ 320, -290, 22 }, { 500, -320, 24 },
 	{ 225, -945, 20 }, { 375, -1050, 22 },
 	{ -65, -995, 26 }, { 85, -995, 26 },
 	{ 27, -560, 24 }, { -27, -800, 24 },
 }
+
+-- Red Maple Gorge river: crosses the road from the crossroads just before the clearing (the
+-- red bridge carries the road over it). yaw 0 = the river runs north-south.
+MapConfig.GorgeRiver = { at = { 355, -360 }, yaw = 0 }
 
 -- Landmarks (ValleyBuilder.buildLandmarks): seen from far away, they tell you where you are.
 MapConfig.Landmarks = {
