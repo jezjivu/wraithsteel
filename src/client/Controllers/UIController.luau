@@ -7,6 +7,7 @@
 -- API:
 --   UIController.Open(panelName, opts?)   panelName = "Weapons" | "Lanterns" | "Spirits" |
 --                                          "Expeditions" | "Quests" | "Store" | "Codes" | "Party" | "Trade"
+--                                          | "NightMarket"
 --   UIController.Close()
 
 local Players = game:GetService("Players")
@@ -36,6 +37,7 @@ local STATION_PANELS = {
 	CodeStone = "Codes",
 	Dojo = "Styles",
 	Waystone = "Travel",
+	NightMarket = "NightMarket",
 }
 
 -- Menu bar (available anywhere). Buying weapons / opening lanterns still needs the hub station.
@@ -50,6 +52,7 @@ local MENU = {
 	{ panel = "Travel", label = "Travel" },
 	{ panel = "Expeditions", label = "Expeditions" },
 	{ panel = "Store", label = "Store" },
+	{ panel = "NightMarket", label = "Market" },
 	{ panel = "Party", label = "Party" },
 	{ panel = "Trade", label = "Trade" },
 	{ panel = "Codes", label = "Codes" },

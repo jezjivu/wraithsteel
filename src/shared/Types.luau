@@ -110,6 +110,9 @@ export type ProfileData = {
 	-- Codes
 	codesRedeemed: { [string]: boolean },
 
+	-- Night Market: purchases in the current stock window (v13)
+	nightMarket: { window: number, bought: { [string]: number } },
+
 	-- Monetization
 	receipts: { [string]: boolean }, -- purchaseId -> granted
 	receiptOrder: { string }, -- FIFO used to cap `receipts`

@@ -117,6 +117,12 @@ Migrations.Steps = {
 			data.tradeOrder = {}
 		end
 	end,
+	-- v12 -> v13: Night Market purchase counters for the current window.
+	[13] = function(data: { [string]: any })
+		if type(data.nightMarket) ~= "table" then
+			data.nightMarket = { window = -1, bought = {} }
+		end
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server

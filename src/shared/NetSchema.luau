@@ -70,6 +70,10 @@ local NetSchema: { [string]: RemoteDef } = {
 	PrepareGift = { kind = "Function", direction = "ToServer", args = { "integer", "string" }, rate = { burst = 3, perSecond = 0.5 } },
 	GetStoreInfo = { kind = "Function", direction = "ToServer", args = {}, rate = { burst = 3, perSecond = 0.5 } },
 
+	-- Night Market (rotating fixed-price stock) ---------------------------------------------
+	GetNightMarket = { kind = "Function", direction = "ToServer", args = {}, rate = { burst = 4, perSecond = 1 } },
+	BuyNightMarket = { kind = "Function", direction = "ToServer", args = { "integer", "integer" }, rate = { burst = 4, perSecond = 1 } },
+
 	-- Rewards / quests / codes ---------------------------------------------------------------
 	ClaimDaily = { kind = "Function", direction = "ToServer", args = {}, rate = { burst = 2, perSecond = 0.5 } },
 	ClaimPlaytime = { kind = "Function", direction = "ToServer", args = { "string" }, rate = { burst = 4, perSecond = 1 } },

@@ -62,6 +62,8 @@ function ProfileTemplate.New(): Types.ProfileData
 
 		codesRedeemed = {},
 
+		nightMarket = { window = -1, bought = {} },
+
 		receipts = {},
 		receiptOrder = {},
 		giftedPasses = {},
