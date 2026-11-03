@@ -74,6 +74,7 @@ export type ProfileData = {
 	skills: { [string]: number }, -- skill tree: skillId -> rank (SkillConfig); added in dataVersion 8
 	shortcuts: { [string]: boolean }, -- opened shortcut gates (MapConfig.Shortcuts); dataVersion 9
 	relics: { [string]: boolean }, -- Ashen Relics found (MapConfig.Relics); dataVersion 9
+	lostEmber: { amount: number, x: number, y: number, z: number }, -- dropped on death (amount 0 = none); v10
 
 	-- Spirits
 	spirits: { [string]: SpiritInstance }, -- uid -> instance

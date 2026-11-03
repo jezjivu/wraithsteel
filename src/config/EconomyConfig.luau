@@ -4,7 +4,7 @@
 
 local EconomyConfig = {}
 
-EconomyConfig.DataVersion = 9 -- bump together with a migration in Logic/Migrations
+EconomyConfig.DataVersion = 10 -- bump together with a migration in Logic/Migrations
 
 EconomyConfig.StartingEmber = 50
 EconomyConfig.StartingJade = 0
@@ -75,6 +75,15 @@ EconomyConfig.ReleaseRefund = {
 	Epic = 80,
 	Legendary = 400,
 	Mythic = 2000,
+}
+
+-- Death: you drop part of your carried Ember where you fell. Reach the spot to get it back;
+-- die again first and it's gone. Nothing drops inside boss arenas or in the hub.
+EconomyConfig.DeathDrop = {
+	fraction = 0.25,
+	minimum = 20, -- don't bother dropping less than this
+	recoverRadius = 8,
+	hubSafeRadius = 150,
 }
 
 return EconomyConfig

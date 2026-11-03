@@ -93,6 +93,12 @@ Migrations.Steps = {
 		data.shortcuts = if type(data.shortcuts) == "table" then data.shortcuts else {}
 		data.relics = if type(data.relics) == "table" then data.relics else {}
 	end,
+	-- v9 -> v10: Ember dropped on death.
+	[10] = function(data: { [string]: any })
+		if type(data.lostEmber) ~= "table" then
+			data.lostEmber = { amount = 0, x = 0, y = 0, z = 0 }
+		end
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server

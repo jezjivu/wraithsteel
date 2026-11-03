@@ -34,6 +34,7 @@ function ProfileTemplate.New(): Types.ProfileData
 		skills = {},
 		shortcuts = {},
 		relics = {},
+		lostEmber = { amount = 0, x = 0, y = 0, z = 0 },
 		saga = { quest = 1, step = 1, progress = 0, started = false },
 
 		spirits = {},
