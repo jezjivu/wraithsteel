@@ -29,6 +29,22 @@ LightingConfig.ColorCorrection = { Saturation = 0.08, Contrast = 0.06, TintColor
 LightingConfig.Clouds = { Cover = 0.55, Density = 0.6, Color = { 255, 225, 215 } }
 LightingConfig.SunRays = { Intensity = 0.06, Spread = 0.7 }
 
+-- Ashen Valley day/night cycle (client, synced by server time so everyone shares the sky).
+-- Keys: hour -> brightness / ambient / outdoor ambient; values blend between keys.
+LightingConfig.DayNight = {
+	enabled = true,
+	cycleMinutes = 24, -- one full day
+	keys = {
+		{ hour = 0, brightness = 0.9, ambient = { 45, 48, 80 }, outdoor = { 70, 78, 120 } },
+		{ hour = 5.5, brightness = 1.2, ambient = { 70, 60, 80 }, outdoor = { 110, 95, 120 } },
+		{ hour = 8, brightness = 2.4, ambient = { 80, 75, 75 }, outdoor = { 135, 128, 122 } },
+		{ hour = 13, brightness = 2.8, ambient = { 85, 82, 80 }, outdoor = { 145, 140, 135 } },
+		{ hour = 17.4, brightness = 2.2, ambient = { 70, 60, 70 }, outdoor = { 120, 105, 110 } },
+		{ hour = 20, brightness = 1.1, ambient = { 55, 48, 75 }, outdoor = { 85, 80, 115 } },
+		{ hour = 24, brightness = 0.9, ambient = { 45, 48, 80 }, outdoor = { 70, 78, 120 } },
+	},
+}
+
 -- Per-realm moods (client RealmAmbienceController tweens to these; japan = the values above).
 -- weather: "Rain" | "Motes" | nil
 LightingConfig.Realms = {

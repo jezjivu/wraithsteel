@@ -100,6 +100,23 @@ local function apply(realm: string)
 	setWeather(if r then r.weather else nil)
 end
 
+-- Valley sky at the current server time (hours 0-24 + blended lighting values).
+local function valleySky(): (number, number, Color3, Color3)
+	local D = LightingConfig.DayNight
+	local cycle = D.cycleMinutes * 60
+	-- Offset so a fresh server starts at dusk (the valley's signature look).
+	local hour = ((workspace:GetServerTimeNow() / cycle) * 24 + 17) % 24
+	local keys = D.keys
+	for i = 1, #keys - 1 do
+		local a, b = keys[i], keys[i + 1]
+		if hour >= a.hour and hour <= b.hour then
+			local t = (hour - a.hour) / math.max(1e-3, b.hour - a.hour)
+			return hour, a.brightness + (b.brightness - a.brightness) * t, rgb(a.ambient):Lerp(rgb(b.ambient), t), rgb(a.outdoor):Lerp(rgb(b.outdoor), t)
+		end
+	end
+	return hour, keys[1].brightness, rgb(keys[1].ambient), rgb(keys[1].outdoor)
+end
+
 function RealmAmbienceController.Init() end
 
 function RealmAmbienceController.Start()
@@ -113,6 +130,22 @@ function RealmAmbienceController.Start()
 	end
 	player:GetAttributeChangedSignal("Realm"):Connect(check)
 	task.delay(2, check)
+	-- Day/night in the Ashen Valley (other realms keep their fixed mood).
+	if LightingConfig.DayNight.enabled then
+		task.spawn(function()
+			task.wait(3) -- after the realm mood tween
+			while true do
+				if current == "japan" then
+					local hour, brightness, ambient, outdoor = valleySky()
+					Lighting.ClockTime = hour
+					Lighting.Brightness = brightness
+					Lighting.Ambient = ambient
+					Lighting.OutdoorAmbient = outdoor
+				end
+				task.wait(0.5)
+			end
+		end)
+	end
 	RunService.RenderStepped:Connect(function()
 		local p = weatherPart
 		local cam = workspace.CurrentCamera
