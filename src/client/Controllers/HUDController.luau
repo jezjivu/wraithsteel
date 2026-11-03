@@ -17,6 +17,7 @@ local Net = require(Shared:WaitForChild("Net"))
 local FormatNumber = require(Shared:WaitForChild("FormatNumber"))
 local BossConfig = require(Config:WaitForChild("BossConfig"))
 local EffectsConfig = require(Config:WaitForChild("EffectsConfig"))
+local SkillLogic = require(Shared:WaitForChild("SkillLogic"))
 
 local UI = script.Parent.Parent:WaitForChild("UI")
 local Kit = require(UI:WaitForChild("Kit"))
@@ -155,6 +156,7 @@ local bossName: TextLabel? = nil
 local bossHp: Meter? = nil
 local bossPosture: Meter? = nil
 
+local pointsChip: TextLabel? = nil
 local function refreshStats()
 	local label = stats
 	if label == nil then
@@ -167,6 +169,13 @@ local function refreshStats()
 		tostring(DataController.Get("level") or 1),
 		FormatNumber.Short(tonumber(localPlayer:GetAttribute("Power")) or 0)
 	)
+	-- Unspent skill points reminder.
+	local chip = pointsChip
+	if chip then
+		local pts = SkillLogic.Available(DataController.Get("level") or 1, DataController.Get("skills") or {}, SkillLogic.Count(DataController.Get("relics")))
+		chip.Visible = pts > 0
+		chip.Text = string.format("✦ %d SKILL POINT%s  ·  MENU > SKILLS", pts, if pts == 1 then "" else "S")
+	end
 end
 
 -- Big fading banner when entering a new zone (ZoneService sets Zone/ZoneName attributes).
@@ -299,6 +308,23 @@ function HUDController.Init()
 	sst.Parent = s
 	Kit.BladeLine(s, UDim2.new(0, 0, 1, 0), UDim.new(1, 0))
 	stats = s
+	local chip = Instance.new("TextLabel")
+	chip.Position = UDim2.fromOffset(10, 46)
+	chip.Size = UDim2.fromOffset(300, 22)
+	chip.BackgroundColor3 = C.Ink
+	chip.BackgroundTransparency = 0.25
+	chip.BorderSizePixel = 0
+	chip.Font = Enum.Font.GothamBold
+	chip.TextSize = 12
+	chip.TextColor3 = C.Gold
+	chip.Visible = false
+	chip.Parent = gui
+	local cst = Instance.new("UIStroke")
+	cst.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	cst.Color = C.Gold
+	cst.Transparency = 0.4
+	cst.Parent = chip
+	pointsChip = chip
 
 	-- Player meters (bottom center, above the default toolbar area).
 	health = meter(gui, UDim2.new(0.5, -160, 1, -92), UDim2.fromOffset(320, 22), Color3.fromRGB(190, 55, 50), "Health")
