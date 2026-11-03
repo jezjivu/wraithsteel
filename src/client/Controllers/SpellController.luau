@@ -71,7 +71,7 @@ local function makeSlot(parent: Instance, x: number, key: string): SlotUi
 	f.BackgroundTransparency = 0.15
 	f.Parent = parent
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 10)
+	corner.CornerRadius = UDim.new(0, 2)
 	corner.Parent = f
 	local stroke = Instance.new("UIStroke")
 	stroke.Thickness = 2
@@ -116,7 +116,7 @@ local function makeSlot(parent: Instance, x: number, key: string): SlotUi
 	shade.ZIndex = 4
 	shade.Parent = f
 	local sc = Instance.new("UICorner")
-	sc.CornerRadius = UDim.new(0, 10)
+	sc.CornerRadius = UDim.new(0, 2)
 	sc.Parent = shade
 	local timer = Instance.new("TextLabel")
 	timer.Size = UDim2.fromScale(1, 1)
@@ -186,14 +186,14 @@ local function buildBar()
 	qf.BackgroundColor3 = C.Ink
 	qf.Parent = bar
 	local qc = Instance.new("UICorner")
-	qc.CornerRadius = UDim.new(0, 5)
+	qc.CornerRadius = UDim.new(0, 1)
 	qc.Parent = qf
 	local fill = Instance.new("Frame")
 	fill.Size = UDim2.fromScale(0, 1)
 	fill.BackgroundColor3 = Color3.fromRGB(90, 170, 255)
 	fill.Parent = qf
 	local fc = Instance.new("UICorner")
-	fc.CornerRadius = UDim.new(0, 5)
+	fc.CornerRadius = UDim.new(0, 1)
 	fc.Parent = fill
 	local grad = Instance.new("UIGradient")
 	grad.Color = ColorSequence.new(Color3.fromRGB(80, 140, 255), Color3.fromRGB(170, 230, 255))

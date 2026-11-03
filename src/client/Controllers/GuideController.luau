@@ -324,9 +324,12 @@ function GuideController.Init()
 	box.BackgroundColor3 = C.Ink
 	box.BackgroundTransparency = 0.2
 	box.Parent = gui
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 8)
+	local corner = Instance.new("UIStroke")
+	corner.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	corner.Color = C.Steel
+	corner.Transparency = 0.45
 	corner.Parent = box
+	Kit.Brackets(box, nil, 10)
 	local title = Instance.new("TextLabel")
 	title.Position = UDim2.fromOffset(10, 4)
 	title.Size = UDim2.new(1, -20, 0, 20)
@@ -335,7 +338,7 @@ function GuideController.Init()
 	title.TextSize = 15
 	title.TextColor3 = C.Gold
 	title.TextXAlignment = Enum.TextXAlignment.Left
-	title.Text = "Objective"
+	title.Text = "OBJECTIVE"
 	title.Parent = box
 	local text = Instance.new("TextLabel")
 	text.Position = UDim2.fromOffset(10, 24)
@@ -357,9 +360,12 @@ function GuideController.Init()
 	card.BackgroundColor3 = C.Ink
 	card.BackgroundTransparency = 0.15
 	card.Parent = gui
-	local c2 = Instance.new("UICorner")
-	c2.CornerRadius = UDim.new(0, 8)
+	local c2 = Instance.new("UIStroke")
+	c2.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	c2.Color = C.Steel
+	c2.Transparency = 0.45
 	c2.Parent = card
+	Kit.Brackets(card, nil, 10)
 	local head = Instance.new("TextLabel")
 	head.Position = UDim2.fromOffset(10, 4)
 	head.Size = UDim2.new(1, -20, 0, 24)
