@@ -8,6 +8,7 @@ local Config = ReplicatedStorage:WaitForChild("Config")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local SkillConfig = require(Config:WaitForChild("SkillConfig"))
 local SpellConfig = require(Config:WaitForChild("SpellConfig"))
+local MapConfig = require(Config:WaitForChild("MapConfig"))
 local SkillLogic = require(Shared:WaitForChild("SkillLogic"))
 local Net = require(Shared:WaitForChild("Net"))
 
@@ -55,17 +56,18 @@ end
 
 local Panel: PanelTypes.Panel = {
 	Title = "Skill Tree",
-	WatchKeys = { "skills", "level" },
+	WatchKeys = { "skills", "level", "relics" },
 	Render = function(body, ctx)
 		local level = DataController.Get("level") or 1
 		local skills: { [string]: number } = DataController.Get("skills") or {}
-		local points = SkillLogic.Available(level, skills)
+		local relics = SkillLogic.Count(DataController.Get("relics"))
+		local points = SkillLogic.Available(level, skills, relics)
 
 		local head = Kit.Row(body, 44)
 		head.BackgroundColor3 = C.Ink
 		head.LayoutOrder = 1
 		Kit.Label(head, string.format("<b>%d</b> skill point%s to spend", points, if points == 1 then "" else "s"), { size = 18, color = if points > 0 then C.Gold else C.Muted, width = 300 })
-		Kit.Label(head, "1 point per level, +1 every 5 levels", { size = 13, color = C.Muted, width = 260 })
+		Kit.Label(head, string.format("1 per level, +1 every 5 levels, +1 per Ashen Relic (%d/%d found)", relics, #MapConfig.Relics), { size = 12, color = C.Muted, width = 270, wrap = true })
 		Kit.Button(head, "Reset", C.Bad, function()
 			local ok, msg = Net.Client.Invoke("ResetSkills")
 			ctx.notify(msg or "", ok ~= true)
@@ -130,7 +132,7 @@ local Panel: PanelTypes.Panel = {
 			for _, id in ids do
 				local def = SkillConfig.Skills[id]
 				local rank = skills[id] or 0
-				local canLearn = SkillLogic.CanLearn(skills, level, id)
+				local canLearn = SkillLogic.CanLearn(skills, level, id, relics)
 				local reach = SkillLogic.Reachable(skills, id)
 				local p = center(pi, def)
 				local b = Instance.new("TextButton")
@@ -202,7 +204,7 @@ local Panel: PanelTypes.Panel = {
 				extra ..= string.format(" · art: %d Qi, %.0fs cooldown", sp.qi, sp.cooldown)
 			end
 			Kit.Label(info, extra, { size = 12, color = C.Muted })
-			local ok, why = SkillLogic.CanLearn(skills, level, id)
+			local ok, why = SkillLogic.CanLearn(skills, level, id, relics)
 			Kit.Button(card, if ok then "Learn" else (why or "Locked"), if ok then C.Good else C.Row, function()
 				local okS, msg = Net.Client.Invoke("LearnSkill", id)
 				ctx.notify(msg or "", okS ~= true)

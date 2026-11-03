@@ -122,6 +122,25 @@ MapConfig.BossArenas = {
 	{ name = "HollowAbbotArena", bossId = "hollow_abbot", at = { 330, -1060 } },
 }
 
+-- One-way shortcut gates (Souls-style): barred from one side; open them from `openFrom`'s
+-- side and they stay open for you (saved). ExplorationService builds them across the road.
+MapConfig.Shortcuts = {
+	{ id = "pass_gate", name = "Mountain Pass Gate", at = { 0, -600 }, dir = { 0, 1 }, half = 18, openFrom = { 0, -700 } },
+	{ id = "temple_gate", name = "Temple Road Gate", at = { 150, -1025 }, dir = { 1, 0.17 }, half = 26, openFrom = { 60, -1040 } },
+}
+
+-- Ashen Relics: hidden pickups, each worth one extra skill point.
+MapConfig.Relics = {
+	{ id = "relic_bamboo", at = { -60, -260 } },
+	{ id = "relic_graves", at = { -470, -250 } },
+	{ id = "relic_springs", at = { -575, -455 } },
+	{ id = "relic_village", at = { -455, -820 } },
+	{ id = "relic_gorge", at = { 360, -430 } },
+	{ id = "relic_stair", at = { 470, -770 } },
+	{ id = "relic_temple", at = { 360, -1060 } },
+	{ id = "relic_gate", at = { 70, -1100 } },
+}
+
 -- World boss spawn (open-world encounter in the gorge clearing).
 MapConfig.WorldBossSpawn = { 440, -330 }
 

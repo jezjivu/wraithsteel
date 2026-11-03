@@ -32,6 +32,8 @@ function ProfileTemplate.New(): Types.ProfileData
 		waystones = { hub = true },
 		respawnWaystone = "hub",
 		skills = {},
+		shortcuts = {},
+		relics = {},
 		saga = { quest = 1, step = 1, progress = 0, started = false },
 
 		spirits = {},

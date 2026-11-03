@@ -47,7 +47,7 @@ function SkillService.Learn(player: Player, skillId: string): (boolean, string)
 		return false, "Loading..."
 	end
 	local skills = skillsOf(data)
-	local ok, err = SkillLogic.Learn(skills, data.level, skillId)
+	local ok, err = SkillLogic.Learn(skills, data.level, skillId, SkillLogic.Count(data.relics))
 	if not ok then
 		return false, err or "Can't learn that"
 	end
@@ -94,7 +94,7 @@ function SkillService.Start()
 		if data then
 			SkillLogic.Sanitize(skillsOf(data))
 			-- Over-spent (config changed): start the tree over rather than keep illegal ranks.
-			if SkillLogic.Available(data.level, data.skills) < 0 then
+			if SkillLogic.Available(data.level, data.skills, SkillLogic.Count(data.relics)) < 0 then
 				data.skills = {}
 			end
 			pruneArts(player, data)

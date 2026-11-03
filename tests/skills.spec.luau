@@ -91,4 +91,43 @@ cases["Skills: sanitize drops unknown skills and clamps ranks"] = function()
 	expectEq(s.iron_body, nil)
 end
 
+cases["Skills: Ashen Relics add bonus points"] = function()
+	expectEq(SkillLogic.Available(1, {}, 2), 2)
+	local s = {}
+	expectEq((SkillLogic.Learn(s, 1, "keen_edge", 1)), true)
+	expectEq(SkillLogic.Count({ a = true, b = true, c = false }), 2)
+end
+
+cases["Exploration: relics and shortcut gates sit on the playable map"] = function()
+	local MapConfig = require(Config.MapConfig)
+	local function reachable(x, z)
+		for _, a in MapConfig.Areas do
+			if math.sqrt((x - a.center[1]) ^ 2 + (z - a.center[2]) ^ 2) <= a.radius then
+				return true
+			end
+		end
+		for _, R in MapConfig.Roads do
+			for i = 1, #R - 1 do
+				local ax, az, bx, bz = R[i].at[1], R[i].at[2], R[i + 1].at[1], R[i + 1].at[2]
+				local dx, dz = bx - ax, bz - az
+				local t = math.clamp(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz), 0, 1)
+				if math.sqrt((x - ax - dx * t) ^ 2 + (z - az - dz * t) ^ 2) <= R[i].half then
+					return true
+				end
+			end
+		end
+		return false
+	end
+	local ids = {}
+	for _, r in MapConfig.Relics do
+		expectTrue(reachable(r.at[1], r.at[2]), "relic off the map: " .. r.id)
+		expectTrue(ids[r.id] == nil, "duplicate relic " .. r.id)
+		ids[r.id] = true
+	end
+	for _, g in MapConfig.Shortcuts do
+		expectTrue(reachable(g.at[1], g.at[2]), "gate off the road: " .. g.id)
+		expectTrue(reachable(g.openFrom[1], g.openFrom[2]), "gate open side unreachable: " .. g.id)
+	end
+end
+
 return cases

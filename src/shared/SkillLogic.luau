@@ -26,8 +26,9 @@ function SkillLogic.Spent(skills: Skills): number
 	return total
 end
 
-function SkillLogic.Available(level: number, skills: Skills): number
-	return SkillLogic.PointsEarned(level) - SkillLogic.Spent(skills)
+-- `bonus` = extra points (Ashen Relics found in the world).
+function SkillLogic.Available(level: number, skills: Skills, bonus: number?): number
+	return SkillLogic.PointsEarned(level) + (bonus or 0) - SkillLogic.Spent(skills)
 end
 
 function SkillLogic.Rank(skills: Skills?, id: string): number
@@ -51,7 +52,7 @@ function SkillLogic.Reachable(skills: Skills, id: string): boolean
 	return false
 end
 
-function SkillLogic.CanLearn(skills: Skills, level: number, id: string): (boolean, string?)
+function SkillLogic.CanLearn(skills: Skills, level: number, id: string, bonus: number?): (boolean, string?)
 	local def = SkillConfig.Skills[id]
 	if def == nil then
 		return false, "Unknown skill"
@@ -65,14 +66,14 @@ function SkillLogic.CanLearn(skills: Skills, level: number, id: string): (boolea
 	if not SkillLogic.Reachable(skills, id) then
 		return false, "Learn a skill above it first"
 	end
-	if SkillLogic.Available(level, skills) < (def.cost or 1) then
+	if SkillLogic.Available(level, skills, bonus) < (def.cost or 1) then
 		return false, "Not enough skill points"
 	end
 	return true, nil
 end
 
-function SkillLogic.Learn(skills: Skills, level: number, id: string): (boolean, string?)
-	local ok, err = SkillLogic.CanLearn(skills, level, id)
+function SkillLogic.Learn(skills: Skills, level: number, id: string, bonus: number?): (boolean, string?)
+	local ok, err = SkillLogic.CanLearn(skills, level, id, bonus)
 	if ok then
 		skills[id] = (skills[id] or 0) + 1
 	end
@@ -100,6 +101,19 @@ end
 function SkillLogic.HasArt(skills: Skills?, spellId: string): boolean
 	local need = SkillConfig.ArtSkill(spellId)
 	return need == nil or SkillLogic.Rank(skills, need) > 0
+end
+
+-- Count of true entries in a set table (relics found).
+function SkillLogic.Count(set: { [string]: any }?): number
+	local n = 0
+	if set then
+		for _, v in set do
+			if v then
+				n += 1
+			end
+		end
+	end
+	return n
 end
 
 -- Drops unknown skills and clamps ranks (e.g. after a config change).

@@ -88,6 +88,11 @@ Migrations.Steps = {
 			data.skills = {}
 		end
 	end,
+	-- v8 -> v9: shortcut gates and Ashen Relics.
+	[9] = function(data: { [string]: any })
+		data.shortcuts = if type(data.shortcuts) == "table" then data.shortcuts else {}
+		data.relics = if type(data.relics) == "table" then data.relics else {}
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server

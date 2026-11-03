@@ -72,6 +72,8 @@ export type ProfileData = {
 	respawnWaystone: string, -- where you respawn (last waystone you rested at)
 	saga: { quest: number, step: number, progress: number, started: boolean }, -- main questline (SagaLogic)
 	skills: { [string]: number }, -- skill tree: skillId -> rank (SkillConfig); added in dataVersion 8
+	shortcuts: { [string]: boolean }, -- opened shortcut gates (MapConfig.Shortcuts); dataVersion 9
+	relics: { [string]: boolean }, -- Ashen Relics found (MapConfig.Relics); dataVersion 9
 
 	-- Spirits
 	spirits: { [string]: SpiritInstance }, -- uid -> instance
