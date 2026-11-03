@@ -82,6 +82,9 @@ local methods = {}
 function methods.GetPropertyChangedSignal()
 	return newSignal()
 end
+function methods.GetAttributeChangedSignal()
+	return newSignal()
+end
 function methods.ClearAllChildren(self)
 	for _, c in self:GetChildren() do
 		c.Parent = nil
@@ -246,9 +249,23 @@ DateTime = { now = function() return { UnixTimestamp = 1700000000, UnixTimestamp
 -- task: delays queue and run when the tool flushes them (one level per flush, never loops).
 local delayed = {}
 task.delay = function(_, f, ...)
+	if __freezeDelays then
+		return
+	end
 	table.insert(delayed, { f = f, args = table.pack(...) })
 end
+-- Inside a spawned coroutine, wait parks it forever (loops stop); on the main thread it
+-- returns, but too many in a row means a polling loop: stop it with an error.
+local mainWaits = 0
 task.wait = function()
+	if coroutine.isyieldable() then
+		coroutine.yield()
+		return 0
+	end
+	mainWaits += 1
+	if mainWaits > 200 then
+		error("ui_mock: task.wait loop on the main thread")
+	end
 	return 0
 end
 task.cancel = function() end
@@ -291,6 +308,8 @@ localPlayer.Name = "Wanderer"
 localPlayer.DisplayName = "Wanderer"
 localPlayer.UserId = 1
 playerGui.Parent = localPlayer
+localPlayer.CharacterAdded = newSignal()
+localPlayer.CharacterRemoving = newSignal()
 localPlayer.GetMouse = function()
 	return { Hit = CFrame.new(), X = 0, Y = 0, Move = newSignal(), Button1Down = newSignal() }
 end

@@ -229,6 +229,9 @@ def layout(node, x, y, pw, ph, placed=None):
             box.w = right
         if auto in ("Y", "XY") and bottom > h:
             box.h = bottom
+    if placed is None and (box.w != w or box.h != h):
+        a = node.get("AnchorPoint") or {"x": 0, "y": 0}
+        shift(box, -(box.w - w) * a["x"], -(box.h - h) * a["y"])
     return box
 
 

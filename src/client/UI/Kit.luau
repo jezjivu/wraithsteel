@@ -550,8 +550,8 @@ function Kit.Progress(parent: Instance, frac: number, color: Color3?, width: num
 	return track
 end
 
--- Currency / stat pill: icon + value (e.g. Ember 48.2K).
-function Kit.Currency(parent: Instance, kind: "ember" | "jade" | "power" | "level", value: string): Frame
+-- Currency / stat pill: icon + value (e.g. Ember 48.2K). Returns the pill and its value label.
+function Kit.Currency(parent: Instance, kind: "ember" | "jade" | "power" | "level", value: string): (Frame, TextLabel)
 	local col = if kind == "ember" then C.Ember elseif kind == "jade" then C.Jade elseif kind == "power" then C.Gold else C.Text
 	local f = frame(parent, UDim2.new(), UDim2.fromOffset(0, 30), C.Ink, 0.25)
 	f.AutomaticSize = Enum.AutomaticSize.X
@@ -570,7 +570,7 @@ function Kit.Currency(parent: Instance, kind: "ember" | "jade" | "power" | "leve
 	l.Size = UDim2.new(0, 0, 1, 0)
 	l.AutomaticSize = Enum.AutomaticSize.X
 	l.LayoutOrder = nextOrder()
-	return f
+	return f, l
 end
 
 -- Friendly empty state.

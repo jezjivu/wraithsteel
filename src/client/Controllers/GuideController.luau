@@ -316,76 +316,99 @@ end
 function GuideController.Init()
 	local gui = Kit.Screen(Players.LocalPlayer:WaitForChild("PlayerGui"), "Guide", 4)
 
+	-- Objective: right edge, clear of Roblox's player list (top right) and chat (top left).
 	local box = Instance.new("Frame")
-	-- Right edge, above the middle: clear of Roblox's player list (top right) and chat (top left).
-	box.AnchorPoint = Vector2.new(1, 0.5)
-	box.Position = UDim2.new(1, -10, 0.36, 0)
-	box.Size = UDim2.fromOffset(300, 74)
+	box.AnchorPoint = Vector2.new(1, 0)
+	box.Position = UDim2.new(1, -12, 0, 150)
+	box.Size = UDim2.fromOffset(300, 0)
+	box.AutomaticSize = Enum.AutomaticSize.Y
 	box.BackgroundColor3 = C.Ink
-	box.BackgroundTransparency = 0.2
+	box.BackgroundTransparency = 0.22
+	box.BorderSizePixel = 0
 	box.Parent = gui
-	local corner = Instance.new("UIStroke")
-	corner.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	corner.Color = C.Steel
-	corner.Transparency = 0.45
-	corner.Parent = box
-	Kit.Brackets(box, nil, 10)
+	Kit.Corner(box, 10)
+	Kit.Stroke(box, C.Line, 0.75, 1)
+	Kit.Pad(box, 14, 12)
+	local boxList = Instance.new("UIListLayout")
+	boxList.Padding = UDim.new(0, 4)
+	boxList.SortOrder = Enum.SortOrder.LayoutOrder
+	boxList.Parent = box
+	local headRow = Instance.new("Frame")
+	headRow.Size = UDim2.new(1, 0, 0, 18)
+	headRow.BackgroundTransparency = 1
+	headRow.LayoutOrder = 1
+	headRow.Parent = box
+	local dot = Instance.new("Frame")
+	dot.AnchorPoint = Vector2.new(0, 0.5)
+	dot.Position = UDim2.new(0, 2, 0.5, 0)
+	dot.Size = UDim2.fromOffset(7, 7)
+	dot.Rotation = 45
+	dot.BackgroundColor3 = C.Accent
+	dot.BorderSizePixel = 0
+	dot.Parent = headRow
 	local title = Instance.new("TextLabel")
-	title.Position = UDim2.fromOffset(10, 4)
-	title.Size = UDim2.new(1, -20, 0, 20)
+	title.Position = UDim2.fromOffset(18, 0)
+	title.Size = UDim2.new(1, -18, 1, 0)
 	title.BackgroundTransparency = 1
-	title.Font = Enum.Font.GothamBold
-	title.TextSize = 15
+	title.Font = Kit.BoldFont
+	title.TextSize = 13
 	title.TextColor3 = C.Gold
 	title.TextXAlignment = Enum.TextXAlignment.Left
 	title.Text = "OBJECTIVE"
-	title.Parent = box
+	title.Parent = headRow
 	local text = Instance.new("TextLabel")
-	text.Position = UDim2.fromOffset(10, 24)
-	text.Size = UDim2.new(1, -20, 1, -28)
+	text.Size = UDim2.new(1, 0, 0, 0)
+	text.AutomaticSize = Enum.AutomaticSize.Y
 	text.BackgroundTransparency = 1
-	text.Font = Enum.Font.Gotham
-	text.TextSize = 14
+	text.Font = Kit.MediumFont
+	text.TextSize = 16
 	text.TextWrapped = true
 	text.TextColor3 = C.Text
 	text.TextXAlignment = Enum.TextXAlignment.Left
 	text.TextYAlignment = Enum.TextYAlignment.Top
+	text.LayoutOrder = 2
 	text.Parent = box
 	objectiveLabel = text
 
+	-- Controls card: two columns of "key  action" lines, bottom right; H toggles it.
 	local card = Instance.new("Frame")
 	card.AnchorPoint = Vector2.new(1, 1)
-	card.Position = UDim2.new(1, -10, 1, -110)
-	card.Size = UDim2.fromOffset(300, 24 * #GuideConfig.Controls + 34)
+	card.Position = UDim2.new(1, -12, 1, -120)
+	card.Size = UDim2.fromOffset(300, 0)
+	card.AutomaticSize = Enum.AutomaticSize.Y
 	card.BackgroundColor3 = C.Ink
-	card.BackgroundTransparency = 0.15
+	card.BackgroundTransparency = 0.18
+	card.BorderSizePixel = 0
 	card.Parent = gui
-	local c2 = Instance.new("UIStroke")
-	c2.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	c2.Color = C.Steel
-	c2.Transparency = 0.45
-	c2.Parent = card
-	Kit.Brackets(card, nil, 10)
+	Kit.Corner(card, 10)
+	Kit.Stroke(card, C.Line, 0.75, 1)
+	Kit.Pad(card, 14, 12)
+	local cardList = Instance.new("UIListLayout")
+	cardList.Padding = UDim.new(0, 3)
+	cardList.SortOrder = Enum.SortOrder.LayoutOrder
+	cardList.Parent = card
 	local head = Instance.new("TextLabel")
-	head.Position = UDim2.fromOffset(10, 4)
-	head.Size = UDim2.new(1, -20, 0, 24)
+	head.Size = UDim2.new(1, 0, 0, 24)
 	head.BackgroundTransparency = 1
-	head.Font = Enum.Font.GothamBold
-	head.TextSize = 16
-	head.TextColor3 = C.Gold
+	head.Font = Kit.TitleFont
+	head.TextSize = 17
+	head.TextColor3 = C.Text
 	head.TextXAlignment = Enum.TextXAlignment.Left
 	head.Text = "Controls"
+	head.LayoutOrder = 0
 	head.Parent = card
 	for i, line in GuideConfig.Controls do
 		local l = Instance.new("TextLabel")
-		l.Position = UDim2.fromOffset(10, 6 + 24 * i)
-		l.Size = UDim2.new(1, -20, 0, 22)
+		l.Size = UDim2.new(1, 0, 0, 0)
+		l.AutomaticSize = Enum.AutomaticSize.Y
 		l.BackgroundTransparency = 1
-		l.Font = Enum.Font.Gotham
-		l.TextSize = 14
-		l.TextColor3 = C.Text
+		l.Font = Kit.BodyFont
+		l.TextSize = 13
+		l.TextWrapped = true
+		l.TextColor3 = if i == #GuideConfig.Controls then C.Muted else C.Text
 		l.TextXAlignment = Enum.TextXAlignment.Left
 		l.Text = line
+		l.LayoutOrder = i
 		l.Parent = card
 	end
 	controlsCard = card
