@@ -636,6 +636,12 @@ function EffectsController.Start()
 			end
 		elseif e.kind == "Guard" then
 			onGuard(e)
+		elseif e.kind == "Alert" then
+			local model = EffectsController.ModelFor(e.sourceId)
+			local part = model and anchorPart(model)
+			if part then
+				floatText(part, "!", Color3.fromRGB(255, 200, 60), 40)
+			end
 		elseif e.kind == "LifeLost" then
 			-- An elite takes the finishing blow... and gets back up.
 			local model = EffectsController.ModelFor(e.targetId)

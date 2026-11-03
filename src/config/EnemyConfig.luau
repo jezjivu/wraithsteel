@@ -113,6 +113,8 @@ EnemyConfig.GuardPostureMultiplier = 1.4 -- guard soaks more posture (break it!)
 -- Stealth (Shadow Strike): unaware enemies only see you within viewDegrees in front of them,
 -- or within closeRange. A strike on an unaware enemy is an instant Shadow Strike.
 EnemyConfig.Stealth = { viewDegrees = 120, closeRange = 7 }
+-- When an enemy spots you it shouts: allies this close become aware for a few seconds.
+EnemyConfig.Alert = { radius = 30, seconds = 6 }
 -- Idle patrols: unaware enemies wander slowly around their post, so you can time a sneak.
 EnemyConfig.Patrol = { radius = 16, pauseMin = 2.5, pauseMax = 6, speedFactor = 0.4 }
 EnemyConfig.SpawnFolderName = "EnemySpawns" -- TODO(Studio/Agent D): Workspace folder of spawn Parts

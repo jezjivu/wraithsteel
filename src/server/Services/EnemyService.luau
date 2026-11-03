@@ -64,6 +64,7 @@ type Brain = {
 	patrolAt: number, -- idle: next time to pick a new patrol point
 	patrolTo: Vector3?,
 	sentry: boolean, -- stands its post (archers on lookout towers): never walks
+	alertUntil: number, -- a nearby ally shouted: aware of players for a few seconds
 }
 
 local EnemyService = {
@@ -147,7 +148,7 @@ local function nearestPlayer(b: Brain): (Combatant?, number)
 			local d = offset.Magnitude
 			-- Stealth: an unaware enemy only notices you in front of it, up close, or when hurt.
 			-- Once it has a target it keeps tracking all around.
-			local aware = b.target ~= nil or not b.c.unaware
+			local aware = b.target ~= nil or not b.c.unaware or os.clock() < b.alertUntil
 			-- Silent Step (skill tree): unaware enemies judge you farther away than you are.
 			local sense = if aware then d else d * (1 + (CombatService.PlayerStats(player).Stealth or 0))
 			local noticed = aware or sense <= EnemyConfig.Stealth.closeRange
@@ -387,6 +388,16 @@ local function think(b: Brain, _dt: number, now: number)
 	if b.c.unaware ~= unaware then
 		b.c.unaware = unaware
 		b.c.model:SetAttribute("Unaware", unaware)
+		if not unaware and now >= b.alertUntil then
+			-- Spotted you: shout. Allies close by turn toward the fight.
+			Net.Server.FireAll("CombatEvent", { kind = "Alert", sourceId = b.c.id })
+			local P = EnemyConfig.Alert
+			for _, other in brains do
+				if other ~= b and not other.c.dead and other.c.unaware and (other.c.root.Position - b.c.root.Position).Magnitude <= P.radius then
+					other.alertUntil = now + P.seconds
+				end
+			end
+		end
 	end
 	local humanoid = b.c.humanoid
 	if b.sentry then
@@ -538,6 +549,7 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 		patrolAt = os.clock() + rng:NextNumber(0, 4),
 		patrolTo = nil,
 		sentry = opts ~= nil and opts.sentry == true,
+		alertUntil = 0,
 	}
 	brains[id] = brain
 	-- Sekiro-style: an aware enemy that isn't swinging or stunned can deflect your strikes.
