@@ -41,7 +41,7 @@ HubConfig.Stations = {
 } :: { StationDef }
 
 -- Lantern pedestals at the Lantern Shrine (in display order).
-HubConfig.ShrineLanterns = { "paper_lantern", "rustwood_lantern", "jade_lantern" }
+HubConfig.ShrineLanterns = { "paper_lantern", "rustwood_lantern", "tidewater_lantern", "jade_lantern" }
 
 -- Training yard dummies (EnemyConfig.training_dummy).
 HubConfig.TrainingDummies = 3

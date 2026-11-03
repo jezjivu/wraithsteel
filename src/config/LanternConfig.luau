@@ -59,6 +59,23 @@ LanternConfig.Lanterns = {
 		pity = nil,
 		modelId = 0,
 	},
+	-- Chapter 1: the drowned-market lantern. Guarantees an Epic or better every 40 opens.
+	tidewater_lantern = {
+		name = "Tidewater Lantern",
+		chapter = 1,
+		currency = "Ember",
+		price = 900,
+		paid = false,
+		entries = {
+			{ spirit = "drift_jelly", weight = 4200 },
+			{ spirit = "ledger_crab", weight = 3600 },
+			{ spirit = "salt_kite", weight = 1700 },
+			{ spirit = "bellwater_koi", weight = 460 },
+			{ spirit = "deep_toll_eel", weight = 40 },
+		},
+		pity = { rolls = 40, minRarity = "Epic" },
+		modelId = 0,
+	},
 	jade_lantern = {
 		name = "Jade Lantern",
 		chapter = 0,

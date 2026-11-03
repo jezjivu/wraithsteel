@@ -30,16 +30,16 @@ RaidConfig.ReturnDelaySeconds = 12 -- after victory/defeat, players go back afte
 RaidConfig.TeleportRetries = 3
 
 RaidConfig.Raids = {
-	-- TODO(Studio/Agent C): a dedicated raid boss (rig, arena, role mechanics). Until then the
-	-- raid reuses Helion with raid-sized health so the whole flow can be playtested.
+	-- Boss: Kurozuma (BossConfig). TODO(Studio/Agent C): sculpted rig + animations, the flooded
+	-- belfry arena (Workspace.RaidArena) and role mechanics beyond the shared move set.
 	sunken_bell_vigil = {
 		name = "Vigil of the Sunken Bell",
 		description = "Eight blades hold the line while the drowned bell tolls.",
-		bossId = "archon_helion",
+		bossId = "kurozuma",
 		chapter = 0,
 		minLevel = 10,
 		minPlayers = 4,
-		healthMultiplier = 1.5,
+		healthMultiplier = 1,
 		timeLimitSeconds = 900,
 		rewards = { ember = 4000, xp = 2500, jade = 10 },
 		firstClearJade = 60,

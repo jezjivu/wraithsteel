@@ -153,6 +153,42 @@ BossConfig.Bosses = {
 		modelId = 0,
 		look = { skin = { 200, 150, 80 }, body = { 190, 130, 60 }, legs = { 170, 110, 50 }, headwear = "Laurel", accent = { 230, 200, 120 }, glow = { 255, 205, 90 }, weapon = "spear_skypiercer", outfit = "Hoplite", scale = 2.4 },
 	},
+	-- Raid boss (RaidConfig.sunken_bell_vigil): a drowned bell-keeper fought by up to eight.
+	-- The fight teaches the raid: deflect the bell orbs back, jump the toll rings, scatter
+	-- from brine rain, and break its posture together during the "Tide Turns" windows.
+	kurozuma = {
+		name = "Kurozuma",
+		title = "Keeper of the Sunken Bell",
+		chapter = 0,
+		kind = "Raid",
+		maxHealth = 9000,
+		healthPerExtraPlayer = 0.45,
+		maxPosture = 520,
+		postureRegen = 6,
+		postureBrokenSeconds = 4.5,
+		walkSpeed = 15,
+		deflectChance = 0.25,
+		moves = {
+			anchor_swing = { name = "Anchor Swing", style = "SlashRight", damage = 34, postureDamage = 30, windup = 0.7, active = 0.25, recovery = 0.8, range = 18, arcDegrees = 160, weight = 4, cooldown = 0, animationId = PLACEHOLDER_ANIM },
+			keel_thrust = { name = "Keel Thrust", style = "Thrust", damage = 48, postureDamage = 42, windup = 0.9, active = 0.3, recovery = 0.9, range = 32, minRange = 10, arcDegrees = 30, weight = 2, cooldown = 7, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
+			bell_orb = { name = "Drowned Peal", style = "CastPush", kind = "Projectile", damage = 38, postureDamage = 34, windup = 1.0, active = 0.2, recovery = 0.8, range = 80, arcDegrees = 360, weight = 3, cooldown = 5, speed = 34, radius = 3.2, deflectable = true, reflectDamage = 420, reflectPosture = 140, color = { 90, 210, 200 }, animationId = PLACEHOLDER_ANIM },
+			toll_ring = { name = "Toll of the Deep", style = "CastSky", kind = "Wave", damage = 34, postureDamage = 22, windup = 1.0, active = 0.3, recovery = 1.0, range = 70, arcDegrees = 360, weight = 3, cooldown = 8, speed = 34, radius = 75, color = { 70, 190, 210 }, animationId = PLACEHOLDER_ANIM },
+			eel_darts = { name = "Eel Darts", style = "CastPush", kind = "Volley", damage = 18, postureDamage = 12, windup = 0.8, active = 0.2, recovery = 0.8, range = 70, minRange = 12, arcDegrees = 360, weight = 2, cooldown = 7, speed = 85, count = 9, spread = 90, radius = 1.3, color = { 120, 230, 210 }, animationId = PLACEHOLDER_ANIM },
+			brine_rain = { name = "Brine Rain", style = "CastSky", kind = "Rain", damage = 40, postureDamage = 14, windup = 1.0, active = 0.3, recovery = 1.0, range = 90, arcDegrees = 360, weight = 2, cooldown = 10, count = 14, radius = 8, delay = 1.3, color = { 60, 170, 190 }, animationId = PLACEHOLDER_ANIM },
+			undertow = { name = "Undertow", style = "Sweep", damage = 36, postureDamage = 20, windup = 0.75, active = 0.25, recovery = 0.8, range = 17, arcDegrees = 320, weight = 2, cooldown = 6, perilous = true, perilousKind = "Sweep", animationId = PLACEHOLDER_ANIM },
+			drowning_grip = { name = "Drowning Grip", style = "Grasp", damage = 60, postureDamage = 0, windup = 0.95, active = 0.25, recovery = 1.1, range = 11, arcDegrees = 60, weight = 1, cooldown = 11, perilous = true, perilousKind = "Grasp", animationId = PLACEHOLDER_ANIM },
+			maelstrom = { name = "Maelstrom", style = "Spin", damage = 14, postureDamage = 16, windup = 0.6, active = 1.2, recovery = 0.9, range = 16, arcDegrees = 360, weight = 1, cooldown = 9, hits = 7, special = true, animationId = PLACEHOLDER_ANIM },
+		},
+		phases = {
+			{ hpThreshold = 1.0, moves = { "anchor_swing", "keel_thrust", "bell_orb", "toll_ring", "undertow" }, speedMultiplier = 1, transitionSeconds = 0 },
+			{ hpThreshold = 0.66, moves = { "anchor_swing", "keel_thrust", "bell_orb", "toll_ring", "undertow", "eel_darts", "drowning_grip" }, speedMultiplier = 1.12, transitionSeconds = 3 },
+			{ hpThreshold = 0.33, moves = { "anchor_swing", "keel_thrust", "bell_orb", "toll_ring", "undertow", "eel_darts", "drowning_grip", "brine_rain", "maelstrom" }, speedMultiplier = 1.25, enrage = true, transitionSeconds = 3 },
+		},
+		idleBetweenMoves = 0.55,
+		rewards = { ember = 3000, xp = 3200, jadeFirstClear = 40 },
+		modelId = 0,
+		look = { skin = { 70, 110, 120 }, body = { 30, 50, 60 }, legs = { 22, 36, 44 }, headwear = "Bell", accent = { 120, 200, 190 }, glow = { 90, 230, 210 }, weapon = "gb_gatebreaker", outfit = "Monk", mask = "Oni", face = "Glow", scale = 2.6 },
+	},
 } :: { [string]: BossDef }
 
 return BossConfig

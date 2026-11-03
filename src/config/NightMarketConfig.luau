@@ -110,6 +110,28 @@ NightMarketConfig.Items = {
 		chapter = 0,
 		amount = 3500,
 	},
+	crab_ashen = {
+		name = "Ashen Ledger Crab",
+		description = "An Uncommon Ledger Crab with the Ashen mutation.",
+		kind = "Spirit",
+		currency = "Ember",
+		price = 2600,
+		limit = 1,
+		weight = 18,
+		chapter = 1,
+		spirit = { id = "ledger_crab", rarity = "Uncommon", mutation = "Ashen" },
+	},
+	kite_gilded = {
+		name = "Gilded Salt Kite",
+		description = "A Rare Salt Kite with the Gilded mutation.",
+		kind = "Spirit",
+		currency = "Ember",
+		price = 7200,
+		limit = 1,
+		weight = 8,
+		chapter = 1,
+		spirit = { id = "salt_kite", rarity = "Rare", mutation = "Gilded" },
+	},
 } :: { [string]: ItemDef }
 
 -- Stable iteration order for the stock pick (never rely on table order).
@@ -121,6 +143,8 @@ NightMarketConfig.ItemOrder = {
 	"ember_incense",
 	"fortune_incense",
 	"ember_crate",
+	"crab_ashen",
+	"kite_gilded",
 }
 
 return NightMarketConfig
