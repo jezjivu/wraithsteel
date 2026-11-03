@@ -174,7 +174,7 @@ local function refreshStats()
 	if chip then
 		local pts = SkillLogic.Available(DataController.Get("level") or 1, DataController.Get("skills") or {}, SkillLogic.Count(DataController.Get("relics")))
 		chip.Visible = pts > 0
-		chip.Text = string.format("✦ %d SKILL POINT%s  ·  MENU > SKILLS", pts, if pts == 1 then "" else "S")
+		chip.Text = string.format("✦ %d SKILL POINT%s  ·  PRESS K", pts, if pts == 1 then "" else "S")
 	end
 end
 

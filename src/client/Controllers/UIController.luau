@@ -42,6 +42,7 @@ local STATION_PANELS = {
 local MENU = {
 	{ panel = "Spirits", label = "Spirits" },
 	{ panel = "Weapons", label = "Weapons" },
+	{ panel = "Map", label = "Map" },
 	{ panel = "Skills", label = "Skills" },
 	{ panel = "Arts", label = "Arts" },
 	{ panel = "Styles", label = "Styles" },
@@ -204,6 +205,15 @@ function UIController.Start()
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if not processed and input.KeyCode == Enum.KeyCode.Escape then
 			UIController.Close()
+		end
+		-- M toggles the map, K the skill tree.
+		if not processed and (input.KeyCode == Enum.KeyCode.M or input.KeyCode == Enum.KeyCode.K) then
+			local name = if input.KeyCode == Enum.KeyCode.M then "Map" else "Skills"
+			if current and current.name == name then
+				UIController.Close()
+			else
+				UIController.Open(name)
+			end
 		end
 	end)
 
