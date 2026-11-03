@@ -60,6 +60,8 @@ type Brain = {
 	activeTo: number,
 	flinchReadyAt: number,
 	recentHits: { number }, -- times of player hits (string deflects)
+	patrolAt: number, -- idle: next time to pick a new patrol point
+	patrolTo: Vector3?,
 }
 
 local EnemyService = {
@@ -387,10 +389,26 @@ local function think(b: Brain, _dt: number, now: number)
 	local humanoid = b.c.humanoid
 	if target == nil then
 		director:Release(b.c.id, now)
-		if (b.c.root.Position - b.home).Magnitude > 4 then
+		local fromHome = (b.c.root.Position - b.home).Magnitude
+		local P = EnemyConfig.Patrol
+		if fromHome > P.radius + 6 then
+			-- Lost you: walk back to the post at full speed.
+			humanoid.WalkSpeed = b.def.walkSpeed
 			humanoid:MoveTo(b.home)
+			b.patrolTo = nil
+		elseif b.def.walkSpeed > 0 and now >= b.patrolAt then
+			-- Idle patrol: amble to a nearby point, pause, repeat.
+			local a = rng:NextNumber(0, math.pi * 2)
+			local r = rng:NextNumber(P.radius * 0.3, P.radius)
+			b.patrolTo = b.home + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r)
+			b.patrolAt = now + rng:NextNumber(P.pauseMin, P.pauseMax) + r / math.max(1, b.def.walkSpeed * P.speedFactor)
+			humanoid.WalkSpeed = b.def.walkSpeed * P.speedFactor
+			humanoid:MoveTo(b.patrolTo :: Vector3)
 		end
 		return
+	end
+	if humanoid.WalkSpeed ~= b.def.walkSpeed then
+		humanoid.WalkSpeed = b.def.walkSpeed
 	end
 	if now >= b.nextAttackAt then
 		local attackId = chooseAttack(b, dist)
@@ -491,6 +509,8 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 		activeTo = 0,
 		flinchReadyAt = 0,
 		recentHits = {},
+		patrolAt = os.clock() + rng:NextNumber(0, 4),
+		patrolTo = nil,
 	}
 	brains[id] = brain
 	-- Sekiro-style: an aware enemy that isn't swinging or stunned can deflect your strikes.
