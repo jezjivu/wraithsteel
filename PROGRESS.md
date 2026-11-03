@@ -185,13 +185,26 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [ ] Chapters 2-3 content
 
 ## Phase 4 - Raid + trading + Chapters 4-5
-- [ ] RaidService (stub) - 8-player reserved-server raid
+- [~] RaidService + RaidLogic: 8-player lobby -> ReserveServer -> MemoryStore manifest -> raid boss with raid health + time limit -> rewards -> home (night 2). Needs: dedicated raid boss, `Workspace.RaidArena`, live test of ReserveServer/MemoryStore (Studio runs the raid in place)
 - [x] TradeService + TradeLogic: Spirits-only trades, confirm reset on change, countdown, re-validated swap, policy-gated; Trade panel
+- [x] Trade escrow ledger (`Logic/TradeLedger`, night 2): DataStore record pending -> committed atomically, per-profile idempotent apply, recovery on load, Spirits frozen during commit/recovery
+- [x] Paid-flag rule (night 2): Spirits from paid lanterns/Night Market carry `paid`; they trade only between accounts whose policy allows paid item trading; fusion keeps the flag
 - [ ] Chapters 4-5 content, final boss
 
 ## Phase 5 - Launch polish / LiveOps
-- [ ] Anti-exploit telemetry from `Net.Rejected` (currently only a signal)
+- [x] Anti-exploit telemetry: SecurityService + `Logic/ExploitScore` (Net.Rejected + sustained-speed samples -> decaying score -> analytics flag; kick only on non-rate abuse) (night 2)
+- [ ] Server-side movement correction (rubber-band) once SecurityFlag data from playtests shows safe limits
 - [ ] Balance pass, economy sinks, events
+
+## Night 2 (cloud run, code only)
+- [x] Compliance fix: Ember is sold for Robux, so Ember lanterns are paid random items too (`LanternOdds.IsPaid` derives it from MonetizationConfig). Restricted accounts can still use free opens.
+- [x] Trade escrow ledger + paid-flag rule + trade recovery (see Phase 4)
+- [x] Night Market: global rotating fixed-price stock, seed from `os.time() // 600` (`Shared/SeededRandom` mulberry32, `Shared/NightMarketLogic`, NightMarketService, panel "Market"), profile v13
+- [x] Raids (see Phase 4), profile v14 (`raidClears`), BossService `healthMultiplier` / `Fail` / `EncounterEnded`
+- [x] SecurityService telemetry (see Phase 5)
+- [x] Tests: ledger (failure injection), market, raid, security specs (111 tests total)
+- [ ] Studio: Night Market stall (`Station = "NightMarket"`), `Workspace.RaidArena`, raid gate prop
+- [ ] Live check: trade ledger DataStore + raid ReserveServer/MemoryStore in a published place (both are mocked/in-memory in Studio)
 
 ## Playtesting
 - `rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` -> open in Studio -> Play.
@@ -203,11 +216,14 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
   To edit the world in Studio: Command Bar -> `require(game.ServerScriptService.EditTools).BuildWorld()` -> save.
 
 ## Next up (for the next run)
-1. Add `WRAITHSTEEL_AGENT_GUIDE.md` to the repo and reconcile `Shared/Types`, `NetSchema`,
-   service APIs and this checklist with §8.3/§11.
-2. Studio session: build EnemySpawns + BossArenas in a test place, playtest combat timings.
-3. Feedback from the Studio playtest (hub, weapon grip, animation angles, combat timings).
-4. RaidService (8-player reserved-server raid), chapter gates, Chapter 2 content.
+1. Add `WRAITHSTEEL_AGENT_GUIDE.md` to the repo (still missing in night 2) and reconcile
+   `Shared/Types`, `NetSchema`, service APIs and this checklist with §8.3/§11.
+2. Decide the Ember-in-store question (see HANDOFF "Night 2"): keep Ember lanterns policy-gated,
+   or stop selling Ember for Robux so Ember lanterns are free randomness again.
+3. Studio session: playtest trades (two clients), Night Market, Raid lobby (runs in place in
+   Studio), combat timings; then a published test place for ReserveServer/MemoryStore/ledger.
+4. Dedicated raid boss + arena; chapter gates (`ZoneService.CanEnter`); Chapter 2 content.
+5. Tune SecurityConfig from SecurityFlag analytics, then add movement correction.
 
 ## Known risks
 - Spells and spirit abilities find victims from server positions; the Ghost Step blink moves the
@@ -224,9 +240,13 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
   not by eye; adjust signs if a swing looks backwards.
 - RigBuilder relies on Players:CreateHumanoidModelFromDescription and Model:ScaleTo; if either
   fails at runtime the code falls back to block placeholders (warning in Output).
-- Trades change two profiles that save separately. Both are saved immediately after a swap,
-  but a server crash between the two saves could duplicate or lose a traded Spirit. Before
-  launch, add a trade ledger (ProfileStore MessageAsync per side, idempotent by trade id).
+- (Fixed in night 2) Trades now go through the escrow ledger. Remaining edge: if the ledger
+  DataStore is down at join, that player's Spirits stay frozen (no trade/fuse/release/equip)
+  until it answers - safe, but players would notice during a long DataStore outage.
+- Raid servers still run every normal service (map, hub, world generation); fine for now, but a
+  raid-only place or a lighter boot path would load faster.
+- SecurityService kicks at a high score from invalid-argument/speed events. A client bug that
+  sends bad arguments in a loop could kick real players - watch SecurityKick analytics.
 - Procedural animation joint angles (AnimationConfig) are educated guesses for R15; tune in Studio.
 - Weapon grip angle (`WeaponConfig.GripRotation`) and rack/viewport framing are computed, not
   eyeballed in Studio; expect small tweaks after the first look.

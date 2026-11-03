@@ -22,3 +22,7 @@ the row. Only original assets (made by us or licensed for this game) may be used
 | Touch button images | InputController (TODO) | none | Icons | D | |
 | Hub town build | `Workspace.Hub` (generated blockout until built) | procedural | Real build with Station attributes | D | See HubConfig |
 | Training dummy rig | `ServerStorage.Enemies.training_dummy` | placeholder block | Rig | C | |
+| Night Market stall | Part/Model with attribute `Station = "NightMarket"` | none (menu only) | Build in the hub | D | Night 2 |
+| Raid arena | `Workspace.RaidArena` (Part; boss spawns on it) | none (spawns ahead of first player) | Build | C/D | Night 2 |
+| Raid boss | `RaidConfig.Raids.sunken_bell_vigil.bossId` | reuses `archon_helion` | Dedicated original raid boss (config + rig + anims) | C | Night 2 |
+| Raid gate prop | hub (opens the Raid panel) | none (menu "Raids") | Build | D | Night 2 |

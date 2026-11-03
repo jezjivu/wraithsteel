@@ -154,3 +154,36 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
   EnemyConfig.Alert.radius aware for a few seconds.
 - Secrets: waterfall cave (MapConfig.WaterfallCave, relic with `absY`), rooftop hooks on intact
   village houses. Map panel (M) draws MapConfig; K opens Skills.
+
+## Night 2 (cloud run, branch `claude/dreamy-fermi-wfrtop`, built on night 1's PR branch)
+The guide is **still not in the repo**; this run followed the task brief + night 1 contracts.
+- **Compliance fix (decide):** MonetizationConfig sells Ember (EmberSmall/EmberLarge/
+  StarterBundle), which makes Ember lanterns *paid random items* under Roblox rules. Now
+  `Shared/LanternOdds.IsPaid(lanternId)` = `paid` flag OR currency is Robux-purchasable (derived
+  from the product list). LanternService refuses paid opens where PolicyService restricts paid
+  random items (free opens still work); the client hides those lanterns unless the player has
+  free opens. Alternative: remove the Ember products, then Ember lanterns are unpaid again
+  automatically.
+- **Spirit `paid` flag** (new optional `SpiritInstance.paid`): set when a Spirit is bought with
+  currency from a paid lantern or the Night Market; fusion keeps it; trades carry it.
+- **Trades:** `TradeLogic.New(a, b, allowPaid)`; `Validate` split from `Execute`. TradeService
+  commits via `Logic/TradeLedger` (DataStore `TradeConfig.LedgerStoreName`, in-memory in Studio
+  without API access). Keys: `t_<tradeId>` record, `u_<userId>` index. Profile `tradesApplied` /
+  `tradeOrder` (v12, private). `DataService.AddLoadHook` runs recovery before the snapshot.
+  `Logic/TradeLock` freezes Spirit-changing requests (Spirit/Fusion/Expedition services check it).
+- **Night Market:** `NightMarketConfig` (items, weights, limits), `Shared/NightMarketLogic`
+  (Stock(window), CanBuy), `Shared/SeededRandom` (mulberry32; never for paid rolls). Remotes
+  `GetNightMarket()`, `BuyNightMarket(slot, window)`. Profile `nightMarket` (v13). Station kind
+  `NightMarket` maps to the panel (stall itself is a Studio TODO); menu button "Market".
+- **Raids:** `RaidConfig`, `Logic/RaidLogic`, `RaidService` (priority 54), remotes
+  `RaidRequest(op, arg?)` / `RaidEvent`. Raid server = `PrivateServerId ~= ""` and
+  `PrivateServerOwnerId == 0`; manifest from MemoryStore `RaidConfig.ManifestStore` keyed by
+  PrivateServerId. Profile `raidClears` (v14). `BossService.StartEncounter(..., healthMultiplier?)`,
+  `BossService.Fail(id)`, `BossService.EncounterEnded(id, bossId, victory, participants)`.
+  Placeholder: the raid fights `archon_helion` until a raid boss exists.
+- **Security:** `SecurityService` (priority 7), `Logic/ExploitScore`, server-only
+  `ServerConfig/SecurityConfig`. Analytics custom events `SecurityFlag`, `SecurityKick`.
+- Tooling used: luau 0.700 + luau-lsp 1.53.0 with the matching `globalTypes.None.d.luau` from
+  the luau-lsp 1.53.0 tag (the defs on luau-lsp `main` need a newer luau-lsp).
+- Not done from the brief: a separate GiftService - gifting already lives in MarketService
+  (gift products, gift tokens, offline delivery via profile messages).
