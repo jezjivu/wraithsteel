@@ -117,6 +117,7 @@ local CombatService = {
 	Died = Signal.new(),
 	Staggered = Signal.new(), -- (combatant, seconds): its attack was parried
 	Deflected = Signal.new(), -- (enemy, attacker): an enemy deflected a player's strike (counter now)
+	Rested = Signal.new(), -- (combatant): rested at a waystone (refill everything)
 	OnSpiritCall = nil :: ((player: Player) -> ())?,
 }
 
@@ -282,6 +283,7 @@ function CombatService.Rest(c: Combatant)
 	c.model:SetAttribute("Flask", c.flask)
 	c.breath = true
 	c.model:SetAttribute("Breath", true)
+	CombatService.Rested:Fire(c)
 	c.posture.value = 0
 	c.model:SetAttribute("Posture", 0)
 end

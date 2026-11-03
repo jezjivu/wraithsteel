@@ -266,7 +266,8 @@ local function bindCharacter(character: Model)
 		if flaskLabel then
 			local n = tonumber(character:GetAttribute("Flask")) or 0
 			local breath = character:GetAttribute("Breath") == true
-			flaskLabel.Text = string.format("Flask x%d%s", n, if breath then "  ✦" else "")
+			local kunai = tonumber(character:GetAttribute("Kunai")) or 0
+			flaskLabel.Text = string.format("Flask x%d%s  ·  Kunai %d", n, if breath then " ✦" else "", kunai)
 			flaskLabel.TextColor3 = if n > 0 then Color3.fromRGB(150, 220, 255) else Color3.fromRGB(150, 140, 140)
 		end
 		if posture then
@@ -285,6 +286,7 @@ local function bindCharacter(character: Model)
 	character:GetAttributeChangedSignal("Shield"):Connect(refresh)
 	character:GetAttributeChangedSignal("Flask"):Connect(refresh)
 	character:GetAttributeChangedSignal("Breath"):Connect(refresh)
+	character:GetAttributeChangedSignal("Kunai"):Connect(refresh)
 	refresh()
 end
 
@@ -329,8 +331,8 @@ function HUDController.Init()
 	-- Player meters (bottom center, above the default toolbar area).
 	health = meter(gui, UDim2.new(0.5, -160, 1, -92), UDim2.fromOffset(320, 22), Color3.fromRGB(190, 55, 50), "Health")
 	local fl = Instance.new("TextLabel")
-	fl.Position = UDim2.new(0.5, -270, 1, -92)
-	fl.Size = UDim2.fromOffset(104, 22)
+	fl.Position = UDim2.new(0.5, -330, 1, -92)
+	fl.Size = UDim2.fromOffset(164, 22)
 	fl.BackgroundColor3 = C.Ink
 	fl.BackgroundTransparency = 0.2
 	fl.Font = Enum.Font.GothamBold

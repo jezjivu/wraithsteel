@@ -18,6 +18,8 @@ InputConfig.Bindings = {
 	Ultimate = { inputs = { Enum.KeyCode.G, Enum.KeyCode.ButtonL2 }, touchButton = true, title = "Ultimate" },
 	Flask = { inputs = { Enum.KeyCode.Q, Enum.KeyCode.ButtonSelect }, touchButton = true, title = "Flask" },
 	SpiritCall = { inputs = { Enum.KeyCode.T, Enum.KeyCode.DPadUp }, touchButton = true, title = "Burst" },
+	-- Shadow Kunai (KunaiController).
+	Kunai = { inputs = { Enum.KeyCode.B }, touchButton = true, title = "Kunai" },
 	-- Grappling hook (MovementController / GrappleController; not a combat action).
 	Grapple = { inputs = { Enum.KeyCode.V }, touchButton = true, title = "Hook" }, -- gamepad: every button is taken; touch gets a button
 	-- Qi arts (SpellController handles these; CombatController ignores them).

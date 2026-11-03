@@ -458,6 +458,9 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 	local id = "E" .. counter
 	local model = getRig(enemyId)
 	model.Name = def.name
+	if def.creature then
+		model:SetAttribute("Creature", def.creature) -- beasts / drones (Shadow Kunai staggers them hard)
+	end
 	model:PivotTo(cframe)
 	local humanoid = model:FindFirstChildOfClass("Humanoid") :: Humanoid
 	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart

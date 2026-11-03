@@ -118,4 +118,17 @@ CombatConfig.SkillMechanics = {
 	ringingSteelRadius = 10,
 }
 
+-- Shadow Kunai (B): a quick throw that interrupts. Charges refill at waystones and on kills.
+CombatConfig.Kunai = {
+	charges = 4,
+	cooldown = 0.55,
+	range = 75,
+	speed = 150, -- studs/s (hit lands after distance / speed)
+	width = 3, -- corridor half-width for the hit
+	damage = 10,
+	posture = 16,
+	creaturePosture = 2, -- x posture against beasts and drones (they hate it)
+	refillOnKill = 1,
+}
+
 return CombatConfig
