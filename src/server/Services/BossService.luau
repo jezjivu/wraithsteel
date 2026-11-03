@@ -40,7 +40,6 @@ local HazardService = require(script.Parent.HazardService)
 local CombatService = require(script.Parent.CombatService)
 local ProgressionService = require(script.Parent.ProgressionService)
 local QuestService = require(script.Parent.QuestService)
-local AnalyticsService = require(script.Parent.AnalyticsService)
 local PartyService = require(script.Parent.PartyService)
 
 type Combatant = CombatService.Combatant

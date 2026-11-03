@@ -43,12 +43,13 @@ end
 
 -- Is a disc (x, z, radius) clear of the road corridor, every zone and the hub?
 local function clearOfPlay(x: number, z: number, radius: number): boolean
-	local R = MapConfig.Route
-	for i = 1, #R - 1 do
-		local a, b = R[i], R[i + 1]
-		local d = segDist(x, z, a.at[1], a.at[2], b.at[1], b.at[2])
-		if d < math.max(a.half, b.half) + radius then
-			return false
+	for _, R in MapConfig.Roads do
+		for i = 1, #R - 1 do
+			local a, b = R[i], R[i + 1]
+			local d = segDist(x, z, a.at[1], a.at[2], b.at[1], b.at[2])
+			if d < math.max(a.half, b.half) + radius then
+				return false
+			end
 		end
 	end
 	for _, area in MapConfig.Areas do
@@ -70,22 +71,28 @@ function ValleyBuilder.Ground(x: number, z: number): Vector3
 end
 local ground = ValleyBuilder.Ground
 
--- Walks the route: calls fn(x, z, y, dirX, dirZ, segmentIndex, distanceAlongRoute) every `step`.
-local function walkRoute(step: number, fn: (number, number, number, number, number, number, number) -> ())
-	local R = MapConfig.Route
-	local total = 0
-	for i = 1, #R - 1 do
-		local a, b = R[i], R[i + 1]
-		local dx, dz = b.at[1] - a.at[1], b.at[2] - a.at[2]
-		local len = math.sqrt(dx * dx + dz * dz)
-		local ux, uz = dx / len, dz / len
-		local d = 0
-		while d < len do
-			local t = d / len
-			fn(a.at[1] + dx * t, a.at[2] + dz * t, a.y + (b.y - a.y) * t, ux, uz, i, total + d)
-			d += step
+type RP = MapConfig.RoutePoint
+local function isStair(a: RP, b: RP): boolean
+	return math.abs(a.y - b.y) > 0.5
+end
+
+-- Walks every road: calls fn(x, z, y, dirX, dirZ, segStart, segEnd, roadIndex) every `step`.
+local function walkRoute(step: number, fn: (number, number, number, number, number, RP, RP, number) -> ())
+	for r, R in MapConfig.Roads do
+		for i = 1, #R - 1 do
+			local a, b = R[i], R[i + 1]
+			local dx, dz = b.at[1] - a.at[1], b.at[2] - a.at[2]
+			local len = math.sqrt(dx * dx + dz * dz)
+			if len > 0 then
+				local ux, uz = dx / len, dz / len
+				local d = 0
+				while d < len do
+					local t = d / len
+					fn(a.at[1] + dx * t, a.at[2] + dz * t, a.y + (b.y - a.y) * t, ux, uz, a, b, r)
+					d += step
+				end
+			end
 		end
-		total += len
 	end
 end
 
@@ -115,19 +122,22 @@ local function sculpt()
 	-- Hub ground.
 	T:FillCylinder(CFrame.new(HUB[1], -6, HUB[2]), 12, HUB_RADIUS + 40, Enum.Material.Grass)
 	-- Road ribbon: wide grass + an earth strip, following the road height.
-	local stair = MapConfig.StairSegment
-	walkRoute(8, function(x, z, y, _ux, _uz, seg)
-		local half = MapConfig.Route[seg].half
-		local top = if seg == stair then y - 2 else y
-		T:FillCylinder(CFrame.new(x, top - 8, z), 16, half + 40, Enum.Material.Grass)
-		if seg ~= stair then
+	walkRoute(8, function(x, z, y, _ux, _uz, a, b)
+		local half = a.half
+		local stair = isStair(a, b)
+		local top = if stair then y - 2 else y
+		-- Solid all the way down, so raised roads are cliffs, not floating slabs.
+		local h = math.max(16, top + 24)
+		T:FillCylinder(CFrame.new(x, top - h / 2, z), h, half + 40, Enum.Material.Grass)
+		if not stair then
 			T:FillCylinder(CFrame.new(x, top - 1, z), 2, half * 0.42, Enum.Material.Ground)
 		end
 	end)
 	-- Zone clearings.
 	for _, a in MapConfig.Areas do
 		local c = Vector3.new(a.center[1], a.y, a.center[2])
-		T:FillCylinder(CFrame.new(c - Vector3.new(0, 8, 0)), 16, a.radius + 25, Enum.Material.Grass)
+		local h = math.max(16, a.y + 24)
+		T:FillCylinder(CFrame.new(c - Vector3.new(0, h / 2, 0)), h, a.radius + 25, Enum.Material.Grass)
 		local mat = if a.theme == "Temple" or a.theme == "BellGate" then Enum.Material.Pavement
 			elseif a.theme == "Graves" or a.theme == "Village" then Enum.Material.Ground
 			elseif a.theme == "Gorge" then Enum.Material.LeafyGrass
@@ -152,8 +162,8 @@ local function sculpt()
 			r *= 0.8
 		end
 	end
-	walkRoute(cfg.spacing, function(x, z, _y, ux, uz, seg)
-		local half = MapConfig.Route[seg].half
+	walkRoute(cfg.spacing, function(x, z, _y, ux, uz, a)
+		local half = a.half
 		for _, side in { -1, 1 } do
 			local r = rng:NextNumber(cfg.minRadius, cfg.maxRadius)
 			local off = half + r * 0.8 + 6
@@ -392,11 +402,12 @@ end
 
 -- Zone set pieces ------------------------------------------------------------------------------
 local function onRoad(x: number, z: number, margin: number): boolean
-	local R = MapConfig.Route
-	for i = 1, #R - 1 do
-		local a, b = R[i], R[i + 1]
-		if segDist(x, z, a.at[1], a.at[2], b.at[1], b.at[2]) < a.half * 0.5 + margin then
-			return true
+	for _, R in MapConfig.Roads do
+		for i = 1, #R - 1 do
+			local a, b = R[i], R[i + 1]
+			if segDist(x, z, a.at[1], a.at[2], b.at[1], b.at[2]) < a.half * 0.5 + margin then
+				return true
+			end
 		end
 	end
 	return false
@@ -582,15 +593,52 @@ local function buildZones(world: Model)
 	end
 end
 
--- The road: flagstones, lanterns, trees along the edges, zone gates; the stone stair.
+-- The roads: flagstones, lanterns, trees along the edges, zone gates; stone stairs on climbs.
+local function buildStair(world: Model, a: RP, b: RP, index: number)
+	-- Always build from the low end up.
+	if a.y > b.y then
+		a, b = b, a
+	end
+	local ax, az, bx, bz = a.at[1], a.at[2], b.at[1], b.at[2]
+	local len = K.dist(ax, az, bx, bz)
+	local ux, uz = (bx - ax) / len, (bz - az) / len
+	local yaw = math.atan2(-ux, -uz)
+	local rise = b.y - a.y
+	local stepRun, stepRise = 3, 1.25
+	local count = math.floor(rise / stepRise)
+	local runTotal = math.min(count * stepRun, len - 8)
+	stepRun = runTotal / count
+	local startD = (len - runTotal) / 2
+	local width = math.min(a.half, b.half) * 0.9
+	local stair = K.model("Stair" .. index, world)
+	-- Flat landings at both ends.
+	for _, d in { startD / 2, len - startD / 2 } do
+		local y = if d < len / 2 then a.y else b.y
+		K.part(stair, "Landing", Vector3.new(width * 1.2, 1, startD + 1), CFrame.new(ax + ux * d, y - 0.4, az + uz * d) * CFrame.Angles(0, yaw, 0), col(C.Flagstone), Enum.Material.Slate)
+	end
+	for s = 0, count - 1 do
+		local d = startD + s * stepRun + stepRun / 2
+		local y = a.y + (s + 1) * stepRise
+		local cf = CFrame.new(ax + ux * d, y - 4, az + uz * d) * CFrame.Angles(0, yaw, 0)
+		K.part(stair, "Step", Vector3.new(width, 8, stepRun + 0.2), cf, col(C.Flagstone), Enum.Material.Slate)
+		if s % 10 == 5 then
+			torii(stair, Vector3.new(ax + ux * d, y, az + uz * d), yaw, width + 2, 13)
+		end
+		if s % 5 == 0 then
+			for _, side in { -1, 1 } do
+				stoneLantern(stair, Vector3.new(ax + ux * d - uz * side * (width * 0.5 + 2), y, az + uz * d + ux * side * (width * 0.5 + 2)), 0.9)
+			end
+		end
+	end
+end
+
 local function buildRoad(world: Model)
 	local road = K.model("Road", world)
 	local trees = K.model("RoadTrees", world)
-	local stairSeg = MapConfig.StairSegment
 	local step = MapConfig.Perf.FlagstoneSpacing
 	local i = 0
-	walkRoute(step, function(x, z, _y, ux, uz, seg)
-		if seg == stairSeg then
+	walkRoute(step, function(x, z, _y, ux, uz, a, b)
+		if isStair(a, b) then
 			return
 		end
 		i += 1
@@ -603,75 +651,66 @@ local function buildRoad(world: Model)
 			stone.CastShadow = false
 		end
 	end)
-	-- Lanterns every 40 studs, trees every ~24 on both edges (outside zones the road is a
-	-- mountain road; trees only where there is ground).
-	walkRoute(40, function(x, z, _y, ux, uz, seg)
-		if seg == stairSeg then
+	-- Lanterns every 48 studs, trees on both edges (skipped inside zone clearings, which
+	-- dress themselves).
+	walkRoute(48, function(x, z, _y, ux, uz, a, b)
+		if isStair(a, b) then
 			return
 		end
-		local half = MapConfig.Route[seg].half
+		local half = a.half
 		for _, side in { -1, 1 } do
-			local off = 7
-			stoneLantern(road, ground(x - uz * side * off, z + ux * side * off), 0.9)
+			stoneLantern(road, ground(x - uz * side * 7, z + ux * side * 7), 0.9)
 		end
 		for _, side in { -1, 1 } do
 			for k = 0, 1 do
-				local along = k * 20 - 10
+				local along = k * 24 - 12
 				local off = half * 0.7 + rng:NextNumber(0, half * 0.25)
 				local tx, tz = x + ux * along - uz * side * off, z + uz * along + ux * side * off
-				if rng:NextNumber() < 0.8 then
+				if rng:NextNumber() < 0.75 then
 					local maple = rng:NextNumber() < 0.35
 					tree(trees, ground(tx, tz), if maple then C.Maple else C.Sakura, if maple then C.MapleGold else C.SakuraDeep, rng:NextNumber(0.9, 1.4))
 				end
 			end
 		end
 	end)
-	-- The Thousand-Step Stair: stone steps up the stair segment, torii every few steps.
-	local R = MapConfig.Route
-	local a, b = R[stairSeg], R[stairSeg + 1]
-	local ax, az, bx, bz = a.at[1], a.at[2], b.at[1], b.at[2]
-	local len = K.dist(ax, az, bx, bz)
-	local ux, uz = (bx - ax) / len, (bz - az) / len
-	local yaw = math.atan2(-ux, -uz)
-	local rise = b.y - a.y
-	local stepRun, stepRise = 3, 1.25
-	local count = math.floor(rise / stepRise)
-	local runTotal = count * stepRun
-	local startD = (len - runTotal) / 2
-	local stair = K.model("ThousandStepStair", world)
-	-- Flat landings before and after.
-	for _, d in { startD / 2, len - startD / 2 } do
-		local y = if d < len / 2 then a.y else b.y
-		K.part(stair, "Landing", Vector3.new(a.half * 1.1, 1, startD), CFrame.new(ax + ux * d, y - 0.4, az + uz * d) * CFrame.Angles(0, yaw, 0), col(C.Flagstone), Enum.Material.Slate)
-	end
-	for s = 0, count - 1 do
-		local d = startD + s * stepRun + stepRun / 2
-		local y = a.y + (s + 1) * stepRise
-		local cf = CFrame.new(ax + ux * d, y - 4, az + uz * d) * CFrame.Angles(0, yaw, 0)
-		K.part(stair, "Step", Vector3.new(a.half * 0.9, 8, stepRun + 0.2), cf, col(C.Flagstone), Enum.Material.Slate)
-		if s % 8 == 4 then
-			torii(stair, Vector3.new(ax + ux * d, y, az + uz * d), yaw, a.half * 0.9 + 2, 13)
-		end
-		if s % 4 == 0 then
-			for _, side in { -1, 1 } do
-				stoneLantern(stair, Vector3.new(ax + ux * d - uz * side * (a.half * 0.45 + 2), y, az + uz * d + ux * side * (a.half * 0.45 + 2)), 0.9)
+	-- Stone stairs on every climb.
+	local n = 0
+	for _, R in MapConfig.Roads do
+		for k = 1, #R - 1 do
+			if isStair(R[k], R[k + 1]) then
+				n += 1
+				buildStair(world, R[k], R[k + 1], n)
 			end
 		end
 	end
-	-- Zone entrance gates (where the road enters each zone), with the zone name on the plaque.
+	-- Zone entrance gates (where each road crosses a zone edge), with the zone name on the plaque.
+	local gates: { Vector3 } = {}
 	for _, area in MapConfig.Areas do
 		if area.theme ~= "ToriiRoad" and area.theme ~= "Stairs" and area.theme ~= "Springs" then
-			-- Find the road point closest to the zone edge coming from the previous zone.
-			local best, bestD = nil, math.huge
-			walkRoute(4, function(x, z, _y, rx, rz)
-				local d = math.abs(K.dist(x, z, area.center[1], area.center[2]) - area.radius * 0.95)
-				local inward = (area.center[1] - x) * rx + (area.center[2] - z) * rz
-				if inward > 0 and d < bestD then
-					best, bestD = { x, z, rx, rz }, d
+			for r = 1, #MapConfig.Roads do
+				local best, bestD = nil, math.huge
+				walkRoute(4, function(x, z, _y, rx, rz, a, b, road)
+					if road ~= r or isStair(a, b) then
+						return
+					end
+					local d = math.abs(K.dist(x, z, area.center[1], area.center[2]) - area.radius * 0.95)
+					if d < bestD then
+						best, bestD = { x, z, rx, rz }, d
+					end
+				end)
+				if best and bestD < 8 then
+					local pos = ground(best[1], best[2])
+					local dup = false
+					for _, g in gates do
+						if (g - pos).Magnitude < 40 then
+							dup = true
+						end
+					end
+					if not dup then
+						table.insert(gates, pos)
+						torii(world, pos, math.atan2(-best[3], -best[4]), 16, 17, string.upper(area.name))
+					end
 				end
-			end)
-			if best and bestD < 8 then
-				torii(world, ground(best[1], best[2]), math.atan2(-best[3], -best[4]), 16, 17, string.upper(area.name))
 			end
 		end
 	end

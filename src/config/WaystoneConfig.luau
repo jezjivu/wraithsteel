@@ -10,9 +10,10 @@ local WaystoneConfig = {}
 WaystoneConfig.Waystones = {
 	{ id = "hub", name = "Ninefold Crossing", at = { 0, 0 } }, -- placed next to the hub plaza at runtime
 	-- Few and far apart: each one is a long stretch of road away from the last.
-	{ id = "graves", name = "Lantern Graveyard Waystone", at = { 330, -690 } },
-	{ id = "village", name = "Ashen Village Waystone", at = { -10, -1395 } },
-	{ id = "temple", name = "Temple of the Silent Bell Waystone", at = { -290, -1930 } },
+	{ id = "graves", name = "Lantern Graveyard Waystone", at = { -400, -270 } },
+	{ id = "gorge", name = "Red Maple Gorge Waystone", at = { 395, -330 } },
+	{ id = "village", name = "Ashen Village Waystone", at = { -355, -735 } },
+	{ id = "temple", name = "Temple of the Silent Bell Waystone", at = { 290, -960 } },
 } :: { WaystoneDef }
 
 WaystoneConfig.HubOffset = { -18, 18 } -- hub waystone position relative to the hub center

@@ -59,12 +59,12 @@ SagaConfig.Npcs = {
 		chatter = { "The bell still hums at night. Listen, and you will hear it counting.", "Nine gates. One bell. And you, carrying its echo." },
 	},
 	{
-		id = "oto", name = "Gravekeeper Oto", title = "Lantern-tender", realm = "japan", at = { 262, -672 }, facing = 120,
+		id = "oto", name = "Gravekeeper Oto", title = "Lantern-tender", realm = "japan", at = { -445, -275 }, facing = 90,
 		look = { skin = { 200, 175, 150 }, body = { 60, 60, 55 }, legs = { 45, 45, 40 }, headwear = "Hood", accent = { 80, 75, 65 }, glow = { 255, 190, 90 }, scale = 1 },
 		chatter = { "The dead keep their lanterns lit. I just make sure they stay where they are." },
 	},
 	{
-		id = "sabaki", name = "Sabaki", title = "Ronin of the Ashen Village", realm = "japan", at = { 48, -1340 }, facing = 200,
+		id = "sabaki", name = "Sabaki", title = "Ronin of the Ashen Village", realm = "japan", at = { -340, -720 }, facing = 200,
 		look = { skin = { 210, 180, 150 }, body = { 50, 40, 40 }, legs = { 35, 30, 30 }, headwear = "Hair", accent = { 160, 40, 40 }, weapon = "dao_rustcutter", scale = 1 },
 		chatter = { "I owe a debt to a woman with a crane on her sleeve. One day I'll pay it in steel." },
 	},
@@ -131,7 +131,7 @@ SagaConfig.Quests = {
 		},
 		steps = {
 			{ kind = "Kill", enemies = { "lantern_ghoul" }, count = 4, text = "Lay Lantern Ghouls to rest" },
-			{ kind = "Reach", realm = "japan", at = { 330, -1080 }, radius = 45, text = "Cross the river at Red Maple Gorge" },
+			{ kind = "Reach", realm = "japan", at = { 420, -360 }, radius = 45, text = "Cross the river at Red Maple Gorge" },
 		},
 		outro = { "The temple was quiet? Good. Quiet is rare now.", "A ronin in the Ashen Village has been staring at the road for days. He might need a second blade." },
 		rewards = { ember = 180, xp = 220, jade = 5 },

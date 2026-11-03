@@ -39,8 +39,8 @@ cases["Saga: reach and boss steps"] = function()
 		SagaLogic.Kill(s, "lantern_ghoul")
 	end
 	expectEq(SagaLogic.Reach(s, "japan", 0, 0), false) -- too far
-	expectEq(SagaLogic.Reach(s, "neon", 330, -1080), false) -- wrong realm
-	expectEq(SagaLogic.Reach(s, "japan", 335, -1075), true)
+	expectEq(SagaLogic.Reach(s, "neon", 420, -360), false) -- wrong realm
+	expectEq(SagaLogic.Reach(s, "japan", 425, -355), true)
 	SagaLogic.Talk(s, "oto")
 	expectEq(s.quest, 3)
 	SagaLogic.Talk(s, "sabaki")
@@ -112,13 +112,14 @@ cases["Valley: waystones are far apart, spawns and shrines sit on the route"] = 
 				return true
 			end
 		end
-		local R = MapConfig.Route
-		for i = 1, #R - 1 do
-			local ax, az, bx, bz = R[i].at[1], R[i].at[2], R[i + 1].at[1], R[i + 1].at[2]
-			local dx, dz = bx - ax, bz - az
-			local t = math.clamp(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz), 0, 1)
-			if math.sqrt((x - ax - dx * t) ^ 2 + (z - az - dz * t) ^ 2) <= R[i].half then
-				return true
+		for _, R in MapConfig.Roads do
+			for i = 1, #R - 1 do
+				local ax, az, bx, bz = R[i].at[1], R[i].at[2], R[i + 1].at[1], R[i + 1].at[2]
+				local dx, dz = bx - ax, bz - az
+				local t = math.clamp(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz), 0, 1)
+				if math.sqrt((x - ax - dx * t) ^ 2 + (z - az - dz * t) ^ 2) <= R[i].half then
+					return true
+				end
 			end
 		end
 		return false
