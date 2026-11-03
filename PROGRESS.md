@@ -162,6 +162,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Skill tree (SkillConfig / Shared/SkillLogic / SkillService / Skills panel): 3 paths, 24 skills, ranks, free reset; stats feed combat; 3 skill arts (Moon Severance, Phantom Rush chain-blink, Crimson Lotus) + mechanics (Blood Rush, Ringing Steel, Vanishing Step); profile v8
 - [x] Unique UI look (Kit): lacquer panels, steel hairlines, red blade lines, gold corner brackets, serif titles, new buttons/menu/HUD meters with damage ghost; posture fills from the center
 - [x] Exploration: one-way shortcut gates + 8 Ashen Relics (+1 skill point each), profile v9; grappling hook (V) with 15 lookout towers + gate tower hook points; hub plaza widened
+- [x] Part 16: every Ashen Valley boss deleted for good (Sable Crane, Hollow Abbot, Hollow Carillon world boss, unused Chapter 1 bosses; old saved shrines are removed at runtime; profile v11); sentry archers on lookout towers; idle patrols; day/night cycle; Shadow Kunai (B); belfry climb + hidden ledge secrets (10 relics); elite mini-boss bar; Souls-style Ember drop on death; landmarks; river/bridge fix
 - [ ] Create the real passes/products on the Creator Dashboard and fill the ids (MonetizationConfig)
 - [x] Shockwave rings drawn hollow (the filled disc read as a giant cylinder)
 - [ ] Studio playtest of realms/portals/arenas; tune enemy/boss numbers

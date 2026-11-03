@@ -135,3 +135,14 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
   (attribute `LandAt`). No server-side movement check (same risk as dashes).
 - Open questions: gate leaf swing direction and grapple landing spots need a Studio look;
   Skills panel is laid out for >= 720 px wide windows (scrolls on small screens).
+
+## Part 16
+- **No bosses in the Ashen Valley.** BossConfig keeps only kagura_9 (Neon) and archon_helion
+  (Aeloria). MapConfig.BossArenas = {}, WorldBossConfig.Rotation = {}. BossService destroys any
+  shrine whose BossId no longer exists (older saved Studio worlds); WorldBossService removes
+  Workspace.WorldBossSpawns when the rotation is empty. Migration v11 drops the old ids.
+- Shadow Kunai: KunaiService / KunaiController, remote ThrowKunai(Vector3), character attribute
+  `Kunai`, CombatService.Rested signal refills it.
+- Sentries: EnemySpawns entries with `lookout = n` stand on that lookout platform (`Sentry` spawn
+  attribute; EnemyService never walks them).
+- Day/night: LightingConfig.DayNight, client-only, from workspace:GetServerTimeNow().
