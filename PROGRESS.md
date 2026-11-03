@@ -157,9 +157,15 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Part 13: Thunderbell Engine gets its own Foundry arena (cover pillars, molten channels, vents, pipes, the cracked bell); cover blocks rockets/lasers/projectiles; 6 new Valley enemies (Rust Hound, Kite Archer, Ash Monk, Shadow Shinobi, Lantern Wisp, Spear Ronin) + 4 elite super enemies (Gravelord Ishiki, Gorge Matriarch, Crimson Oni Captain, Masked Retainer Kurogiri) with gold names/auras; enemy Rain attacks + creature poses
 - [x] Store: Robux levels / Ember / bundle, DoubleXP / ExtraFlask / VIP passes, intended prices; Studio-only free simulated test purchases (same receipt path)
 - [x] Part 14: Kagehisa (swordmaster duel, moonlit courtyard arena) replaces the robot; elite signature moves; execution cinematic on Severing Blows; Qi arts reworked into blade arts (Thousand Cuts, Ghost Step, Crescent Wave, Earthsplitter, Rising Dragon, Tempest Spin, Heaven's Fall); migration v7
+- [x] Part 15: Prologue boss removed entirely (Neon portal opens at level 8); Ashen Valley rebuilt WIDE and interconnected (MapConfig.Roads: crossroads at Whispering Bamboo, west wing graveyard/springs/village + cliff stair, east wing gorge + Thousand-Step Stair + temple, both meet at the Gate of the Cracked Bell; long shortcut descent back to the crossroads); fewer, smaller enemy groups
+- [x] Better human models: World/Outfits (samurai armor, ronin, monk, shinobi, bandit, archer, hoplite, cyber, robe, noble) + masks (oni, menpo, kitsune, cloth, skull) + part-built faces; tools/render_rigs.py preview sheet
+- [x] Skill tree (SkillConfig / Shared/SkillLogic / SkillService / Skills panel): 3 paths, 24 skills, ranks, free reset; stats feed combat; 3 skill arts (Moon Severance, Phantom Rush chain-blink, Crimson Lotus) + mechanics (Blood Rush, Ringing Steel, Vanishing Step); profile v8
+- [x] Unique UI look (Kit): lacquer panels, steel hairlines, red blade lines, gold corner brackets, serif titles, new buttons/menu/HUD meters with damage ghost; posture fills from the center
+- [x] Exploration: one-way shortcut gates + 8 Ashen Relics (+1 skill point each), profile v9; grappling hook (V) with 15 lookout towers + gate tower hook points; hub plaza widened
 - [ ] Create the real passes/products on the Creator Dashboard and fill the ids (MonetizationConfig)
 - [x] Shockwave rings drawn hollow (the filled disc read as a giant cylinder)
 - [ ] Studio playtest of realms/portals/arenas; tune enemy/boss numbers
+- [ ] Studio check: outfit pieces on real R15 proportions, Skills panel layout at small screens, grapple landings on every tower, shortcut gate doors swinging the right way
 
 ## Phase 2 - Chapter 1 + depth
 - [x] BossConfig entries for the 4 Chapter 1 bosses (Hollow Abbot, Twin Cinder Sisters, Rustwood Matriarch, Gatekeeper of Rust - 3 phases)
@@ -188,8 +194,10 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 
 ## Playtesting
 - `rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` -> open in Studio -> Play.
-  You spawn in the hub (south). The Wilds (north, through the red gate): bandits, ghouls,
-  Rustwood stalkers, a sentinel, Rust Tiger + Hollow Abbot arenas. Press E at stalls.
+  You spawn in the hub (south). The valley (north, through the red gate): Torii Road to the
+  Whispering Bamboo crossroads; west to the graveyard / springs / village, east to the gorge and
+  the stair up to the temple; both wings climb to the Gate of the Cracked Bell. Press E at stalls,
+  V at gold hook rings, Menu > Skills for the skill tree.
   Studio-only chat commands via DebugService (`/ember`, `/odds`, `/open`, `/spirits`, `/equipall`, `/daily`, `/stats`, `/worldboss`, `/chapter`, `/level`, `/spirit`).
   To edit the world in Studio: Command Bar -> `require(game.ServerScriptService.EditTools).BuildWorld()` -> save.
 

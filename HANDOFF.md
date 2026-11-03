@@ -116,3 +116,22 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
 - Is Ember purchasable? (Assumed **no**; only Jade is sold, so only Jade lanterns are "paid".)
 - Exact chapter/boss names: ChapterConfig uses original placeholders for 20 of 21 bosses.
 - Should equipped Spirits be fusable (auto-unequip)? Currently must unequip first.
+
+## Part 15 (this run): wide valley, outfits, skill tree, UI look, exploration
+- **Valley layout** is now `MapConfig.Roads` (several polylines) instead of one `Route`
+  (`MapConfig.Route` = `Roads[1]` kept for compatibility). A road segment whose two points have
+  different `y` is a stone stair (ValleyBuilder.buildStair). Plateau zones (`y = 50`) are filled
+  solid down to the valley floor.
+- **Outfits** (`World/Outfits`): RigLook gained `outfit`, `mask`, `face` (all optional). Pieces are
+  welded to limbs so they animate. Preview: `python3 tools/render_rigs.py <luau> build/rigs.png`.
+- **Skill tree**: profile `skills` (v8). Points = `SkillLogic.PointsEarned(level)` + relics found.
+  Skill stats are merged into `CombatService.PlayerStats` (same keys as spirit stats + new ones,
+  listed in SkillConfig). `CombatService.RefreshStats(player)` re-applies max HP / flask.
+  Arts tied to a skill (`SkillConfig.ArtSkill`) are checked in SpellLogic.CanCast/SetLoadout.
+- **Exploration** (`ExplorationService` / `ExplorationController`, profile `shortcuts` + `relics`, v9):
+  gates are server parts; opening is per player, so the client swings its own copy open and turns
+  off collision (character physics is client-owned). Models use `ModelStreamingMode.Atomic`.
+- **Grappling hook**: `GrappleController` (client only) pulls to parts tagged `GrapplePoint`
+  (attribute `LandAt`). No server-side movement check (same risk as dashes).
+- Open questions: gate leaf swing direction and grapple landing spots need a Studio look;
+  Skills panel is laid out for >= 720 px wide windows (scrolls on small screens).
