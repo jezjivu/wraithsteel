@@ -26,8 +26,8 @@ local HubConfig = {}
 
 HubConfig.Name = "Ninefold Crossing"
 HubConfig.Origin = { 0, 0, 150 } -- plaza center (studs)
-HubConfig.PlazaRadius = 64
-HubConfig.StallRing = 44 -- distance of stalls from the center
+HubConfig.PlazaRadius = 90
+HubConfig.StallRing = 66 -- distance of stalls from the center
 HubConfig.PromptDistance = 14
 
 HubConfig.Stations = {
@@ -45,6 +45,6 @@ HubConfig.ShrineLanterns = { "paper_lantern", "rustwood_lantern", "jade_lantern"
 
 -- Training yard dummies (EnemyConfig.training_dummy).
 HubConfig.TrainingDummies = 3
-HubConfig.TrainingYardOffset = { 0, 0, 76 } -- just outside the plaza, behind the Jade Merchant
+HubConfig.TrainingYardOffset = { 0, 0, 112 } -- just outside the plaza, behind the Jade Merchant
 
 return HubConfig

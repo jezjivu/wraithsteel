@@ -110,7 +110,7 @@ RealmConfig.Realms = {
 -- Portals (local positions in their `from` realm). The gate into a realm stays sealed until
 -- that realm's unlockBoss is defeated.
 RealmConfig.Portals = {
-	{ from = "japan", to = "neon", at = { 60, 0 }, facing = -90 }, -- Japan: relative to the hub center
+	{ from = "japan", to = "neon", at = { 90, 42 }, facing = -65 }, -- Japan: relative to the hub center
 	{ from = "neon", to = "japan", at = { 0, 55 }, facing = 0 },
 	{ from = "neon", to = "greek", at = { 70, 40 }, facing = 90 },
 	{ from = "greek", to = "neon", at = { 0, 55 }, facing = 0 },

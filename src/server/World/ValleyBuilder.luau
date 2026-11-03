@@ -30,7 +30,7 @@ end
 local rng = Random.new(MapConfig.Seed)
 local T = workspace.Terrain
 local HUB = { HubConfig.Origin[1], HubConfig.Origin[3] }
-local HUB_RADIUS = 100
+local HUB_RADIUS = 145
 
 -- Geometry helpers ----------------------------------------------------------------------------
 local function segDist(x: number, z: number, ax: number, az: number, bx: number, bz: number): (number, number)

@@ -16,7 +16,7 @@ WaystoneConfig.Waystones = {
 	{ id = "temple", name = "Temple of the Silent Bell Waystone", at = { 290, -960 } },
 } :: { WaystoneDef }
 
-WaystoneConfig.HubOffset = { -18, 18 } -- hub waystone position relative to the hub center
+WaystoneConfig.HubOffset = { -28, 26 } -- hub waystone position relative to the hub center
 WaystoneConfig.CombatLockSeconds = 6 -- can't travel this soon after taking/dealing damage
 WaystoneConfig.TravelCooldown = 5
 WaystoneConfig.Color = { 120, 220, 255 }
