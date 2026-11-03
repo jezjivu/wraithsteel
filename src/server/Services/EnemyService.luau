@@ -62,6 +62,7 @@ type Brain = {
 	recentHits: { number }, -- times of player hits (string deflects)
 	patrolAt: number, -- idle: next time to pick a new patrol point
 	patrolTo: Vector3?,
+	sentry: boolean, -- stands its post (archers on lookout towers): never walks
 }
 
 local EnemyService = {
@@ -387,6 +388,24 @@ local function think(b: Brain, _dt: number, now: number)
 		b.c.model:SetAttribute("Unaware", unaware)
 	end
 	local humanoid = b.c.humanoid
+	if b.sentry then
+		-- Sentries hold their post: turn and shoot, never walk.
+		if humanoid.WalkSpeed ~= 0 then
+			humanoid.WalkSpeed = 0
+		end
+		if target then
+			face(b, target.root.Position)
+			if now >= b.nextAttackAt then
+				local attackId = chooseAttack(b, dist)
+				if attackId and director:Request(b.c.id, target.id, now) then
+					startAttack(b, attackId, now)
+				end
+			end
+		else
+			director:Release(b.c.id, now)
+		end
+		return
+	end
 	if target == nil then
 		director:Release(b.c.id, now)
 		local fromHome = (b.c.root.Position - b.home).Magnitude
@@ -429,7 +448,7 @@ local function think(b: Brain, _dt: number, now: number)
 	end
 end
 
-function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> ())?): Combatant?
+function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> ())?, opts: { sentry: boolean? }?): Combatant?
 	local def = EnemyConfig.Enemies[enemyId]
 	if def == nil then
 		warn("[EnemyService] unknown enemy", enemyId)
@@ -512,6 +531,7 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 		recentHits = {},
 		patrolAt = os.clock() + rng:NextNumber(0, 4),
 		patrolTo = nil,
+		sentry = opts ~= nil and opts.sentry == true,
 	}
 	brains[id] = brain
 	-- Sekiro-style: an aware enemy that isn't swinging or stunned can deflect your strikes.
@@ -572,11 +592,12 @@ local function runSpawner(spawnPart: BasePart)
 	local count = tonumber(spawnPart:GetAttribute("Count")) or 1
 	local respawn = tonumber(spawnPart:GetAttribute("RespawnSeconds")) or EnemyConfig.DefaultRespawnSeconds
 	local scatter = tonumber(spawnPart:GetAttribute("Scatter")) or EnemyConfig.DefaultSpawnScatter
+	local sentry = spawnPart:GetAttribute("Sentry") == true
 	local function spawnOne()
-		local offset = Vector3.new(rng:NextNumber(-scatter, scatter), 3, rng:NextNumber(-scatter, scatter))
+		local offset = Vector3.new(rng:NextNumber(-scatter, scatter), if sentry then 0.5 else 3, rng:NextNumber(-scatter, scatter))
 		EnemyService.Spawn(enemyId, spawnPart.CFrame + offset, function()
 			task.delay(respawn, spawnOne)
-		end)
+		end, { sentry = sentry })
 	end
 	for _ = 1, count do
 		spawnOne()

@@ -830,7 +830,14 @@ local function buildFolders()
 		local folder = Instance.new("Folder")
 		folder.Name = "EnemySpawns"
 		for _, s in MapConfig.EnemySpawns do
-			local p = K.part(folder, s.name, Vector3.new(4, 0.2, 4), CFrame.new(ground(s.at[1], s.at[2]) + Vector3.new(0, 0.3, 0)), Color3.new(1, 1, 1))
+			-- Sentries stand on their lookout tower's platform.
+			local look = if (s :: any).lookout then MapConfig.Lookouts[(s :: any).lookout] else nil
+			local pos = ground(s.at[1], s.at[2]) + Vector3.new(0, if look then look[3] + 0.4 else 0.3, 0)
+			local p = K.part(folder, s.name, Vector3.new(4, 0.2, 4), CFrame.new(pos), Color3.new(1, 1, 1))
+			if look then
+				p:SetAttribute("Sentry", true)
+				p:SetAttribute("Scatter", 0)
+			end
 			p.Transparency = 1
 			p.CanCollide = false
 			p.CanQuery = false

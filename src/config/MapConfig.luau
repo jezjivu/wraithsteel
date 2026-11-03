@@ -109,6 +109,12 @@ MapConfig.EnemySpawns = {
 	{ name = "TempleSpears", enemyId = "spear_ronin", count = 1, respawn = 30, at = { 330, -1030 } },
 	{ name = "GateShinobi", enemyId = "shadow_shinobi", count = 2, respawn = 30, at = { -40, -1030 } },
 	{ name = "PassBrute", enemyId = "mire_brute", count = 1, respawn = 45, at = { 0, -760 } },
+	-- Sentry archers on lookout towers (`lookout` = index in MapConfig.Lookouts): they never
+	-- come down. Hook up behind them, or shoot back... or just run.
+	{ name = "TowerArcherBamboo", enemyId = "kite_archer", count = 1, respawn = 45, at = { 75, -255 }, lookout = 1 },
+	{ name = "TowerArcherVillage", enemyId = "kite_archer", count = 1, respawn = 45, at = { -300, -690 }, lookout = 5 },
+	{ name = "TowerArcherGorge", enemyId = "kite_archer", count = 1, respawn = 45, at = { 320, -290 }, lookout = 8 },
+	{ name = "TowerArcherTemple", enemyId = "kite_archer", count = 1, respawn = 45, at = { 225, -945 }, lookout = 10 },
 	-- Elites (super enemies): one per wing, long respawn.
 	{ name = "EliteGravelord", enemyId = "gravelord", count = 1, respawn = 180, at = { -440, -320 } },
 	{ name = "EliteMatriarch", enemyId = "gorge_matriarch", count = 1, respawn = 180, at = { 440, -380 } },

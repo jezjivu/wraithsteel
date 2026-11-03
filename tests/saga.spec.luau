@@ -125,7 +125,13 @@ cases["Valley: waystones are far apart, spawns and shrines sit on the route"] = 
 		return false
 	end
 	for _, s in MapConfig.EnemySpawns do
-		assert(reachable(s.at[1], s.at[2]), "spawn off the route: " .. s.name)
+		if s.lookout then
+			-- Tower sentries stand on their lookout (off the road by design).
+			local l = MapConfig.Lookouts[s.lookout]
+			assert(l ~= nil and l[1] == s.at[1] and l[2] == s.at[2], "sentry not on its lookout: " .. s.name)
+		else
+			assert(reachable(s.at[1], s.at[2]), "spawn off the route: " .. s.name)
+		end
 	end
 	for _, a in MapConfig.BossArenas do
 		assert(reachable(a.at[1], a.at[2]), "shrine off the route: " .. a.name)
