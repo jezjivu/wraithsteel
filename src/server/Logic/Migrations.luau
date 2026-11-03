@@ -129,6 +129,13 @@ Migrations.Steps = {
 			data.raidClears = {}
 		end
 	end,
+	-- v14 -> v15: Fortune Chips for Bell Dice (free, never sold, never traded).
+	[15] = function(data: { [string]: any })
+		data.chips = if type(data.chips) == "number" then data.chips else 0
+		data.chipsDay = if type(data.chipsDay) == "number" then data.chipsDay else -1
+		data.chipsExchangedDay = if type(data.chipsExchangedDay) == "number" then data.chipsExchangedDay else -1
+		data.chipsExchanged = if type(data.chipsExchanged) == "number" then data.chipsExchanged else 0
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server

@@ -65,6 +65,11 @@ function ProfileTemplate.New(): Types.ProfileData
 
 		nightMarket = { window = -1, bought = {} },
 
+		chips = 0,
+		chipsDay = -1,
+		chipsExchangedDay = -1,
+		chipsExchanged = 0,
+
 		receipts = {},
 		receiptOrder = {},
 		giftedPasses = {},

@@ -114,6 +114,12 @@ export type ProfileData = {
 	-- Night Market: purchases in the current stock window (v13)
 	nightMarket: { window: number, bought: { [string]: number } },
 
+	-- Bell Dice (v15): free Fortune Chips, daily gift day, chips exchanged for Ember today
+	chips: number,
+	chipsDay: number,
+	chipsExchangedDay: number,
+	chipsExchanged: number,
+
 	-- Monetization
 	receipts: { [string]: boolean }, -- purchaseId -> granted
 	receiptOrder: { string }, -- FIFO used to cap `receipts`

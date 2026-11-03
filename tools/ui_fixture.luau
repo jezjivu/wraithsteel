@@ -38,6 +38,8 @@ local function profile()
 	end
 	d.freeLanterns = { paper_lantern = 1 }
 	d.dailyStreak = 4
+	d.chips = 120
+	d.chipsExchanged = 20
 	return d
 end
 
@@ -72,6 +74,24 @@ function __client(opts)
 			table.insert(stock, { slot = e.slot, itemId = e.itemId, bought = if i == 2 then 1 else 0 })
 		end
 		return { window = w, endsAt = NightMarketLogic.WindowEndsAt(w), stock = stock }
+	end
+	local DiceLogic = __require(RS.Shared.DiceLogic)
+	__invokes.DiceState = function()
+		return {
+			allowed = true,
+			round = 42,
+			phase = "Betting",
+			endsAt = 1700000014,
+			dice = nil,
+			tables = { Low = { players = 2, chips = 30 }, High = { players = 1, chips = 10 }, Triple = { players = 1, chips = 2 } },
+			seated = {
+				{ userId = 2, name = "Kaito", bets = { { bet = "Low", stake = 25 } } },
+				{ userId = 3, name = "Mirelle", bets = { { bet = "High", stake = 10 }, { bet = "Triple", stake = 2 } } },
+			},
+			history = { { 3, 5, 2 }, { 6, 6, 6 } },
+			winners = {},
+			odds = DiceLogic.Odds(),
+		}
 	end
 	__invokes.GetStoreInfo = function()
 		local passes, products = {}, {}

@@ -74,6 +74,12 @@ local NetSchema: { [string]: RemoteDef } = {
 	GetNightMarket = { kind = "Function", direction = "ToServer", args = {}, rate = { burst = 4, perSecond = 1 } },
 	BuyNightMarket = { kind = "Function", direction = "ToServer", args = { "integer", "integer" }, rate = { burst = 4, perSecond = 1 } },
 
+	-- Bell Dice (shared chance table, free chips only) ---------------------------------------
+	DiceState = { kind = "Function", direction = "ToServer", args = {}, rate = { burst = 4, perSecond = 1 } },
+	DiceBet = { kind = "Function", direction = "ToServer", args = { "string", "integer" }, rate = { burst = 6, perSecond = 3 } },
+	DiceExchange = { kind = "Function", direction = "ToServer", args = { "integer" }, rate = { burst = 2, perSecond = 0.5 } },
+	DiceEvent = { kind = "Event", direction = "ToClient" },
+
 	-- Rewards / quests / codes ---------------------------------------------------------------
 	ClaimDaily = { kind = "Function", direction = "ToServer", args = {}, rate = { burst = 2, perSecond = 0.5 } },
 	ClaimPlaytime = { kind = "Function", direction = "ToServer", args = { "string" }, rate = { burst = 4, perSecond = 1 } },

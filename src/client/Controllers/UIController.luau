@@ -5,7 +5,8 @@
 -- panel is open.
 -- The dock (left edge) has five groups; a group's window shows its panels as tabs:
 --   Blade (Weapons, Styles, Arts, Skills) · Spirits (Spirits, Lanterns, Expeditions) ·
---   World (Quests, Map, Travel) · Bonds (Party, Raids, Trade) · Market (Store, Night Market, Codes)
+--   World (Quests, Map, Travel) · Bonds (Party, Raids, Trade) ·
+--   Market (Store, Night Market, Bell Dice, Codes)
 --
 -- API:
 --   UIController.Open(panelName, opts?)   panelName = "Weapons" | "Lanterns" | "Spirits" |
@@ -41,6 +42,7 @@ local STATION_PANELS = {
 	Dojo = "Styles",
 	Waystone = "Travel",
 	NightMarket = "NightMarket",
+	BellDice = "BellDice",
 }
 
 -- Dock groups (available anywhere). Buying weapons / opening lanterns still needs the station.
@@ -70,6 +72,7 @@ local GROUPS: { Group } = {
 	{ id = "market", label = "Market", icon = "market", tabs = {
 		{ id = "Store", label = "Store" },
 		{ id = "NightMarket", label = "Night Market" },
+		{ id = "BellDice", label = "Bell Dice" },
 		{ id = "Codes", label = "Codes" },
 	} },
 }
