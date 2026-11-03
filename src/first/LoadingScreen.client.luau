@@ -48,6 +48,16 @@ end
 local title = text("WRAITHSTEEL", Enum.Font.Antique, 76, Color3.fromRGB(245, 205, 120), 0.42)
 local sub = text("Bell of Nine Gates", Enum.Font.GothamMedium, 26, Color3.fromRGB(230, 220, 205), 0.51)
 local status = text("Lighting the lanterns...", Enum.Font.Gotham, 18, Color3.fromRGB(170, 160, 150), 0.8)
+local TIPS = {
+	"A perfect deflect stops everything - even the red attacks.",
+	"Strike an enemy that hasn't seen you: one clean cut ends it.",
+	"Barred gates open from the other side. Find the way around.",
+	"Gold rings on towers: press V to hook up and look over the valley.",
+	"Ashen Relics hide in every region. Each one is a skill point.",
+	"Die, and a quarter of your Ember stays where you fell. Go back for it.",
+	"Mash attacks and enemies start deflecting you. Read them, then cut.",
+}
+local tip = text(TIPS[math.random(1, #TIPS)], Enum.Font.GothamMedium, 16, Color3.fromRGB(200, 185, 160), 0.86)
 
 local line = Instance.new("Frame")
 line.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -56,6 +66,9 @@ line.Size = UDim2.fromScale(0.36, 0.006)
 line.BackgroundColor3 = Color3.fromRGB(200, 40, 35)
 line.BorderSizePixel = 0
 line.Parent = bg
+local lineGrad = Instance.new("UIGradient")
+lineGrad.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) })
+lineGrad.Parent = line
 
 -- Drifting lantern lights.
 local lights = {}
@@ -99,7 +112,7 @@ end
 status.Text = ""
 local fade = TweenInfo.new(0.8)
 TweenService:Create(bg, fade, { BackgroundTransparency = 1 }):Play()
-for _, l in { title, sub, status } do
+for _, l in { title, sub, status, tip } do
 	TweenService:Create(l, fade, { TextTransparency = 1 }):Play()
 end
 TweenService:Create(line, fade, { BackgroundTransparency = 1 }):Play()
