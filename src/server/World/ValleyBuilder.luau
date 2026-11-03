@@ -313,6 +313,12 @@ local function house(parent: Instance, base: Vector3, yaw: number, burned: boole
 		K.part(m, "SideWall2", Vector3.new(0.6, 8, 10.6), cf * CFrame.new(7.4, 5, 0), wood, Enum.Material.WoodPlanks)
 		K.part(m, "Roof", Vector3.new(19, 1, 15), cf * CFrame.new(0, 9.8, 0), col(C.Roof), Enum.Material.Slate)
 		K.part(m, "RoofTop", Vector3.new(12, 1.4, 8), cf * CFrame.new(0, 11, 0), col(C.Roof), Enum.Material.Slate)
+		-- Rooftop hook ring: run the village over the roofs.
+		local hook = K.decor(m, "GrapplePoint", Vector3.new(0.3, 2, 2), cf * CFrame.new(0, 15, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 205, 110), Enum.Material.Neon, Enum.PartType.Cylinder)
+		hook:SetAttribute("LandAt", (cf * CFrame.new(0, 14.5, 0)).Position)
+		pcall(function()
+			game:GetService("CollectionService"):AddTag(hook, "GrapplePoint")
+		end)
 		local lamp = K.decor(m, "DoorLamp", Vector3.new(1.2, 1.6, 1.2), cf * CFrame.new(5, 6, -6.4), Color3.fromRGB(255, 120, 80), Enum.Material.Neon, Enum.PartType.Ball)
 		K.light(lamp, Color3.fromRGB(255, 150, 90), 14, 1)
 	else
@@ -510,6 +516,11 @@ local function buildZones(world: Model)
 			end
 			local up = cf * CFrame.new(0, 0, -a.radius * 1.05)
 			T:FillBlock(up * CFrame.new(0, 22, -10), Vector3.new(80, 50, 24), Enum.Material.Rock)
+			-- A cave hidden beside the falls (a relic waits inside).
+			local cave = MapConfig.WaterfallCave
+			T:FillBlock(CFrame.new(cave.at[1], cave.height / 2, cave.at[2]), Vector3.new(cave.size[1], cave.height, cave.size[2]), Enum.Material.Air)
+			local glow = K.decor(m, "CaveGlow", Vector3.new(0.6, 0.6, 0.6), CFrame.new(cave.at[1], cave.height - 2, cave.at[2]), Color3.fromRGB(120, 200, 255), Enum.Material.Neon, Enum.PartType.Ball)
+			K.light(glow, Color3.fromRGB(120, 200, 255), 18, 1.2)
 			local fall = K.decor(m, "Waterfall", Vector3.new(14, 46, 0.8), up * CFrame.new(0, 21, 2.2), col(C.WaterFall), Enum.Material.Glass)
 			fall.Transparency = 0.25
 			local foam = K.decor(m, "Foam", Vector3.new(18, 1, 6), up * CFrame.new(0, 0.5, 5), Color3.new(1, 1, 1))

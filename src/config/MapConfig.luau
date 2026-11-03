@@ -149,6 +149,7 @@ MapConfig.Relics = {
 	-- Secrets: only the grappling hook gets you there. `y` = height above the ground there.
 	{ id = "relic_belfry", at = { 0, -1125 }, y = 5 + 5 * (110 / 5.4) - 1.4 + 3.2 },
 	{ id = "relic_ledge", at = { -140, -460 }, y = 3.8, secret = true }, -- off the map: hook only
+	{ id = "relic_waterfall", at = { 369, -481 }, absY = 3.2, secret = true }, -- in the waterfall cave
 }
 
 -- Lookout towers: wooden platforms with a grappling-hook point on top (vertical routes,
@@ -166,6 +167,9 @@ MapConfig.Lookouts = {
 -- Red Maple Gorge river: crosses the road from the crossroads just before the clearing (the
 -- red bridge carries the road over it). yaw 0 = the river runs north-south.
 MapConfig.GorgeRiver = { at = { 355, -360 }, yaw = 0 }
+
+-- A cave cut into the rock beside the gorge waterfall (upstream, north of the bridge).
+MapConfig.WaterfallCave = { at = { 369, -477 }, size = { 14, 18 }, height = 10 }
 
 -- Landmarks (ValleyBuilder.buildLandmarks): seen from far away, they tell you where you are.
 MapConfig.Landmarks = {
