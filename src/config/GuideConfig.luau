@@ -31,7 +31,10 @@ GuideConfig.Controls = {
 	"Break posture, then strike - SEVERING BLOW",
 	"Shift - Sprint   Tab - Lock on   Q - Spring Flask (heal)",
 	"Z / X / C - Qi arts (spells)   T - Spirit Burst",
-	"1 / 2 - Skills   G - Ultimate   E - Use stations",
+	"1 / 2 - Weapon skills   G - Ultimate   E - Use stations",
+	"V - Grappling hook (aim at a gold ring on towers)",
+	"Menu > Skills - spend skill points (1 per level + Ashen Relics hidden in the valley)",
+	"Barred gates open from the other side - find the way around",
 	"H - Toggle this card",
 }
 

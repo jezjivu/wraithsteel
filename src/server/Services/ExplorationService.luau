@@ -80,6 +80,12 @@ local function buildGate(folder: Instance, def: any)
 		block(model, "Wall", Vector3.new(40, 30, 6), cf * CFrame.new(side * (span / 2 + 20), 15, 0), stone, Enum.Material.Slate)
 		block(model, "Tower", Vector3.new(9, 36, 9), cf * CFrame.new(side * (span / 2 + 3), 18, 0), stone, Enum.Material.Slate)
 		block(model, "TowerRoof", Vector3.new(12, 2, 12), cf * CFrame.new(side * (span / 2 + 3), 37, 0), Color3.fromRGB(50, 52, 60), Enum.Material.Slate)
+		-- Hook point above each tower (GrappleController): climb up and look over the wall.
+		local hook = block(model, "GrapplePoint", Vector3.new(0.3, 2.2, 2.2), cf * CFrame.new(side * (span / 2 + 3), 41, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 205, 110), Enum.Material.Neon)
+		hook.Shape = Enum.PartType.Cylinder
+		hook.CanCollide = false
+		hook:SetAttribute("LandAt", (cf * CFrame.new(side * (span / 2 + 3), 41, 0)).Position)
+		game:GetService("CollectionService"):AddTag(hook, "GrapplePoint")
 	end
 	block(model, "Lintel", Vector3.new(span + 18, 4, 7), cf * CFrame.new(0, 30, 0), stone, Enum.Material.Slate)
 	-- Two door leaves, hinged at the towers.
