@@ -28,4 +28,14 @@ MovementConfig.Lean = { forwardDegrees = 9, sideDegrees = 10, smoothing = 8, ful
 -- Air slam (air attack): plunge speed and landing shockwave.
 MovementConfig.Plunge = { speed = 70, shockRadius = 14 }
 
+-- Grappling hook (V / R3): pull yourself to a glowing hook point (lookout towers, gates).
+MovementConfig.Grapple = {
+	range = 95, -- studs to the hook point
+	minDot = 0.82, -- how close to the screen center the point must be
+	speed = 120, -- studs per second while being pulled
+	minSeconds = 0.35,
+	arc = 7, -- studs of upward arc on the way
+	cooldown = 0.8,
+}
+
 return MovementConfig

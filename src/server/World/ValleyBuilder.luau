@@ -716,6 +716,43 @@ local function buildRoad(world: Model)
 	end
 end
 
+-- Lookout towers with a grappling-hook point (CollectionService tag "GrapplePoint").
+local function buildLookouts(world: Model)
+	local folder = K.model("Lookouts", world)
+	local wood, dark = col(C.Wood), col(C.DarkWood)
+	for i, l in MapConfig.Lookouts do
+		local x, z, h = l[1], l[2], l[3]
+		if onRoad(x, z, 8) then
+			continue
+		end
+		local base = ground(x, z)
+		local tower = K.model("Lookout" .. i, folder)
+		for _, dx in { -4, 4 } do
+			for _, dz in { -4, 4 } do
+				K.part(tower, "Post", Vector3.new(0.9, h + 7, 0.9), CFrame.new(base + Vector3.new(dx, (h + 7) / 2 - 1, dz)), dark, Enum.Material.Wood)
+			end
+			-- Cross braces.
+			K.decor(tower, "Brace", Vector3.new(0.4, 0.4, math.sqrt(64 + h * h * 0.36)), CFrame.new(base + Vector3.new(dx, h * 0.45, 0)) * CFrame.Angles(math.atan2(h * 0.6, 8), 0, 0), dark, Enum.Material.Wood)
+		end
+		K.part(tower, "Platform", Vector3.new(11, 0.8, 11), CFrame.new(base + Vector3.new(0, h, 0)), wood, Enum.Material.WoodPlanks)
+		for _, side in { -1, 1 } do
+			K.part(tower, "Rail", Vector3.new(11, 1.6, 0.4), CFrame.new(base + Vector3.new(0, h + 1.2, side * 5.3)), dark, Enum.Material.Wood)
+			K.part(tower, "Rail", Vector3.new(0.4, 1.6, 11), CFrame.new(base + Vector3.new(side * 5.3, h + 1.2, 0)), dark, Enum.Material.Wood)
+		end
+		-- Pitched roof.
+		for _, side in { -1, 1 } do
+			K.part(tower, "Roof", Vector3.new(12.5, 0.6, 7.4), CFrame.new(base + Vector3.new(0, h + 7.6, side * 3)) * CFrame.Angles(math.rad(-26 * side), 0, 0), col(C.Roof), Enum.Material.Slate)
+		end
+		-- The hook point: a gold ring marker hanging under the roof peak.
+		local hook = K.decor(tower, "GrapplePoint", Vector3.new(0.3, 2.2, 2.2), CFrame.new(base + Vector3.new(0, h + 5.4, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 205, 110), Enum.Material.Neon, Enum.PartType.Cylinder)
+		hook:SetAttribute("LandAt", base + Vector3.new(0, h + 3, 0))
+		K.light(hook, Color3.fromRGB(255, 200, 120), 10, 0.8)
+		pcall(function()
+			game:GetService("CollectionService"):AddTag(hook, "GrapplePoint")
+		end)
+	end
+end
+
 -- Spawns, arenas, world boss spot -----------------------------------------------------------
 local function buildFolders()
 	if workspace:FindFirstChild("EnemySpawns") == nil then
@@ -772,6 +809,10 @@ function ValleyBuilder.Build(parent: Instance): Model
 	local ok2, err2 = pcall(buildZones :: any, world)
 	if not ok2 then
 		warn("[ValleyBuilder] zones:", err2)
+	end
+	local ok3, err3 = pcall(buildLookouts :: any, world)
+	if not ok3 then
+		warn("[ValleyBuilder] lookouts:", err3)
 	end
 	buildFolders()
 	return world

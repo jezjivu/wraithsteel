@@ -325,8 +325,8 @@ local function send(action: string)
 end
 
 local function onAction(action: string)
-	if string.sub(action, 1, 5) == "Spell" then
-		return -- Qi arts: SpellController
+	if string.sub(action, 1, 5) == "Spell" or action == "Grapple" then
+		return -- Qi arts: SpellController; hook: GrappleController
 	end
 	local now = os.clock()
 	if now < predictedBusyUntil and action ~= "Dodge" then

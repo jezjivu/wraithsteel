@@ -141,6 +141,18 @@ MapConfig.Relics = {
 	{ id = "relic_gate", at = { 70, -1100 } },
 }
 
+-- Lookout towers: wooden platforms with a grappling-hook point on top (vertical routes,
+-- ambush spots over the zones). {x, z, platform height}
+MapConfig.Lookouts = {
+	{ 75, -255, 22 }, { -85, -405, 22 },
+	{ -350, -375, 20 }, { -505, -235, 18 },
+	{ -300, -690, 24 }, { -470, -745, 20 }, { -395, -865, 22 },
+	{ 345, -295, 22 }, { 500, -320, 24 },
+	{ 225, -945, 20 }, { 375, -1050, 22 },
+	{ -65, -995, 26 }, { 85, -995, 26 },
+	{ 27, -560, 24 }, { -27, -800, 24 },
+}
+
 -- World boss spawn (open-world encounter in the gorge clearing).
 MapConfig.WorldBossSpawn = { 440, -330 }
 
