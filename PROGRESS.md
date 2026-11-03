@@ -226,6 +226,27 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [ ] Studio: playtest enemy spacing/turn-taking feel and tune `EnemyConfig.Movement`; look at the thinner Torii Road
 - [ ] Before launch: answer "simulated gambling" in the Roblox experience questionnaire (Bell Dice)
 
+## Night 5 (cloud run, code only): Ironcrow Keep + headless smoke test
+- [x] Fourth realm **Ironcrow Keep** (fortress castle): cliff road, gatehouse, outer bailey, High Ramparts, Chapel of Ash, Crow Bridge over a chasm, inner keep; fall respawn to the nearest waystone
+- [x] Bosses Tessai (Castle arena) and Ashrei (Throne arena); enemies Ironcrow Footman, Crow Knight, Ember Archer, elite Castellan Gorou
+- [x] Story: Hanabusa + 3 quests after Aeloria; tests/keep.spec.luau (130 tests)
+- [x] `tools/smoke_server.py`: boots all 40 services headless, 2 fake players join, scripted remote calls (lantern, equip, daily, dice, market, party, trade, raid, weapon, skills, store) - 0 errors
+- [ ] Studio: sculpt the castle (KeepBuilder is a blockout), rigs/anims for the new enemies and bosses, tune Tessai/Ashrei
+
+## Publish readiness (honest)
+NOT ready to publish yet. Blockers, in order:
+1. Never run inside Roblox: one full Studio playtest (solo + 2 players) end to end.
+2. Create the passes/products on the Creator Dashboard and fill `MonetizationConfig` ids (all 0).
+3. Decide the Ember-for-Robux question (paid random items) and fill the experience questionnaire
+   (paid random items, simulated gambling for Bell Dice).
+4. Merge https://github.com/jezjivu/wraithsteel/pull/1 then https://github.com/jezjivu/wraithsteel/pull/2.
+5. Live-only systems tested in a published private place: DataStore saves, trade ledger,
+   reserved-server raids, MemoryStore, receipts (test purchases).
+6. Animations are procedural fallbacks (ids 0), rigs are part-built, sounds are built-in -
+   playable, but upload real ones for launch quality.
+7. Balance pass from playtest data (enemy damage, boss health, economy, security thresholds).
+After 1-5 pass: ready for a small closed test (friends/group). After 6-7: public launch.
+
 ## Playtesting
 - `rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` -> open in Studio -> Play.
   You spawn in the hub (south). The valley (north, through the red gate): Torii Road to the

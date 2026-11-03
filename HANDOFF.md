@@ -225,3 +225,16 @@ The guide is **still not in the repo**; this run followed the task brief + night
   the river and the waterfall cave are hand-placed and would need moving together.
 - **Party frames**: `PartyFramesController` (reads PartyController.State + characters).
   The dock now sits at 60% height so the frames fit above it.
+
+## Night 5 (same branch)
+- **Ironcrow Keep**: `RealmConfig.Realms.keep` (origin {0, 0, -5000}, half 420, unlocked by
+  `archon_helion`), `World/KeepBuilder` (blockout), portals greek <-> keep, `LightingConfig.Realms.keep`,
+  `RealmConfig.FallRespawnDepth` (RealmService sends fallen players to the realm's nearest waystone).
+  Map preview: `python3 tools/render_map.py <luau> out.png keep` (assets/keep_top_preview.png).
+- **Bosses** `tessai` (ArenaConfig layout "Castle") and `ashrei` (layout "Throne"); enemies
+  `keep_footman`, `crow_knight`, `ember_archer`, elite `castellan`.
+- **Story**: NPC `hanabusa` (keep), quests `iron_gate`, `crows_over_ash`, `ember_throne`.
+- **Smoke test**: `python3 tools/smoke_server.py <luau> [ticks]` with `tools/server_mock.luau`
+  (DataStores fail with 403 so ProfileStore uses its mock; task.wait parks threads until the
+  next tick; os.clock does not advance, so timed loops and rate limits are only roughly
+  exercised). Add actions to its SPEC to cover new remotes.
