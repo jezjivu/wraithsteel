@@ -206,6 +206,17 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [ ] Studio: Night Market stall (`Station = "NightMarket"`), `Workspace.RaidArena`, raid gate prop
 - [ ] Live check: trade ledger DataStore + raid ReserveServer/MemoryStore in a published place (both are mocked/in-memory in Studio)
 
+## Night 3 (cloud run, code only): UI pass + content
+- [x] "Ink & Seal" UI design system in `UI/Kit` (tokens, Merriweather + Builder Sans, seal stamp, gate line, frame-built icons, cards, chips, sections, bars, wallets, toggles, empty states); every panel restyled through it
+- [x] Dock replaces the 15-button menu: 5 groups (Blade, Spirits, World, Bonds, Market), group panels as window tabs, last tab remembered
+- [x] HUD: level seal + currency pills, cleaner meters (one bottom "Vitals" cluster), arts bar, objective card, controls card, toasts
+- [x] Lanterns panel: lantern cards, odds table with bars + mutation chips + guarantee bar (odds still before Open); Spirits panel: rarity-tinted cards with chips and lock icon
+- [x] Responsive: `Kit.AutoScale` for HUD clusters/dock/objective/toasts/arts bar; bigger windows on short screens (checked at 844x390)
+- [x] Headless UI preview tool: `tools/render_ui.py` + `ui_mock`/`ui_fixture` + `tools/ui_scenes/*`; previews in `assets/ui_previews/`
+- [x] Content: raid boss Kurozuma (3 phases, 9 moves); Tidewater Spirits (5) + Tidewater Lantern (Epic+ every 40); 2 Night Market Spirits; tests (114 total)
+- [ ] Studio: look at the real UI on PC + phone (fonts render differently from the preview), Kurozuma rig/anims + flooded belfry arena, Tidewater Lantern model
+- [ ] Remaining panels still use the generic Kit look only (Map, Travel, Arts, Styles, Trade, Party, Codes) - fine, but could get bespoke layouts like Spirits/Lanterns
+
 ## Playtesting
 - `rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` -> open in Studio -> Play.
   You spawn in the hub (south). The valley (north, through the red gate): Torii Road to the
@@ -216,6 +227,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
   To edit the world in Studio: Command Bar -> `require(game.ServerScriptService.EditTools).BuildWorld()` -> save.
 
 ## Next up (for the next run)
+0. Studio look at the new UI (dock, HUD, Lanterns, Spirits) on PC and phone; tweak Kit tokens.
 1. Add `WRAITHSTEEL_AGENT_GUIDE.md` to the repo (still missing in night 2) and reconcile
    `Shared/Types`, `NetSchema`, service APIs and this checklist with §8.3/§11.
 2. Decide the Ember-in-store question (see HANDOFF "Night 2"): keep Ember lanterns policy-gated,

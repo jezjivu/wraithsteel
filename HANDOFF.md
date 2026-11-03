@@ -187,3 +187,23 @@ The guide is **still not in the repo**; this run followed the task brief + night
   the luau-lsp 1.53.0 tag (the defs on luau-lsp `main` need a newer luau-lsp).
 - Not done from the brief: a separate GiftService - gifting already lives in MarketService
   (gift products, gift tokens, offline delivery via profile messages).
+
+## Night 3 (UI pass + content, same branch)
+- **Design tokens live only in `src/client/UI/Kit.luau`** (`Kit.Colors`, fonts, `Kit.Radius`).
+  Button style follows the color passed: `C.Accent` = vermilion primary (use once per screen),
+  `C.Row`/`C.Steel` = quiet, anything else = tinted. New components: `Seal`, `GateLine`,
+  `Icon(kind)`, `Section`, `Chip`, `Progress`, `BarLine`, `KeyValue`, `Currency` (returns pill +
+  value label), `Wallet`, `Toggle`, `Empty`, `Strip`, `AutoScale`, `ScaleFor`.
+  `Kit.Window(parent, title, { tabs, activeTab, onTab, glyph?, subtitle? })`.
+- **Dock** (`UIController`): groups table `GROUPS`; add a panel to a group's `tabs` to give it a
+  tab. Station prompts still open panels directly (with `atStation`).
+- **HUD**: bottom meters live in the `Vitals` frame (scaled as one block). Arts bar, objective,
+  controls card, toasts and dock each carry `Kit.AutoScale`.
+- **Preview tool**: `python3 tools/render_ui.py <luau> [scene ...] [--size WxH] [--out dir]`
+  runs real client code with `tests/engine_mock.luau` + `tools/ui_mock.luau` +
+  `tools/ui_fixture.luau` and draws PNGs. It approximates Roblox (stand-in fonts, no images or
+  3D in viewports). New scene = a file in `tools/ui_scenes/` returning a builder function
+  (`__client()`, `__openPanel(name)`). `tools/ui_sheet.py` tiles PNGs.
+- **Content**: `BossConfig.kurozuma` (Raid), Tidewater Spirits + abilities in `SpiritConfig`,
+  `LanternConfig.tidewater_lantern` (added to `HubConfig.ShrineLanterns`, so the generated hub
+  now has 4 pedestals), Night Market `crab_ashen` / `kite_gilded`.

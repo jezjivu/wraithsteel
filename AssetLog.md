@@ -24,5 +24,8 @@ the row. Only original assets (made by us or licensed for this game) may be used
 | Training dummy rig | `ServerStorage.Enemies.training_dummy` | placeholder block | Rig | C | |
 | Night Market stall | Part/Model with attribute `Station = "NightMarket"` | none (menu only) | Build in the hub | D | Night 2 |
 | Raid arena | `Workspace.RaidArena` (Part; boss spawns on it) | none (spawns ahead of first player) | Build | C/D | Night 2 |
-| Raid boss | `RaidConfig.Raids.sunken_bell_vigil.bossId` | reuses `archon_helion` | Dedicated original raid boss (config + rig + anims) | C | Night 2 |
+| Kurozuma (raid boss) rig + 9 anims | `ServerStorage.Bosses.kurozuma`, `BossConfig.kurozuma` moves | procedural rig (RigBuilder `look`) / 0 | Sculpted rig + anims | C | Night 3 (config done) |
 | Raid gate prop | hub (opens the Raid panel) | none (menu "Raids") | Build | D | Night 2 |
+| Tidewater Lantern model | `LanternConfig.tidewater_lantern.modelId` | 0 | Model | D | Night 3 |
+| Tidewater Spirits (5) | built from parts (`SpiritConfig.*.visual`); icons in `assets/spirit_icons` | procedural | Optional sculpted models | B/D | Night 3 |
+| UI icons | frame-built geometric icons (`Kit.Icon`) | n/a | Optional uploaded icon set | D | Night 3 |
