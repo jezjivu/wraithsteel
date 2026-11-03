@@ -73,6 +73,7 @@ export type EnemyDef = {
 	deflectChance: number?, -- while guarding: chance to deflect a strike outright and counter
 	look: RigLook?,
 	elite: boolean?, -- super enemy: gold name + aura, much tougher, bigger rewards
+	lives: number?, -- finishing blows needed (default 1); elites rise again after the first
 	creature: string?, -- part-built body instead of a humanoid rig (World/CreatureBuilder): "Drone" | "Tiger"
 }
 
@@ -470,6 +471,7 @@ EnemyConfig.Enemies = {
 		name = "Crimson Oni Captain",
 		chapter = 0,
 		elite = true,
+		lives = 2,
 		maxHealth = 1600,
 		maxPosture = 280,
 		postureRegen = 8,
@@ -500,6 +502,7 @@ EnemyConfig.Enemies = {
 		name = "Gravelord Ishiki",
 		chapter = 0,
 		elite = true,
+		lives = 2,
 		maxHealth = 1200,
 		maxPosture = 200,
 		postureRegen = 10,
@@ -529,6 +532,7 @@ EnemyConfig.Enemies = {
 		name = "Gorge Matriarch",
 		chapter = 0,
 		elite = true,
+		lives = 2,
 		maxHealth = 1400,
 		maxPosture = 220,
 		postureRegen = 9,
@@ -559,6 +563,7 @@ EnemyConfig.Enemies = {
 		name = "Masked Retainer Kurogiri",
 		chapter = 0,
 		elite = true,
+		lives = 2,
 		maxHealth = 1100,
 		maxPosture = 180,
 		postureRegen = 14,

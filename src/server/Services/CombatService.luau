@@ -72,6 +72,7 @@ export type Combatant = {
 	flask: number?, -- players: Spring Flask charges left
 	breath: boolean?, -- players: Second Breath still available this life
 	rushUntil: number?, -- players: Blood Rush (skill) active until
+	lives: number?, -- enemies: finishing blows needed (elites take two; the first one only knocks a life off)
 	unaware: boolean?, -- enemies: hasn't noticed any player yet (Shadow Strike possible)
 	deflectChance: number?, -- enemies/bosses: chance to deflect a strike while canDeflect()
 	canDeflect: (() -> boolean)?,
@@ -398,6 +399,22 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 				CombatService.Heal(target, target.humanoid.MaxHealth * math.min(1, CombatConfig.SecondBreath.heal * (1 + bonus)))
 				broadcast({ kind = "Revived", targetId = target.id })
 			end
+		end)
+	end
+	-- Elites with lives left: a finishing blow takes a life instead of ending them; they rise
+	-- again at full health with their posture reset.
+	if target.lives and target.lives > 1 and damage >= target.humanoid.Health and damage > 0 and not target.player then
+		target.lives -= 1
+		damage = 0
+		target.humanoid.Health = target.humanoid.MaxHealth
+		target.posture.value = 0
+		target.posture.brokenUntil = now
+		target.model:SetAttribute("Broken", false)
+		target.model:SetAttribute("Lives", target.lives)
+		target.invulnerable = true
+		broadcast({ kind = "LifeLost", targetId = target.id, lives = target.lives })
+		task.delay(CombatConfig.EliteRise.seconds, function()
+			target.invulnerable = false
 		end)
 	end
 	-- Shields soak health damage first.

@@ -467,10 +467,9 @@ function HUDController.Start()
 				end
 				if best then
 					local h = best:FindFirstChildOfClass("Humanoid") :: Humanoid
-					if eliteShown ~= best then
-						eliteShown = best
-						nameL.Text = best.Name
-					end
+					local lives = tonumber(best:GetAttribute("Lives")) or 1
+					eliteShown = best
+					nameL.Text = best.Name .. (if lives > 1 then "   " .. string.rep("◆", lives) else "")
 					frame.Visible = true
 					local frac = h.Health / math.max(1, h.MaxHealth)
 					setMeter(hp, frac, string.format("%d%%", math.ceil(frac * 100)))

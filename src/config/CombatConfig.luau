@@ -131,4 +131,7 @@ CombatConfig.Kunai = {
 	refillOnKill = 1,
 }
 
+-- Elites with extra lives (EnemyConfig `lives`): after a finishing blow they rise again.
+CombatConfig.EliteRise = { seconds = 1.6 } -- invulnerable while getting up
+
 return CombatConfig

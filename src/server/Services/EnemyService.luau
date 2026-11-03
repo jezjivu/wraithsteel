@@ -476,6 +476,7 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 	if def.elite then
 		-- Super enemy: golden aura + glow so it reads from afar.
 		model:SetAttribute("Elite", true)
+		model:SetAttribute("Lives", def.lives or 1)
 		game:GetService("CollectionService"):AddTag(model, "Elite")
 		local e = Instance.new("ParticleEmitter")
 		e.Name = "EliteAura"
@@ -516,6 +517,7 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 		dead = false,
 		contributions = {},
 		deflectChance = if def.training then nil else (def.deflectChance or EnemyConfig.BaseDeflect),
+		lives = def.lives,
 		unaware = true,
 	}
 	CombatService.Register(c)

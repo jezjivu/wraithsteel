@@ -636,6 +636,18 @@ function EffectsController.Start()
 			end
 		elseif e.kind == "Guard" then
 			onGuard(e)
+		elseif e.kind == "LifeLost" then
+			-- An elite takes the finishing blow... and gets back up.
+			local model = EffectsController.ModelFor(e.targetId)
+			local part = model and anchorPart(model)
+			if model and part then
+				local c = Color3.fromRGB(255, 90, 70)
+				AnimationController.Play(model, "Stagger", nil, { windup = 0.1, active = 1.2, recovery = 0.3 })
+				Fx.Pillar(part.Position - Vector3.new(0, 2.5, 0), c, 26)
+				Fx.Shockwave(part.Position - Vector3.new(0, 2.6, 0), c, 14, 0.6)
+				floatText(part, "RISES AGAIN", c, 30)
+				Fx.CenterText(string.upper(model.Name) .. " RISES AGAIN", c, 34, 1.4)
+			end
 		elseif e.kind == "SecondBreath" or e.kind == "Revived" then
 			local model = EffectsController.ModelFor(e.targetId)
 			local part = model and anchorPart(model)
