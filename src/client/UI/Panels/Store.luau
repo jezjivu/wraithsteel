@@ -35,7 +35,7 @@ local Panel: PanelTypes.Panel = {
 		if info.testMode then
 			Kit.Label(body, "STUDIO TEST MODE - every purchase here is free and simulated (only in Studio). Passes last for this session.", { bold = true, size = 13, color = C.Good, wrap = true })
 		end
-		Kit.Label(body, "Game Passes", { bold = true, color = C.Gold })
+		Kit.Section(body, "Game Passes")
 		for i, key in sortedKeys(info.passes) do
 			local p = info.passes[key]
 			local row = Kit.Row(body, 60, i % 2 == 0)
@@ -52,7 +52,7 @@ local Panel: PanelTypes.Panel = {
 				end, 130)
 			end
 		end
-		Kit.Label(body, "Levels, Ember, Jade & Boosts", { bold = true, color = C.Gold })
+		Kit.Section(body, "Levels, Ember, Jade & Boosts")
 		Kit.Label(body, "Jade can buy weapons and Jade Lanterns. Lantern odds are always shown before you open one.", { size = 13, color = C.Muted, wrap = true })
 		local i = 0
 		for _, key in sortedKeys(info.products) do

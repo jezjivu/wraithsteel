@@ -17,6 +17,7 @@ local WeaponConfig = require(Config:WaitForChild("WeaponConfig"))
 local InputConfig = require(Config:WaitForChild("InputConfig"))
 local CombatConfig = require(Config:WaitForChild("CombatConfig"))
 local StyleConfig = require(Config:WaitForChild("StyleConfig"))
+local StyleLogic = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("StyleLogic"))
 
 local InputController = require(script.Parent.InputController)
 local AnimationController = require(script.Parent.AnimationController)
@@ -100,7 +101,7 @@ local function predictMove(action: string): string?
 			predictedKind = "Air"
 			return weapon.air
 		end
-		if now - lastDashAt <= CombatConfig.DashAttackWindow then
+		if now - lastDashAt <= StyleLogic.DashWindow(DataController.Get("fightingStyle") or StyleConfig.Default) then
 			lastDashAt = -math.huge
 			comboIndex = 0
 			predictedKind = "Dash"
@@ -263,10 +264,13 @@ local function send(action: string)
 	end
 	local moveId = if action == "Dodge" or action == "Parry" or action == "Flask" then nil else predictMove(action)
 	local move = moveId and WeaponConfig.Moves[moveId]
-	local style = StyleConfig.Get(DataController.Get("fightingStyle"))
+	-- Same speed the server uses: style base + Flow stacks (published as StyleStacks).
+	local styleId = DataController.Get("fightingStyle") or StyleConfig.Default
+	local stacks = if character then tonumber(character:GetAttribute("StyleStacks")) or 0 else 0
+	local smods = StyleLogic.Attack(styleId, { stacks = stacks, lastGain = os.clock(), lastDodge = lastDashAt }, os.clock())
 	if move then
-		local windup = move.windup / style.speed
-		predictedBusyUntil = os.clock() + windup + move.active + move.recovery / style.speed
+		local windup = move.windup / smods.speed
+		predictedBusyUntil = os.clock() + windup + move.active + move.recovery / smods.speed
 		-- Body follows the blade: step into the strike, or dive for an air slam.
 		local kind = predictedKind
 		task.delay(windup, function()
@@ -315,11 +319,11 @@ local function send(action: string)
 		end
 	elseif move and character and (action == "LightAttack" or action == "HeavyAttack") and brokenEnemyNear(character) then
 		-- Severing Blow on a posture-broken enemy: the big two-handed finisher.
-		AnimationController.Play(character, "Sever", nil, { windup = move.windup / style.speed, active = math.max(move.active, 0.12), recovery = move.recovery / style.speed + 0.2 })
+		AnimationController.Play(character, "Sever", nil, { windup = move.windup / smods.speed, active = math.max(move.active, 0.12), recovery = move.recovery / smods.speed + 0.2 })
 	elseif move and move.animationId ~= PLACEHOLDER_ANIM then
 		playAnimation(move.animationId)
 	elseif character and action ~= "Dodge" then
-		AnimationController.Play(character, action, moveId, nil, predictedKind, style.speed)
+		AnimationController.Play(character, action, moveId, nil, predictedKind, smods.speed)
 	end
 	CombatController.LocalAction:Fire(action, moveId, predictedKind)
 end

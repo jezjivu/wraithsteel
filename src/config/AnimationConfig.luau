@@ -253,6 +253,50 @@ AnimationConfig.Stances = {
 		waist = { 4, -8, 0 }, leftHip = { 18, 0, -4 }, rightHip = { -12, 0, 4 }, leftKnee = { -18, 0, 0 }, rightKnee = { -16, 0, 0 },
 	},
 } :: { [string]: Pose }
+-- Fighting-style stances: added on top of the weapon-class stance (degrees; root entries 4-6
+-- are studs). Each style should read at a glance, even from across a duel arena.
+AnimationConfig.StyleStances = {
+	-- Flowing River: upright and calm, blade low and forward, free hand open.
+	river = {
+		waist = { -4, 4, 0 }, root = { 2, -4, 0, 0, 0.15, 0 },
+		shoulder = { -10, 6, 0 }, elbow = { -8, 0, 0 },
+		leftShoulder = { 10, -6, -8 }, leftElbow = { -15, 0, 0 },
+		leftKnee = { 8, 0, 0 }, rightKnee = { 8, 0, 0 },
+	},
+	-- Iron Mountain: wide, low and square, weapon held high across the chest.
+	mountain = {
+		root = { 4, 6, 0, 0, -0.45, 0 }, waist = { 4, 6, 0 },
+		shoulder = { 18, -6, 4 }, elbow = { 10, 0, 0 },
+		leftShoulder = { 14, 8, -4 },
+		leftHip = { 8, 0, -12 }, rightHip = { 6, 0, 12 }, leftKnee = { -18, 0, 0 }, rightKnee = { -18, 0, 0 },
+	},
+	-- Wind Step: on the toes, leaning in, free arm trailing back for balance.
+	wind = {
+		root = { -10, 0, 0, 0, 0.1, 0 }, waist = { -6, -4, 0 },
+		shoulder = { -6, 0, 6 }, leftShoulder = { -40, 0, -18 }, leftElbow = { -25, 0, 0 },
+		leftHip = { 14, 0, 0 }, rightHip = { -10, 0, 0 }, leftKnee = { 10, 0, 0 }, rightKnee = { 6, 0, 0 },
+	},
+	-- Ember Fang: blade cocked high over the shoulder, torso twisted, weight on the back leg.
+	ember = {
+		root = { 2, 14, 0, 0, -0.25, 0 }, waist = { 0, -18, 0 },
+		shoulder = { 55, 25, 10 }, elbow = { 35, 0, 0 },
+		leftShoulder = { 30, 20, -14 },
+		leftHip = { 10, 0, -6 }, rightHip = { -12, 0, 8 }, rightKnee = { -12, 0, 0 },
+	},
+} :: { [string]: Pose }
+
+-- How each style swings: `coil` = how far past the windup pose the anticipation goes,
+-- `overshoot` = follow-through past the strike pose, `lean` = extra forward root pitch on the
+-- strike (degrees, negative = forward), `settle` = overshoot when returning to stance.
+export type Flavor = { coil: number, overshoot: number, lean: number, settle: number }
+AnimationConfig.StyleFlavor = {
+	river = { coil = 1.04, overshoot = 1.08, lean = -2, settle = 1.03 }, -- smooth, economical
+	mountain = { coil = 1.2, overshoot = 1.22, lean = -8, settle = 1.1 }, -- big wind-up, heavy follow-through
+	wind = { coil = 0.95, overshoot = 1.12, lean = -12, settle = 1.02 }, -- snappy, lunging
+	ember = { coil = 1.12, overshoot = 1.28, lean = -6, settle = 1.08 }, -- wild, wide arcs
+} :: { [string]: Flavor }
+AnimationConfig.DefaultFlavor = { coil = 1.08, overshoot = 1.15, lean = 0, settle = 1.06 } :: Flavor
+
 AnimationConfig.StanceByClass = { Jian = "OneHanded", Dao = "OneHanded", Spear = "TwoHanded", Staff = "TwoHanded", Greatblade = "TwoHanded", Fan = "Open" } :: { [string]: string }
 
 -- Which cast pose each art kind uses.

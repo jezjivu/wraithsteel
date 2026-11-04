@@ -29,14 +29,16 @@ local Panel: PanelTypes.Panel = {
 		for i, id in StyleConfig.Order do
 			local def = StyleConfig.Styles[id]
 			local color = Color3.fromRGB(def.color[1], def.color[2], def.color[3])
-			local row = Kit.Row(body, 96, i % 2 == 0)
+			local row = Kit.Row(body, 128, i % 2 == 0)
+			row.BackgroundColor3 = color:Lerp(C.Row, 0.88)
 			local info = Kit.Stack(row, -150)
-			Kit.Label(info, def.name, { bold = true, size = 19, color = color })
-			Kit.Label(info, def.description, { size = 13, wrap = true })
+			Kit.Label(info, def.name, { font = Kit.TitleFont, size = 19, color = C.Text })
+			Kit.Label(info, def.description, { size = 14, wrap = true })
+			Kit.Label(info, string.format("<b>%s</b> - %s", def.mechanic.name, def.mechanic.text), { size = 13, color = color:Lerp(C.Text, 0.35), wrap = true })
 			Kit.Label(info, string.format(
 				"Speed %s · Damage %s · Posture %s · Knockback %s · Dash %s%s",
 				pct(def.speed), pct(def.damage), pct(def.posture), pct(def.knockback), pct(def.dashDistance),
-				if def.parryWindowBonus > 0 then " · Parry window +" .. math.floor(def.parryWindowBonus * 1000) .. "ms" else ""
+				if def.parryWindowBonus ~= 0 then string.format(" · Parry window %+dms", math.floor(def.parryWindowBonus * 1000 + 0.5)) else ""
 			), { size = 12, color = C.Muted, wrap = true })
 			if current == id then
 				Kit.Button(row, "Active", C.Good, function() end, 120)

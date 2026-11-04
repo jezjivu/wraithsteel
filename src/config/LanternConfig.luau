@@ -2,8 +2,10 @@
 -- LanternConfig: Spirit Lanterns (the game's eggs). Owner: Agent B.
 -- Compliance: odds for every lantern are computed by Shared/Odds from exactly these weights,
 -- shown in the UI before purchase, and used by the server roll. Pity rules are shown too.
--- `paid = true` means the lantern can be bought with Robux-purchasable currency (Jade):
--- it is hidden/blocked for players where PolicyService says paid random items are restricted.
+-- `paid = true` forces a lantern to count as a paid random item. Lanterns priced in a currency
+-- that is sold for Robux (MonetizationConfig) count as paid automatically - see
+-- Shared/LanternOdds.IsPaid. Paid lanterns are blocked (except free opens) where PolicyService
+-- restricts paid random items.
 
 export type LanternEntry = { spirit: string, weight: number }
 
@@ -55,6 +57,23 @@ LanternConfig.Lanterns = {
 			{ spirit = "jade_qilin_cub", weight = 5 },
 		},
 		pity = nil,
+		modelId = 0,
+	},
+	-- Chapter 1: the drowned-market lantern. Guarantees an Epic or better every 40 opens.
+	tidewater_lantern = {
+		name = "Tidewater Lantern",
+		chapter = 1,
+		currency = "Ember",
+		price = 900,
+		paid = false,
+		entries = {
+			{ spirit = "drift_jelly", weight = 4200 },
+			{ spirit = "ledger_crab", weight = 3600 },
+			{ spirit = "salt_kite", weight = 1700 },
+			{ spirit = "bellwater_koi", weight = 460 },
+			{ spirit = "deep_toll_eel", weight = 40 },
+		},
+		pity = { rolls = 40, minRarity = "Epic" },
 		modelId = 0,
 	},
 	jade_lantern = {

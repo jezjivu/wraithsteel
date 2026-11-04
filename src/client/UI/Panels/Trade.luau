@@ -46,6 +46,9 @@ local Panel: PanelTypes.Panel = {
 			end, 110)
 		end
 
+		if st.paidAllowed == false then
+			Kit.Label(body, "Spirits from Ember/Jade lanterns cannot be traded on this account; free Spirits can.", { size = 13, color = C.Muted, wrap = true })
+		end
 		if not st.active then
 			Kit.Label(body, "Stand near a player and send a request. Only Spirits can be traded; locked, equipped and expedition Spirits stay home.", { size = 13, color = C.Muted, wrap = true })
 			local any = false

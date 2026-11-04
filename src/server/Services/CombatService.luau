@@ -17,6 +17,7 @@
 --   CombatService.RollCrit(player) -> (multiplier, crit: boolean)
 --   CombatService.Heal(c, amount) / AddShield(c, amount, seconds)
 --   CombatService.OnSpiritCall: ((player) -> ())?  -- set by SpiritAbilityService (T key)
+--   CombatService.OnDuelLethal: ((target, attacker) -> ())? -- set by DuelService
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -32,6 +33,9 @@ local WeaponConfig = require(Config:WaitForChild("WeaponConfig"))
 local EnemyConfig = require(Config:WaitForChild("EnemyConfig"))
 local BossConfig = require(Config:WaitForChild("BossConfig"))
 local StyleConfig = require(Config:WaitForChild("StyleConfig"))
+local StyleLogic = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("StyleLogic"))
+local PvpConfig = require(Config:WaitForChild("PvpConfig"))
+local DuelLogic = require(script.Parent.Parent:WaitForChild("Logic"):WaitForChild("DuelLogic"))
 local MapConfig = require(Config:WaitForChild("MapConfig"))
 
 local Logic = script.Parent.Parent:WaitForChild("Logic")
@@ -72,6 +76,10 @@ export type Combatant = {
 	flask: number?, -- players: Spring Flask charges left
 	breath: boolean?, -- players: Second Breath still available this life
 	rushUntil: number?, -- players: Blood Rush (skill) active until
+	styleId: string?, -- players: current fighting style (StyleConfig)
+	styleState: StyleLogic.State?, -- players: Flow / Heat stacks, last dash (StyleLogic)
+	armorUntil: number?, -- players: super armor (Iron Mountain heavy attacks) until
+	duelId: number?, -- players: in a duel (DuelService) - only the opponent can hit them
 	lives: number?, -- enemies: finishing blows needed (elites take two; the first one only knocks a life off)
 	unaware: boolean?, -- enemies: hasn't noticed any player yet (Shadow Strike possible)
 	deflectChance: number?, -- enemies/bosses: chance to deflect a strike while canDeflect()
@@ -93,6 +101,7 @@ export type Hit = {
 	severing: boolean?, -- Severing Blow on a posture-broken enemy
 	ranged: boolean?, -- projectile / wave / eruption: a parry does not stagger the attacker
 	shadow: boolean?, -- Severing Blow on an enemy that never saw you coming
+	guardCrush: number?, -- posture multiplier if this hit is blocked (Iron Mountain heavies)
 }
 
 local MAX_TARGETS_PER_SWING = 4
@@ -120,6 +129,7 @@ local CombatService = {
 	Deflected = Signal.new(), -- (enemy, attacker): an enemy deflected a player's strike (counter now)
 	Rested = Signal.new(), -- (combatant): rested at a waystone (refill everything)
 	OnSpiritCall = nil :: ((player: Player) -> ())?,
+	OnDuelLethal = nil :: ((target: any, attacker: any) -> ())?, -- set by DuelService
 }
 
 local combatants: { [string]: Combatant } = {}
@@ -307,6 +317,18 @@ local function syncUltimate(c: Combatant)
 	end
 end
 
+-- Mirrors a player's style stacks (Flow / Heat) to the character for the HUD.
+local function syncStyle(c: Combatant, now: number)
+	local st = c.styleState
+	if st and c.styleId then
+		local n = StyleLogic.Stacks(c.styleId, st, now)
+		if c.model:GetAttribute("StyleStacks") ~= n then
+			c.model:SetAttribute("StyleStacks", n)
+		end
+	end
+end
+CombatService.SyncStyle = syncStyle
+
 -- Applies a hit to `target`. Players resolve parry/block/dodge; enemies/bosses take it directly.
 function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hit): CombatRules.Resolution?
 	if target.dead or target.invulnerable or target.humanoid.Health <= 0 then
@@ -339,6 +361,18 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 			end
 		end
 		res = CombatRules.ResolveIncoming(target.rules, hit, now, ctx)
+		-- Style mechanics on the defending player.
+		local st, sid = target.styleState, target.styleId
+		if st and sid then
+			if res.outcome == "Parried" then
+				StyleLogic.OnParry(sid, st, now)
+			elseif res.outcome == "Hit" then
+				StyleLogic.OnHurt(sid, st)
+			elseif res.outcome == "Dodged" and StyleLogic.DodgeRefund(sid) then
+				target.rules.dodgeReadyAt = now
+			end
+			syncStyle(target, now)
+		end
 	elseif attacker and attacker.player and hit.source == nil and not hit.severing and target.deflectChance
 		and not Posture.IsBroken(target.posture, now)
 		and (if target.canDeflect then target.canDeflect() else (target.guardUntil ~= nil and now < target.guardUntil))
@@ -358,17 +392,36 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	end
 
 	local damage = res.damage
+	local pvp = attacker ~= nil and attacker.duelId ~= nil and attacker.duelId == target.duelId
+	-- Iron Mountain: a blocked heavy crushes the guard.
+	if res.outcome == "Blocked" and hit.guardCrush then
+		res = table.clone(res)
+		res.postureDamage *= hit.guardCrush
+	end
+	-- Landing a clean hit stokes Ember Fang's Heat.
+	if attacker and attacker.styleState and attacker.styleId and res.outcome == "Hit" and hit.source == nil then
+		StyleLogic.OnLandHit(attacker.styleId, attacker.styleState, now)
+		syncStyle(attacker, now)
+	end
+	local armored = target.armorUntil ~= nil and now < target.armorUntil
 	if Posture.IsBroken(target.posture, now) and not hit.severing then
 		damage *= CombatConfig.PostureBrokenDamageMultiplier
 	end
 	local postureDamage = res.postureDamage
 	if target.player then
-		postureDamage *= 1 - (CombatService.PlayerStats(target.player).Guard or 0)
+		if not pvp then
+			postureDamage *= 1 - (CombatService.PlayerStats(target.player).Guard or 0)
+		end
+		if armored and target.styleId then
+			postureDamage *= StyleLogic.ArmorPostureTaken(target.styleId)
+		end
 	end
 	if attacker and attacker.player then
 		local stats = CombatService.PlayerStats(attacker.player)
-		postureDamage *= 1 + (stats.Posture or 0)
-		local lifesteal = stats.Lifesteal or 0
+		if not pvp then
+			postureDamage *= 1 + (stats.Posture or 0)
+		end
+		local lifesteal = if pvp then 0 else stats.Lifesteal or 0
 		if lifesteal > 0 and damage > 0 and hit.source ~= "spirit" and (res.outcome == "Hit" or res.outcome == "Blocked") then
 			local hum = attacker.humanoid
 			hum.Health = math.min(hum.MaxHealth, hum.Health + damage * lifesteal)
@@ -382,6 +435,14 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		end
 	end
 
+	-- Duels: nobody dies - a lethal blow ends the round (DuelService).
+	if pvp and damage >= target.humanoid.Health and damage > 0 then
+		damage = math.max(0, target.humanoid.Health - 1)
+		local hook = CombatService.OnDuelLethal
+		if hook then
+			task.defer(hook, target, attacker)
+		end
+	end
 	-- Second Breath: the killing blow leaves a player at 1 HP, then they rise again.
 	if target.player and target.breath and damage >= target.humanoid.Health and damage > 0 then
 		target.breath = false
@@ -447,7 +508,7 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	end
 
 	-- Knockback / launch away from the attacker (halved through a block, none on parry/dodge).
-	if attacker and (hit.knockback or hit.launch) and (res.outcome == "Hit" or res.outcome == "Blocked") then
+	if attacker and not armored and (hit.knockback or hit.launch) and (res.outcome == "Hit" or res.outcome == "Blocked") then
 		local away = target.root.Position - attacker.root.Position
 		local flat = Vector3.new(away.X, 0, away.Z)
 		local dir = if flat.Magnitude > 0.1 then flat.Unit else attacker.root.CFrame.LookVector
@@ -534,7 +595,8 @@ function CombatService.TargetsInArc(attacker: Combatant, range: number, arcDegre
 	local pos = attacker.root.Position
 	local look = aim or attacker.root.CFrame.LookVector
 	for _, c in combatants do
-		if c.team ~= attacker.team and not c.dead and c.humanoid.Health > 0 then
+		local foe = c.team ~= attacker.team or (attacker.duelId ~= nil and c.duelId == attacker.duelId and c ~= attacker)
+		if foe and not c.dead and c.humanoid.Health > 0 then
 			local tp = c.root.Position
 			if math.abs(tp.Y - pos.Y) < 12 and CombatRules.InArc(pos.X, pos.Z, look.X, look.Z, tp.X, tp.Z, range, arcDegrees) then
 				table.insert(out, c)
@@ -637,25 +699,38 @@ local function onCombatAction(player: Player, req: { [string]: any })
 		return
 	end
 	local now = os.clock()
-	local style = StyleConfig.Get(data.fightingStyle)
+	local styleId = data.fightingStyle
+	local style = StyleConfig.Get(styleId)
+	if c.styleId ~= styleId then
+		c.styleState = nil -- switched style: stacks of the old mechanic do not carry over
+	end
+	c.styleId = styleId
+	local styleState = c.styleState or StyleLogic.New()
+	c.styleState = styleState
+	local smods = StyleLogic.Attack(styleId, styleState, now)
 	local hum = c.humanoid
 	local airborne = hum.FloorMaterial == Enum.Material.Air
 		or hum:GetState() == Enum.HumanoidStateType.Freefall
 		or hum:GetState() == Enum.HumanoidStateType.Jumping
-	local decision = CombatRules.Validate(c.rules :: CombatRules.State, data.equippedWeapon, action, seq, now, { airborne = airborne })
+	local decision = CombatRules.Validate(c.rules :: CombatRules.State, data.equippedWeapon, action, seq, now, { airborne = airborne, dashWindow = StyleLogic.DashWindow(styleId) })
 	if not decision.ok then
 		Net.Server.Fire("CombatEvent", player, { kind = "Rejected", seq = seq, reason = decision.reason })
 		return
 	end
 	local stats = CombatService.PlayerStats(player)
 	local dodgeMult = (1 - (stats.Haste or 0)) * style.dashCooldown
-	CombatRules.Commit(c.rules :: CombatRules.State, decision, now, dodgeMult, { speed = style.speed, parryWindowBonus = style.parryWindowBonus + (stats.ParryWindow or 0) })
+	local total = CombatRules.Commit(c.rules :: CombatRules.State, decision, now, dodgeMult, { speed = smods.speed, parryWindowBonus = style.parryWindowBonus + (stats.ParryWindow or 0) })
 	syncUltimate(c)
 	if action == "Dodge" then
 		c.dodgeAt = now
 		c.dodgeDir = sanitizeAim(req.move) or c.root.CFrame.LookVector
+		StyleLogic.OnDodge(styleState, now)
 	end
-	broadcast({ kind = "Action", sourceId = c.id, action = action, moveId = decision.moveId, seq = seq, route = decision.kind, speed = style.speed })
+	if StyleLogic.Armored(styleId, action, decision.kind) and total > 0 then
+		c.armorUntil = now + total
+	end
+	syncStyle(c, now)
+	broadcast({ kind = "Action", sourceId = c.id, action = action, moveId = decision.moveId, seq = seq, route = decision.kind, speed = smods.speed, style = styleId })
 
 	local moveId = decision.moveId
 	local move = moveId and WeaponConfig.Moves[moveId]
@@ -665,7 +740,8 @@ local function onCombatAction(player: Player, req: { [string]: any })
 	local power = ProgressionService.GetPower(player)
 	local aim = sanitizeAim(req.aim)
 	local kb = move.knockback or defaultKnockback(action)
-	task.delay(move.windup / style.speed, function()
+	local guardCrush = StyleLogic.GuardCrush(styleId, action, decision.kind)
+	task.delay(move.windup / smods.speed, function()
 		-- Interrupted by posture break or death during windup: no hit.
 		local rules = c.rules :: CombatRules.State
 		if c.dead or os.clock() < rules.stunnedUntil or byPlayer[player] ~= c then
@@ -727,11 +803,32 @@ local function onCombatAction(player: Player, req: { [string]: any })
 				end)
 				continue
 			end
+			if target.kind == "Player" then
+				-- Fair duel numbers: base move damage, style and timing only (DuelLogic).
+				local broken = Posture.IsBroken(target.posture, os.clock())
+				local pcrit = if smods.crit then smods.critMultiplier else 1
+				CombatService.ApplyHit(c, target, {
+					crit = smods.crit,
+					damage = DuelLogic.HitDamage(move.damage, smods.damage, mult, pcrit, broken, target.humanoid.MaxHealth),
+					postureDamage = move.postureDamage * smods.posture * mult * PvpConfig.PostureScale,
+					moveId = moveId :: string,
+					knockback = kb * style.knockback,
+					launch = move.launch,
+					riposte = riposte,
+					guardCrush = if guardCrush ~= 1 then guardCrush else nil,
+				})
+				continue
+			end
 			local critMult, crit = CombatService.RollCrit(player)
+			if smods.crit then
+				-- Wind Step: strikes off a dash always crit.
+				critMult, crit = math.max(critMult, smods.critMultiplier), true
+			end
 			CombatService.ApplyHit(c, target, {
 				crit = crit,
-				damage = CombatRules.ScaleDamage(move.damage, power, rng:NextNumber()) * style.damage * mult * attackMult * critMult,
-				postureDamage = move.postureDamage * style.posture * mult,
+				damage = CombatRules.ScaleDamage(move.damage, power, rng:NextNumber()) * smods.damage * mult * attackMult * critMult,
+				postureDamage = move.postureDamage * smods.posture * mult,
+				guardCrush = if guardCrush ~= 1 then guardCrush else nil,
 				perilous = false,
 				moveId = moveId :: string,
 				knockback = kb * style.knockback,
@@ -778,6 +875,8 @@ local function onCharacterAdded(player: Player, character: Model)
 		invulnerable = false,
 		dead = false,
 		contributions = {},
+		styleId = if data then data.fightingStyle else StyleConfig.Default,
+		styleState = StyleLogic.New(),
 	}
 	c.flask = flaskMax(c)
 	character:SetAttribute("Flask", c.flask)
@@ -796,6 +895,9 @@ function CombatService.RefreshStats(player: Player)
 	statCache[player] = nil
 	local c = byPlayer[player]
 	local data = DataService.GetData(player)
+	if c and c.duelId then
+		return -- duels use fixed fair stats; refreshed when the duel ends
+	end
 	if c and data and not c.dead then
 		local frac = c.humanoid.Health / math.max(1, c.humanoid.MaxHealth)
 		c.humanoid.MaxHealth = maxHealthFor(player, data.level)

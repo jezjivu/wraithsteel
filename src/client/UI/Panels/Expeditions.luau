@@ -66,8 +66,14 @@ local Panel: PanelTypes.Panel = {
 		table.insert(slots, ExpeditionConfig.ExtraSlotWithPass)
 		for i, slotId in slots do
 			local e = exps[slotId]
-			local row = Kit.Row(body, 60, i % 2 == 0)
-			local info = Kit.Stack(row)
+			local eligible = {}
+			for _, routeId in routeIds() do
+				if ExpeditionConfig.Routes[routeId].chapter <= chapter then
+					table.insert(eligible, routeId)
+				end
+			end
+			local row = Kit.Row(body, 64, i % 2 == 0)
+			local info = Kit.Stack(row, if e then -150 else -(#eligible * 150 + 10))
 			local slotName = if slotId == ExpeditionConfig.ExtraSlotWithPass then "Slot 3 (Long Road pass)" else "Slot " .. i
 			if e then
 				local route = ExpeditionConfig.Routes[e.id]
@@ -85,10 +91,10 @@ local Panel: PanelTypes.Panel = {
 			else
 				Kit.Label(info, slotName .. ": free", { bold = true })
 				Kit.Label(info, "Pick a route to send your best idle Spirits.", { size = 12, color = C.Muted, wrap = true })
-				for _, routeId in routeIds() do
+				for _, routeId in eligible do
 					local route = ExpeditionConfig.Routes[routeId]
-					if route.chapter <= chapter then
-						Kit.Button(row, route.name .. " (" .. Time.FormatDuration(route.durationSeconds) .. ")", C.Blue, function()
+					do
+						local b = Kit.Button(row, route.name .. "\n" .. Time.FormatDuration(route.durationSeconds), C.Blue, function()
 							local uids = bestIdle(route.maxSpirits)
 							if #uids == 0 then
 								ctx.notify("No idle Spirits. Unequip some first.", true)
@@ -97,6 +103,8 @@ local Panel: PanelTypes.Panel = {
 							local ok, err = Net.Client.Invoke("StartExpedition", slotId, routeId, uids)
 							ctx.notify(if ok then "Expedition started!" else err or "Could not start", not ok)
 						end, 140)
+						b.Size = UDim2.fromOffset(140, 44)
+						b.TextSize = 13
 					end
 				end
 			end

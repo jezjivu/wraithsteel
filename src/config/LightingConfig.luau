@@ -71,6 +71,16 @@ LightingConfig.Realms = {
 		ColorCorrection = { Saturation = 0.12, Contrast = 0.05, TintColor = { 255, 250, 238 } },
 		weather = "Motes",
 	},
+	keep = {
+		ClockTime = 17.4,
+		Brightness = 1.6,
+		Ambient = { 90, 70, 65 },
+		OutdoorAmbient = { 120, 100, 95 },
+		Atmosphere = { Density = 0.38, Offset = 0.12, Color = { 190, 150, 130 }, Decay = { 110, 80, 70 }, Glare = 0.2, Haze = 1.8 },
+		Bloom = { Intensity = 0.7, Size = 26, Threshold = 1.6 },
+		ColorCorrection = { Saturation = -0.08, Contrast = 0.1, TintColor = { 255, 236, 222 } },
+		weather = "Motes",
+	},
 }
 
 return LightingConfig

@@ -18,6 +18,7 @@ local Signal = require(Shared:WaitForChild("Signal"))
 local Types = require(Shared:WaitForChild("Types"))
 
 local SpiritLogic = require(script.Parent.Parent:WaitForChild("Logic"):WaitForChild("SpiritLogic"))
+local TradeLock = require(script.Parent.Parent:WaitForChild("Logic"):WaitForChild("TradeLock"))
 local DataService = require(script.Parent.DataService)
 local MarketService = require(script.Parent.MarketService)
 local ProgressionService = require(script.Parent.ProgressionService)
@@ -64,17 +65,23 @@ function SpiritService.FreeStorage(player: Player): number
 	return if data then SpiritLogic.FreeStorage(data :: any) else 0
 end
 
-function SpiritService.Grant(player: Player, spiritId: string, rarity: string, mutation: string): Types.SpiritInstance?
+function SpiritService.Grant(player: Player, spiritId: string, rarity: string, mutation: string, paid: boolean?): Types.SpiritInstance?
 	local data = DataService.GetData(player)
 	if data == nil then
 		return nil
 	end
 	local inst = SpiritLogic.Create(data :: any, spiritId, rarity, mutation, os.time())
+	if paid then
+		inst.paid = true
+	end
 	changed(player)
 	return inst
 end
 
 function SpiritService.Equip(player: Player, uid: string): (boolean, string?)
+	if TradeLock.IsLocked(player.UserId) then
+		return false, TradeLock.Message
+	end
 	local data = DataService.GetData(player)
 	if data == nil then
 		return false, "Loading..."
@@ -88,6 +95,9 @@ function SpiritService.Equip(player: Player, uid: string): (boolean, string?)
 end
 
 function SpiritService.Unequip(player: Player, uid: string): boolean
+	if TradeLock.IsLocked(player.UserId) then
+		return false
+	end
 	local data = DataService.GetData(player)
 	if data == nil then
 		return false
@@ -100,6 +110,9 @@ function SpiritService.Unequip(player: Player, uid: string): boolean
 end
 
 function SpiritService.SetLocked(player: Player, uid: string, locked: boolean): boolean
+	if TradeLock.IsLocked(player.UserId) then
+		return false
+	end
 	local data = DataService.GetData(player)
 	local s = data and data.spirits[uid]
 	if s == nil then
@@ -111,6 +124,9 @@ function SpiritService.SetLocked(player: Player, uid: string, locked: boolean): 
 end
 
 function SpiritService.Release(player: Player, uids: { string }): (number?, string?)
+	if TradeLock.IsLocked(player.UserId) then
+		return nil, TradeLock.Message
+	end
 	local data = DataService.GetData(player)
 	if data == nil then
 		return nil, "Loading..."

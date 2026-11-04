@@ -185,13 +185,74 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [ ] Chapters 2-3 content
 
 ## Phase 4 - Raid + trading + Chapters 4-5
-- [ ] RaidService (stub) - 8-player reserved-server raid
+- [~] RaidService + RaidLogic: 8-player lobby -> ReserveServer -> MemoryStore manifest -> raid boss with raid health + time limit -> rewards -> home (night 2). Needs: dedicated raid boss, `Workspace.RaidArena`, live test of ReserveServer/MemoryStore (Studio runs the raid in place)
 - [x] TradeService + TradeLogic: Spirits-only trades, confirm reset on change, countdown, re-validated swap, policy-gated; Trade panel
+- [x] Trade escrow ledger (`Logic/TradeLedger`, night 2): DataStore record pending -> committed atomically, per-profile idempotent apply, recovery on load, Spirits frozen during commit/recovery
+- [x] Paid-flag rule (night 2): Spirits from paid lanterns/Night Market carry `paid`; they trade only between accounts whose policy allows paid item trading; fusion keeps the flag
 - [ ] Chapters 4-5 content, final boss
 
 ## Phase 5 - Launch polish / LiveOps
-- [ ] Anti-exploit telemetry from `Net.Rejected` (currently only a signal)
+- [x] Anti-exploit telemetry: SecurityService + `Logic/ExploitScore` (Net.Rejected + sustained-speed samples -> decaying score -> analytics flag; kick only on non-rate abuse) (night 2)
+- [ ] Server-side movement correction (rubber-band) once SecurityFlag data from playtests shows safe limits
 - [ ] Balance pass, economy sinks, events
+
+## Night 2 (cloud run, code only)
+- [x] Compliance fix: Ember is sold for Robux, so Ember lanterns are paid random items too (`LanternOdds.IsPaid` derives it from MonetizationConfig). Restricted accounts can still use free opens.
+- [x] Trade escrow ledger + paid-flag rule + trade recovery (see Phase 4)
+- [x] Night Market: global rotating fixed-price stock, seed from `os.time() // 600` (`Shared/SeededRandom` mulberry32, `Shared/NightMarketLogic`, NightMarketService, panel "Market"), profile v13
+- [x] Raids (see Phase 4), profile v14 (`raidClears`), BossService `healthMultiplier` / `Fail` / `EncounterEnded`
+- [x] SecurityService telemetry (see Phase 5)
+- [x] Tests: ledger (failure injection), market, raid, security specs (111 tests total)
+- [ ] Studio: Night Market stall (`Station = "NightMarket"`), `Workspace.RaidArena`, raid gate prop
+- [ ] Live check: trade ledger DataStore + raid ReserveServer/MemoryStore in a published place (both are mocked/in-memory in Studio)
+
+## Night 3 (cloud run, code only): UI pass + content
+- [x] "Ink & Seal" UI design system in `UI/Kit` (tokens, Merriweather + Builder Sans, seal stamp, gate line, frame-built icons, cards, chips, sections, bars, wallets, toggles, empty states); every panel restyled through it
+- [x] Dock replaces the 15-button menu: 5 groups (Blade, Spirits, World, Bonds, Market), group panels as window tabs, last tab remembered
+- [x] HUD: level seal + currency pills, cleaner meters (one bottom "Vitals" cluster), arts bar, objective card, controls card, toasts
+- [x] Lanterns panel: lantern cards, odds table with bars + mutation chips + guarantee bar (odds still before Open); Spirits panel: rarity-tinted cards with chips and lock icon
+- [x] Responsive: `Kit.AutoScale` for HUD clusters/dock/objective/toasts/arts bar; bigger windows on short screens (checked at 844x390)
+- [x] Headless UI preview tool: `tools/render_ui.py` + `ui_mock`/`ui_fixture` + `tools/ui_scenes/*`; previews in `assets/ui_previews/`
+- [x] Content: raid boss Kurozuma (3 phases, 9 moves); Tidewater Spirits (5) + Tidewater Lantern (Epic+ every 40); 2 Night Market Spirits; tests (114 total)
+- [ ] Studio: look at the real UI on PC + phone (fonts render differently from the preview), Kurozuma rig/anims + flooded belfry arena, Tidewater Lantern model
+- [ ] Remaining panels still use the generic Kit look only (Map, Travel, Arts, Styles, Trade, Party, Codes) - fine, but could get bespoke layouts like Spirits/Lanterns
+
+## Night 4 (cloud run, code only): calmer world, smarter enemies, Bell Dice, party HUD
+- [x] Less clutter: Torii Road 5 gates (was a 22-gate tunnel), one torii per stair, one named gate per zone (`MapConfig.Clutter`)
+- [x] Enemy groups spread out: elites no longer stacked on groups, one village group removed; test keeps ground groups >= 80 studs apart
+- [x] Enemy AI (`Logic/EnemyMovement`): shared ring slots around the player, separation (no stacking), step back after attacks (take turns), pack spawn spacing, perilous attacks likelier vs. a guarding player; 2 attackers per player at once (was 3)
+- [x] Bell Dice: shared table per server (everyone sees rounds, bets, winners), free Fortune Chips only, exact odds + 97.22% return shown, capped chip -> Ember exchange, policy-gated; profile v15
+- [x] Party frames on the HUD (names, health, distance, leader); top right on phones
+- [ ] Studio: playtest enemy spacing/turn-taking feel and tune `EnemyConfig.Movement`; look at the thinner Torii Road
+- [ ] Before launch: answer "simulated gambling" in the Roblox experience questionnaire (Bell Dice)
+
+## Night 5 (cloud run, code only): Ironcrow Keep + headless smoke test
+- [x] Fourth realm **Ironcrow Keep** (fortress castle): cliff road, gatehouse, outer bailey, High Ramparts, Chapel of Ash, Crow Bridge over a chasm, inner keep; fall respawn to the nearest waystone
+- [x] Bosses Tessai (Castle arena) and Ashrei (Throne arena); enemies Ironcrow Footman, Crow Knight, Ember Archer, elite Castellan Gorou
+- [x] Story: Hanabusa + 3 quests after Aeloria; tests/keep.spec.luau (130 tests)
+- [x] `tools/smoke_server.py`: boots all 40 services headless, 2 fake players join, scripted remote calls (lantern, equip, daily, dice, market, party, trade, raid, weapon, skills, store) - 0 errors
+- [ ] Studio: sculpt the castle (KeepBuilder is a blockout), rigs/anims for the new enemies and bosses, tune Tessai/Ashrei
+
+## Night 6 (cloud run, code only): styles that matter, style animations, PvP duels
+- [x] Fighting styles have signature mechanics (Shared/StyleLogic): River Flow (deflects), Mountain Unshaken (armored heavies + guard crush), Wind Gale (dash crits, longer dash window, dodge refund), Ember Heat (combo stacks, reset when hit); HUD style chip; Dojo panel explains them
+- [x] Animations: per-style stance overlays and swing flavor (coil, follow-through, lean, settle); `tools/render_poses.py` stick-figure preview (assets/pose_preview.png)
+- [x] PvP: Proving Ring duels (best of three, fair 300 HP, no Power/stat bonuses, no arts/kunai/companions, lethal blow ends the round, no deaths or Ember loss, small rate-limited rewards, record saved v16); Duels panel + duel HUD
+- [x] Headless playtest (`tools/smoke_server.py`): characters, friendly-fire check, full duel (challenge, accept, countdown, hit, lethal -> round, best of 3, sent home, stats restored, record + rewards), Heat/Flow through real ApplyHit - 0 errors; fixed HUD overlap (Qi label vs style chip)
+- [ ] Studio: duel feel with two real clients (latency on deflects!), tune PvpConfig and StyleConfig numbers, look at style stances on real rigs
+
+## Publish readiness (honest)
+NOT ready to publish yet. Blockers, in order:
+1. Never run inside Roblox: one full Studio playtest (solo + 2 players) end to end.
+2. Create the passes/products on the Creator Dashboard and fill `MonetizationConfig` ids (all 0).
+3. Decide the Ember-for-Robux question (paid random items) and fill the experience questionnaire
+   (paid random items, simulated gambling for Bell Dice).
+4. Merge https://github.com/jezjivu/wraithsteel/pull/1 then https://github.com/jezjivu/wraithsteel/pull/2.
+5. Live-only systems tested in a published private place: DataStore saves, trade ledger,
+   reserved-server raids, MemoryStore, receipts (test purchases).
+6. Animations are procedural fallbacks (ids 0), rigs are part-built, sounds are built-in -
+   playable, but upload real ones for launch quality.
+7. Balance pass from playtest data (enemy damage, boss health, economy, security thresholds).
+After 1-5 pass: ready for a small closed test (friends/group). After 6-7: public launch.
 
 ## Playtesting
 - `rojo build playtest.project.json -o Wraithsteel-Playtest.rbxl` -> open in Studio -> Play.
@@ -203,11 +264,15 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
   To edit the world in Studio: Command Bar -> `require(game.ServerScriptService.EditTools).BuildWorld()` -> save.
 
 ## Next up (for the next run)
-1. Add `WRAITHSTEEL_AGENT_GUIDE.md` to the repo and reconcile `Shared/Types`, `NetSchema`,
-   service APIs and this checklist with §8.3/§11.
-2. Studio session: build EnemySpawns + BossArenas in a test place, playtest combat timings.
-3. Feedback from the Studio playtest (hub, weapon grip, animation angles, combat timings).
-4. RaidService (8-player reserved-server raid), chapter gates, Chapter 2 content.
+0. Studio look at the new UI (dock, HUD, Lanterns, Spirits) on PC and phone; tweak Kit tokens.
+1. Add `WRAITHSTEEL_AGENT_GUIDE.md` to the repo (still missing in night 2) and reconcile
+   `Shared/Types`, `NetSchema`, service APIs and this checklist with §8.3/§11.
+2. Decide the Ember-in-store question (see HANDOFF "Night 2"): keep Ember lanterns policy-gated,
+   or stop selling Ember for Robux so Ember lanterns are free randomness again.
+3. Studio session: playtest trades (two clients), Night Market, Raid lobby (runs in place in
+   Studio), combat timings; then a published test place for ReserveServer/MemoryStore/ledger.
+4. Dedicated raid boss + arena; chapter gates (`ZoneService.CanEnter`); Chapter 2 content.
+5. Tune SecurityConfig from SecurityFlag analytics, then add movement correction.
 
 ## Known risks
 - Spells and spirit abilities find victims from server positions; the Ghost Step blink moves the
@@ -224,9 +289,13 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
   not by eye; adjust signs if a swing looks backwards.
 - RigBuilder relies on Players:CreateHumanoidModelFromDescription and Model:ScaleTo; if either
   fails at runtime the code falls back to block placeholders (warning in Output).
-- Trades change two profiles that save separately. Both are saved immediately after a swap,
-  but a server crash between the two saves could duplicate or lose a traded Spirit. Before
-  launch, add a trade ledger (ProfileStore MessageAsync per side, idempotent by trade id).
+- (Fixed in night 2) Trades now go through the escrow ledger. Remaining edge: if the ledger
+  DataStore is down at join, that player's Spirits stay frozen (no trade/fuse/release/equip)
+  until it answers - safe, but players would notice during a long DataStore outage.
+- Raid servers still run every normal service (map, hub, world generation); fine for now, but a
+  raid-only place or a lighter boot path would load faster.
+- SecurityService kicks at a high score from invalid-argument/speed events. A client bug that
+  sends bad arguments in a loop could kick real players - watch SecurityKick analytics.
 - Procedural animation joint angles (AnimationConfig) are educated guesses for R15; tune in Studio.
 - Weapon grip angle (`WeaponConfig.GripRotation`) and rack/viewport framing are computed, not
   eyeballed in Studio; expect small tweaks after the first look.

@@ -32,6 +32,10 @@ export type SpiritInstance = {
 	fusedCount: number, -- how many fusions produced this spirit lineage (cosmetic star)
 	locked: boolean, -- locked spirits cannot be fused/traded/released
 	obtainedAt: number,
+	-- true when this Spirit (or any Spirit fused into it) came from a lantern opened with
+	-- Robux-purchasable currency. Paid Spirits move only between accounts whose policy allows
+	-- paid item trading (TradeLogic). Added in night 2; missing = false.
+	paid: boolean?,
 }
 
 export type QuestState = {
@@ -61,6 +65,7 @@ export type ProfileData = {
 	chapter: number, -- 0 = Prologue, 1..5
 	stage: number,
 	bossesDefeated: { [string]: number }, -- bossId -> clear count
+	raidClears: { [string]: number }, -- raidId -> clear count (RaidConfig); v14
 	tutorialDone: boolean,
 
 	-- Combat loadout
@@ -78,6 +83,8 @@ export type ProfileData = {
 
 	-- Spirits
 	spirits: { [string]: SpiritInstance }, -- uid -> instance
+	tradesApplied: { [string]: number }, -- trade escrow ids already applied -> os.time (v12)
+	tradeOrder: { string }, -- FIFO used to cap `tradesApplied` (v12)
 	equippedSpirits: { string }, -- uids
 	spiritSlots: number,
 	spiritStorage: number,
@@ -103,6 +110,20 @@ export type ProfileData = {
 
 	-- Codes
 	codesRedeemed: { [string]: boolean },
+
+	-- Night Market: purchases in the current stock window (v13)
+	nightMarket: { window: number, bought: { [string]: number } },
+
+	-- Duels (v16)
+	pvpWins: number,
+	pvpLosses: number,
+	pvpStreak: number,
+
+	-- Bell Dice (v15): free Fortune Chips, daily gift day, chips exchanged for Ember today
+	chips: number,
+	chipsDay: number,
+	chipsExchangedDay: number,
+	chipsExchanged: number,
 
 	-- Monetization
 	receipts: { [string]: boolean }, -- purchaseId -> granted

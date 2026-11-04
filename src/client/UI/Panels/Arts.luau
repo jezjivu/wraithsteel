@@ -45,7 +45,7 @@ local Panel: PanelTypes.Panel = {
 			local spell = SpellConfig.Spells[loadout[i] or ""]
 			table.insert(slots, SpellConfig.KeyLabels[i] .. ": " .. (if spell then spell.name else "-"))
 		end
-		Kit.Label(body, table.concat(slots, "     "), { bold = true, color = C.Gold })
+		Kit.Section(body, table.concat(slots, "     "))
 		Kit.Label(body, string.format("Blade arts cost Qi (max %d). Qi refills over time and faster when you land hits (+%d) and perfect parries (+%d).", SpellConfig.Qi.max, SpellConfig.Qi.onHit, SpellConfig.Qi.onParry), { size = 13, color = C.Muted, wrap = true })
 
 		for i, id in SpellConfig.Order do

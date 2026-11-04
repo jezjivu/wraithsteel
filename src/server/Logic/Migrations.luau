@@ -108,6 +108,42 @@ Migrations.Steps = {
 			end
 		end
 	end,
+	-- v11 -> v12: trade escrow ledger ids (TradeLedger). Spirit `paid` flags default to nil.
+	[12] = function(data: { [string]: any })
+		if type(data.tradesApplied) ~= "table" then
+			data.tradesApplied = {}
+		end
+		if type(data.tradeOrder) ~= "table" then
+			data.tradeOrder = {}
+		end
+	end,
+	-- v12 -> v13: Night Market purchase counters for the current window.
+	[13] = function(data: { [string]: any })
+		if type(data.nightMarket) ~= "table" then
+			data.nightMarket = { window = -1, bought = {} }
+		end
+	end,
+	-- v13 -> v14: raid clear counts (first clear bonus).
+	[14] = function(data: { [string]: any })
+		if type(data.raidClears) ~= "table" then
+			data.raidClears = {}
+		end
+	end,
+	-- v14 -> v15: Fortune Chips for Bell Dice (free, never sold, never traded).
+	[15] = function(data: { [string]: any })
+		data.chips = if type(data.chips) == "number" then data.chips else 0
+		data.chipsDay = if type(data.chipsDay) == "number" then data.chipsDay else -1
+		data.chipsExchangedDay = if type(data.chipsExchangedDay) == "number" then data.chipsExchangedDay else -1
+		data.chipsExchanged = if type(data.chipsExchanged) == "number" then data.chipsExchanged else 0
+	end,
+	-- v15 -> v16: duel record.
+	[16] = function(data: { [string]: any })
+		for _, k in { "pvpWins", "pvpLosses", "pvpStreak" } do
+			if type(data[k]) ~= "number" then
+				data[k] = 0
+			end
+		end
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server

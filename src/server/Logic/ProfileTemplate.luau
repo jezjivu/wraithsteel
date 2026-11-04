@@ -23,6 +23,7 @@ function ProfileTemplate.New(): Types.ProfileData
 		chapter = 0,
 		stage = 1,
 		bossesDefeated = {},
+		raidClears = {},
 		tutorialDone = false,
 
 		weapons = { [EconomyConfig.StartingWeapon] = true },
@@ -38,6 +39,8 @@ function ProfileTemplate.New(): Types.ProfileData
 		saga = { quest = 1, step = 1, progress = 0, started = false },
 
 		spirits = {},
+		tradesApplied = {},
+		tradeOrder = {},
 		equippedSpirits = {},
 		spiritSlots = EconomyConfig.StartingSpiritSlots,
 		spiritStorage = EconomyConfig.StartingSpiritStorage,
@@ -59,6 +62,17 @@ function ProfileTemplate.New(): Types.ProfileData
 		questDay = -1,
 
 		codesRedeemed = {},
+
+		nightMarket = { window = -1, bought = {} },
+
+		pvpWins = 0,
+		pvpLosses = 0,
+		pvpStreak = 0,
+
+		chips = 0,
+		chipsDay = -1,
+		chipsExchangedDay = -1,
+		chipsExchanged = 0,
 
 		receipts = {},
 		receiptOrder = {},

@@ -171,6 +171,42 @@ SpiritConfig.Spirits = {
 		modelId = 0, iconId = 0,
 		visual = { shape = "Wraith", color = { 40, 30, 60 }, accent = { 200, 120, 255 }, size = 1.3, aura = "Void", crest = "Halo" },
 	},
+	-- Tidewater family (Tidewater Lantern, Chapter 1): drowned-market Spirits.
+	drift_jelly = {
+		name = "Drift Jelly", rarity = "Uncommon", basePower = 8, chapter = 1, element = "Water",
+		stats = { QiRegen = 0.12, Health = 0.04 }, ability = "tidewash",
+		flavor = "Floats where the market lanterns used to hang, glowing for customers who never come.",
+		modelId = 0, iconId = 0,
+		visual = { shape = "Fish", color = { 150, 200, 230 }, accent = { 200, 240, 255 }, size = 0.85, aura = "Bubbles", crest = "Halo" },
+	},
+	ledger_crab = {
+		name = "Ledger Crab", rarity = "Uncommon", basePower = 9, chapter = 1, element = "Metal",
+		stats = { Guard = 0.08, EmberFind = 0.06 }, ability = "shell_ledger",
+		flavor = "Counts every coin twice and pinches anyone who counts once.",
+		modelId = 0, iconId = 0,
+		visual = { shape = "Beast", color = { 190, 90, 60 }, accent = { 240, 200, 120 }, features = { "Scales", "Toad" }, size = 0.85, aura = "Glimmer" },
+	},
+	salt_kite = {
+		name = "Salt Kite", rarity = "Rare", basePower = 17, chapter = 1, element = "Wind",
+		stats = { CritChance = 0.05, Haste = 0.06 }, ability = "gale_stoop",
+		flavor = "Rides the sea wind above the drowned stalls and drops like a thrown knife.",
+		modelId = 0, iconId = 0,
+		visual = { shape = "Winged", color = { 235, 235, 225 }, accent = { 120, 200, 210 }, size = 1.1, aura = "Mist" },
+	},
+	bellwater_koi = {
+		name = "Bellwater Koi", rarity = "Epic", basePower = 32, chapter = 1, element = "Water",
+		stats = { Attack = 0.08, QiRegen = 0.15, CritDamage = 0.15 }, ability = "undertow_chain",
+		flavor = "It swam inside the sunken bell for a hundred years and learned its ring.",
+		modelId = 0, iconId = 0,
+		visual = { shape = "Fish", color = { 240, 120, 80 }, accent = { 120, 230, 220 }, size = 1.15, aura = "Bubbles", crest = "Orbit" },
+	},
+	deep_toll_eel = {
+		name = "Deep-Toll Eel", rarity = "Legendary", basePower = 64, chapter = 1, element = "Void",
+		stats = { Posture = 0.14, Lifesteal = 0.02, Attack = 0.06 }, ability = "sunken_toll",
+		flavor = "When it surfaces, every bell in the harbor answers at once.",
+		modelId = 0, iconId = 0,
+		visual = { shape = "Wraith", color = { 20, 50, 60 }, accent = { 90, 230, 210 }, size = 1.25, aura = "Void", crest = "Crown" },
+	},
 } :: { [string]: SpiritDef }
 
 -- Companion abilities (numbers only; SpiritAbilityService applies them).
@@ -184,6 +220,11 @@ SpiritConfig.Abilities = {
 	tusk_charge = { name = "Tusk Charge", text = "Charges through your target, hurling it away.", kind = "Pounce", cooldown = 8, damage = 24, posture = 24, range = 30, knockback = 42 },
 	rolling_thunder = { name = "Rolling Thunder", text = "Lightning that leaps between up to 4 enemies.", kind = "Chain", cooldown = 8, damage = 28, posture = 12, range = 40, chains = 4 },
 	jade_bloom = { name = "Jade Bloom", text = "A blooming blast that hurts enemies and heals you.", kind = "Bloom", cooldown = 12, damage = 32, posture = 14, radius = 14, heal = 0.12 },
+	tidewash = { name = "Tidewash", text = "A cool wave that heals you when you are hurt.", kind = "Heal", cooldown = 11, heal = 0.12, threshold = 0.75 },
+	shell_ledger = { name = "Shell Ledger", text = "Snaps a coin-shell shield around you in a fight.", kind = "Shield", cooldown = 14, shield = 0.18, seconds = 6, threshold = 0.95 },
+	gale_stoop = { name = "Gale Stoop", text = "Stoops onto your target in a burst of salt wind.", kind = "Dive", cooldown = 6, damage = 26, posture = 12, range = 38, radius = 8 },
+	undertow_chain = { name = "Undertow Chain", text = "A ringing current that jumps between up to 5 enemies.", kind = "Chain", cooldown = 8, damage = 26, posture = 16, range = 42, chains = 5 },
+	sunken_toll = { name = "Sunken Toll", text = "Rings a drowned bell on your target. Crushes posture.", kind = "Toll", cooldown = 13, damage = 52, posture = 80, range = 40, radius = 16 },
 	ninth_toll = { name = "Ninth Toll", text = "Drops a phantom bell on your target. Shatters posture.", kind = "Toll", cooldown = 14, damage = 60, posture = 70, range = 40, radius = 14 },
 } :: { [string]: AbilityDef }
 

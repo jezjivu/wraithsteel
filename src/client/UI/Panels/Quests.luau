@@ -54,20 +54,20 @@ local Panel: PanelTypes.Panel = {
 		end, 130)
 
 		-- Playtime gifts
-		Kit.Label(body, "Playtime gifts (today)", { bold = true, color = C.Gold })
+		Kit.Section(body, "Playtime gifts (today)")
 		local claimed = DataController.Get("playtimeClaimed") or {}
 		local gifts = Kit.Row(body, 48)
 		for _, tierId in RewardConfig.PlaytimeOrder do
 			local tier = RewardConfig.Playtime[tierId]
 			local done = claimed[tierId] == true
-			Kit.Button(gifts, (if done then "Claimed " else "") .. math.floor(tier.seconds / 60) .. " min", if done then C.Row else C.Accent, function()
+			Kit.Button(gifts, (if done then "Claimed " else "") .. math.floor(tier.seconds / 60) .. " min", if done then C.Row else C.Gold, function()
 				local _, msg = Net.Client.Invoke("ClaimPlaytime", tierId)
 				ctx.notify(msg or "Not ready yet")
 			end, 110)
 		end
 
 		-- Quests
-		Kit.Label(body, "Quests", { bold = true, color = C.Gold })
+		Kit.Section(body, "Quests")
 		local quests = DataController.Get("quests") or {}
 		local ids = {}
 		for id in quests do
