@@ -212,8 +212,8 @@ local function tick()
 	local cfg = SpiritConfig.AutoCast
 	for _, player in Players:GetPlayers() do
 		local owner = CombatService.GetByPlayer(player)
-		if owner == nil or owner.dead or owner.humanoid.Health <= 0 then
-			continue
+		if owner == nil or owner.dead or owner.humanoid.Health <= 0 or owner.duelId ~= nil then
+			continue -- (companions sit duels out)
 		end
 		local st = stateOf(player)
 		if now - st.lastCastAt < cfg.gap then
@@ -238,7 +238,7 @@ end
 
 local function onSpiritCall(player: Player)
 	local owner = CombatService.GetByPlayer(player)
-	if owner == nil or owner.dead then
+	if owner == nil or owner.dead or owner.duelId ~= nil then
 		return
 	end
 	local st = stateOf(player)

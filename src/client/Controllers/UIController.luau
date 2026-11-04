@@ -5,7 +5,7 @@
 -- panel is open.
 -- The dock (left edge) has five groups; a group's window shows its panels as tabs:
 --   Blade (Weapons, Styles, Arts, Skills) · Spirits (Spirits, Lanterns, Expeditions) ·
---   World (Quests, Map, Travel) · Bonds (Party, Raids, Trade) ·
+--   World (Quests, Map, Travel) · Bonds (Party, Raids, Duels, Trade) ·
 --   Market (Store, Night Market, Bell Dice, Codes)
 --
 -- API:
@@ -67,6 +67,7 @@ local GROUPS: { Group } = {
 	{ id = "bonds", label = "Bonds", icon = "bonds", tabs = {
 		{ id = "Party", label = "Party" },
 		{ id = "Raid", label = "Raids" },
+		{ id = "Duels", label = "Duels" },
 		{ id = "Trade", label = "Trade" },
 	} },
 	{ id = "market", label = "Market", icon = "market", tabs = {

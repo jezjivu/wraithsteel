@@ -112,8 +112,8 @@ end
 local function onCast(player: Player, spellId: string, aim: Vector3?, point: Vector3?)
 	local c = CombatService.GetByPlayer(player)
 	local data = DataService.GetData(player)
-	if c == nil or data == nil or c.dead or c.humanoid.Health <= 0 then
-		return
+	if c == nil or data == nil or c.dead or c.humanoid.Health <= 0 or c.duelId ~= nil then
+		return -- (no Qi arts in duels: PvpConfig)
 	end
 	local now = os.clock()
 	local rules = c.rules

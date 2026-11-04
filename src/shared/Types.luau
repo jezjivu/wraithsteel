@@ -114,6 +114,11 @@ export type ProfileData = {
 	-- Night Market: purchases in the current stock window (v13)
 	nightMarket: { window: number, bought: { [string]: number } },
 
+	-- Duels (v16)
+	pvpWins: number,
+	pvpLosses: number,
+	pvpStreak: number,
+
 	-- Bell Dice (v15): free Fortune Chips, daily gift day, chips exchanged for Ember today
 	chips: number,
 	chipsDay: number,

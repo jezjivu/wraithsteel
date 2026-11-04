@@ -153,6 +153,34 @@ local function courtyard(m: Model, center: Vector3, R: number, accent: Color3)
 	local _ = accent
 end
 
+-- Dojo layout (PvP Proving Ring): a raised wooden floor with a painted circle, two start
+-- marks, tatami edging, paper lanterns and a weapon rack. No cover - duels are about timing.
+local function dojo(m: Model, center: Vector3, R: number, accent: Color3)
+	local wood = Color3.fromRGB(150, 110, 75)
+	local up = CFrame.Angles(0, 0, math.rad(90))
+	local floor = part(m, "DojoFloor", Vector3.new(1, R * 1.6, R * 1.6), CFrame.new(center + Vector3.new(0, 0.2, 0)) * up, wood, Enum.Material.WoodPlanks, Enum.PartType.Cylinder)
+	floor.CanCollide = true
+	local ring = part(m, "DuelCircle", Vector3.new(0.12, R * 1.2, R * 1.2), CFrame.new(center + Vector3.new(0, 0.75, 0)) * up, accent, Enum.Material.Neon, Enum.PartType.Cylinder)
+	ring.Transparency = 0.55
+	ring.CanCollide = false
+	local inner = part(m, "DuelCircleInner", Vector3.new(0.13, R * 1.17, R * 1.17), CFrame.new(center + Vector3.new(0, 0.76, 0)) * up, wood, Enum.Material.WoodPlanks, Enum.PartType.Cylinder)
+	inner.CanCollide = false
+	for _, z in { -1, 1 } do
+		local mark = part(m, "StartMark", Vector3.new(6, 0.15, 1.2), CFrame.new(center + Vector3.new(0, 0.8, z * 13)), accent, Enum.Material.Neon)
+		mark.Transparency = 0.2
+		mark.CanCollide = false
+	end
+	for i = 0, 11 do
+		local a = i / 12 * math.pi * 2
+		local p = center + Vector3.new(math.cos(a) * R * 0.86, 0, math.sin(a) * R * 0.86)
+		part(m, "LanternPost", Vector3.new(0.8, 7, 0.8), CFrame.new(p + Vector3.new(0, 3.5, 0)), Color3.fromRGB(60, 40, 30), Enum.Material.Wood)
+		local l = part(m, "PaperLantern", Vector3.new(2, 2.6, 2), CFrame.new(p + Vector3.new(0, 8, 0)), Color3.fromRGB(255, 220, 170), Enum.Material.Neon)
+		l.CanCollide = false
+	end
+	local rack = center + Vector3.new(R * 0.7, 0, 0)
+	part(m, "Rack", Vector3.new(1, 5, 10), CFrame.new(rack + Vector3.new(0, 2.5, 0)), Color3.fromRGB(70, 45, 30), Enum.Material.Wood)
+end
+
 -- Castle layout: a walled bailey. Crenellations on the wall ring, four broken siege
 -- barricades as cover, a fallen portcullis, rubble.
 local function castle(m: Model, center: Vector3, R: number, accent: Color3)
@@ -297,6 +325,8 @@ function ArenaBuilder.Build(center: Vector3, theme: { floor: { number }, wall: {
 		foundry(m, center, R, accent)
 	elseif theme.layout == "Courtyard" then
 		courtyard(m, center, R, accent)
+	elseif theme.layout == "Dojo" then
+		dojo(m, center, R, accent)
 	elseif theme.layout == "Castle" then
 		castle(m, center, R, accent)
 	elseif theme.layout == "Throne" then

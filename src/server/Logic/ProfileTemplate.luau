@@ -65,6 +65,10 @@ function ProfileTemplate.New(): Types.ProfileData
 
 		nightMarket = { window = -1, bought = {} },
 
+		pvpWins = 0,
+		pvpLosses = 0,
+		pvpStreak = 0,
+
 		chips = 0,
 		chipsDay = -1,
 		chipsExchangedDay = -1,

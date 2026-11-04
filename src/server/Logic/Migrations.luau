@@ -136,6 +136,14 @@ Migrations.Steps = {
 		data.chipsExchangedDay = if type(data.chipsExchangedDay) == "number" then data.chipsExchangedDay else -1
 		data.chipsExchanged = if type(data.chipsExchanged) == "number" then data.chipsExchanged else 0
 	end,
+	-- v15 -> v16: duel record.
+	[16] = function(data: { [string]: any })
+		for _, k in { "pvpWins", "pvpLosses", "pvpStreak" } do
+			if type(data[k]) ~= "number" then
+				data[k] = 0
+			end
+		end
+	end,
 } :: { [number]: (data: { [string]: any }) -> () }
 
 -- Returns true if data was migrated. Errors if data is from a NEWER version (a newer server

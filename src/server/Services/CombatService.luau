@@ -17,6 +17,7 @@
 --   CombatService.RollCrit(player) -> (multiplier, crit: boolean)
 --   CombatService.Heal(c, amount) / AddShield(c, amount, seconds)
 --   CombatService.OnSpiritCall: ((player) -> ())?  -- set by SpiritAbilityService (T key)
+--   CombatService.OnDuelLethal: ((target, attacker) -> ())? -- set by DuelService
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -33,6 +34,8 @@ local EnemyConfig = require(Config:WaitForChild("EnemyConfig"))
 local BossConfig = require(Config:WaitForChild("BossConfig"))
 local StyleConfig = require(Config:WaitForChild("StyleConfig"))
 local StyleLogic = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("StyleLogic"))
+local PvpConfig = require(Config:WaitForChild("PvpConfig"))
+local DuelLogic = require(script.Parent.Parent:WaitForChild("Logic"):WaitForChild("DuelLogic"))
 local MapConfig = require(Config:WaitForChild("MapConfig"))
 
 local Logic = script.Parent.Parent:WaitForChild("Logic")
@@ -76,6 +79,7 @@ export type Combatant = {
 	styleId: string?, -- players: current fighting style (StyleConfig)
 	styleState: StyleLogic.State?, -- players: Flow / Heat stacks, last dash (StyleLogic)
 	armorUntil: number?, -- players: super armor (Iron Mountain heavy attacks) until
+	duelId: number?, -- players: in a duel (DuelService) - only the opponent can hit them
 	lives: number?, -- enemies: finishing blows needed (elites take two; the first one only knocks a life off)
 	unaware: boolean?, -- enemies: hasn't noticed any player yet (Shadow Strike possible)
 	deflectChance: number?, -- enemies/bosses: chance to deflect a strike while canDeflect()
@@ -125,6 +129,7 @@ local CombatService = {
 	Deflected = Signal.new(), -- (enemy, attacker): an enemy deflected a player's strike (counter now)
 	Rested = Signal.new(), -- (combatant): rested at a waystone (refill everything)
 	OnSpiritCall = nil :: ((player: Player) -> ())?,
+	OnDuelLethal = nil :: ((target: any, attacker: any) -> ())?, -- set by DuelService
 }
 
 local combatants: { [string]: Combatant } = {}
@@ -387,6 +392,7 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	end
 
 	local damage = res.damage
+	local pvp = attacker ~= nil and attacker.duelId ~= nil and attacker.duelId == target.duelId
 	-- Iron Mountain: a blocked heavy crushes the guard.
 	if res.outcome == "Blocked" and hit.guardCrush then
 		res = table.clone(res)
@@ -403,15 +409,19 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	end
 	local postureDamage = res.postureDamage
 	if target.player then
-		postureDamage *= 1 - (CombatService.PlayerStats(target.player).Guard or 0)
+		if not pvp then
+			postureDamage *= 1 - (CombatService.PlayerStats(target.player).Guard or 0)
+		end
 		if armored and target.styleId then
 			postureDamage *= StyleLogic.ArmorPostureTaken(target.styleId)
 		end
 	end
 	if attacker and attacker.player then
 		local stats = CombatService.PlayerStats(attacker.player)
-		postureDamage *= 1 + (stats.Posture or 0)
-		local lifesteal = stats.Lifesteal or 0
+		if not pvp then
+			postureDamage *= 1 + (stats.Posture or 0)
+		end
+		local lifesteal = if pvp then 0 else stats.Lifesteal or 0
 		if lifesteal > 0 and damage > 0 and hit.source ~= "spirit" and (res.outcome == "Hit" or res.outcome == "Blocked") then
 			local hum = attacker.humanoid
 			hum.Health = math.min(hum.MaxHealth, hum.Health + damage * lifesteal)
@@ -425,6 +435,14 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 		end
 	end
 
+	-- Duels: nobody dies - a lethal blow ends the round (DuelService).
+	if pvp and damage >= target.humanoid.Health and damage > 0 then
+		damage = math.max(0, target.humanoid.Health - 1)
+		local hook = CombatService.OnDuelLethal
+		if hook then
+			task.defer(hook, target, attacker)
+		end
+	end
 	-- Second Breath: the killing blow leaves a player at 1 HP, then they rise again.
 	if target.player and target.breath and damage >= target.humanoid.Health and damage > 0 then
 		target.breath = false
@@ -577,7 +595,8 @@ function CombatService.TargetsInArc(attacker: Combatant, range: number, arcDegre
 	local pos = attacker.root.Position
 	local look = aim or attacker.root.CFrame.LookVector
 	for _, c in combatants do
-		if c.team ~= attacker.team and not c.dead and c.humanoid.Health > 0 then
+		local foe = c.team ~= attacker.team or (attacker.duelId ~= nil and c.duelId == attacker.duelId and c ~= attacker)
+		if foe and not c.dead and c.humanoid.Health > 0 then
 			local tp = c.root.Position
 			if math.abs(tp.Y - pos.Y) < 12 and CombatRules.InArc(pos.X, pos.Z, look.X, look.Z, tp.X, tp.Z, range, arcDegrees) then
 				table.insert(out, c)
@@ -784,6 +803,22 @@ local function onCombatAction(player: Player, req: { [string]: any })
 				end)
 				continue
 			end
+			if target.kind == "Player" then
+				-- Fair duel numbers: base move damage, style and timing only (DuelLogic).
+				local broken = Posture.IsBroken(target.posture, os.clock())
+				local pcrit = if smods.crit then smods.critMultiplier else 1
+				CombatService.ApplyHit(c, target, {
+					crit = smods.crit,
+					damage = DuelLogic.HitDamage(move.damage, smods.damage, mult, pcrit, broken, target.humanoid.MaxHealth),
+					postureDamage = move.postureDamage * smods.posture * mult * PvpConfig.PostureScale,
+					moveId = moveId :: string,
+					knockback = kb * style.knockback,
+					launch = move.launch,
+					riposte = riposte,
+					guardCrush = if guardCrush ~= 1 then guardCrush else nil,
+				})
+				continue
+			end
 			local critMult, crit = CombatService.RollCrit(player)
 			if smods.crit then
 				-- Wind Step: strikes off a dash always crit.
@@ -860,6 +895,9 @@ function CombatService.RefreshStats(player: Player)
 	statCache[player] = nil
 	local c = byPlayer[player]
 	local data = DataService.GetData(player)
+	if c and c.duelId then
+		return -- duels use fixed fair stats; refreshed when the duel ends
+	end
 	if c and data and not c.dead then
 		local frac = c.humanoid.Health / math.max(1, c.humanoid.MaxHealth)
 		c.humanoid.MaxHealth = maxHealthFor(player, data.level)

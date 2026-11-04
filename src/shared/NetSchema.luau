@@ -74,6 +74,10 @@ local NetSchema: { [string]: RemoteDef } = {
 	GetNightMarket = { kind = "Function", direction = "ToServer", args = {}, rate = { burst = 4, perSecond = 1 } },
 	BuyNightMarket = { kind = "Function", direction = "ToServer", args = { "integer", "integer" }, rate = { burst = 4, perSecond = 1 } },
 
+	-- Duels: (op "state"|"challenge"|"accept"|"decline"|"forfeit", userId?)
+	DuelRequest = { kind = "Function", direction = "ToServer", args = { "string", "integer?" }, rate = { burst = 4, perSecond = 1 } },
+	DuelEvent = { kind = "Event", direction = "ToClient" },
+
 	-- Bell Dice (shared chance table, free chips only) ---------------------------------------
 	DiceState = { kind = "Function", direction = "ToServer", args = {}, rate = { burst = 4, perSecond = 1 } },
 	DiceBet = { kind = "Function", direction = "ToServer", args = { "string", "integer" }, rate = { burst = 6, perSecond = 3 } },
