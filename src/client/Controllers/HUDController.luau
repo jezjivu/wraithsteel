@@ -18,6 +18,7 @@ local FormatNumber = require(Shared:WaitForChild("FormatNumber"))
 local BossConfig = require(Config:WaitForChild("BossConfig"))
 local EffectsConfig = require(Config:WaitForChild("EffectsConfig"))
 local SkillLogic = require(Shared:WaitForChild("SkillLogic"))
+local StyleConfig = require(Config:WaitForChild("StyleConfig"))
 
 local UI = script.Parent.Parent:WaitForChild("UI")
 local Kit = require(UI:WaitForChild("Kit"))
@@ -161,6 +162,30 @@ local bossHp: Meter? = nil
 local bossPosture: Meter? = nil
 
 local pointsChip: TextLabel? = nil
+local styleChip: TextLabel? = nil
+
+-- "Flowing River  ◆◆◇" : style name in its color, stacks as filled/empty diamonds.
+local function refreshStyleChip()
+	local chip = styleChip
+	if chip == nil then
+		return
+	end
+	local id = localPlayer:GetAttribute("FightingStyle")
+	local def = StyleConfig.Get(if type(id) == "string" then id else nil)
+	local ch = localPlayer.Character
+	local stacks = if ch then tonumber(ch:GetAttribute("StyleStacks")) or 0 else 0
+	local max = def.mechanic.maxStacks or 0
+	local hex = Color3.fromRGB(def.color[1], def.color[2], def.color[3]):ToHex()
+	local pips = ""
+	if max > 0 then
+		pips = "  " .. string.rep("◆", stacks) .. string.rep("◇", max - stacks)
+	elseif def.mechanic.kind == "Unshaken" then
+		pips = "  heavies armored"
+	elseif def.mechanic.kind == "Gale" then
+		pips = "  dash -> crit"
+	end
+	chip.Text = string.format('<font color="#%s">%s</font>%s', hex, def.name, pips)
+end
 local statLabels: { [string]: TextLabel? } = {}
 local function refreshStats()
 	local lv, em, jd, pw = statLabels.level, statLabels.ember, statLabels.jade, statLabels.power
@@ -293,7 +318,9 @@ local function bindCharacter(character: Model)
 	character:GetAttributeChangedSignal("Flask"):Connect(refresh)
 	character:GetAttributeChangedSignal("Breath"):Connect(refresh)
 	character:GetAttributeChangedSignal("Kunai"):Connect(refresh)
+	character:GetAttributeChangedSignal("StyleStacks"):Connect(refreshStyleChip)
 	refresh()
+	refreshStyleChip()
 end
 
 function HUDController.Init()
@@ -391,6 +418,22 @@ function HUDController.Init()
 	local um = meter(cluster, UDim2.new(0.5, -170, 0, 44), UDim2.fromOffset(340, 4), Color3.fromRGB(120, 168, 240), "")
 	um.label.Visible = false
 	ultimate = um
+	-- Style chip (above the right end of the health bar): style name + its stacks.
+	local sc = Instance.new("TextLabel")
+	sc.Name = "StyleChip"
+	sc.AnchorPoint = Vector2.new(1, 1)
+	sc.Position = UDim2.new(0.5, 170, 0, 21)
+	sc.Size = UDim2.fromOffset(240, 16)
+	sc.BackgroundTransparency = 1
+	sc.Font = Kit.BoldFont
+	sc.TextSize = 13
+	sc.TextXAlignment = Enum.TextXAlignment.Right
+	sc.TextColor3 = C.Muted
+	sc.TextStrokeTransparency = 0.6
+	sc.RichText = true
+	sc.Text = ""
+	sc.Parent = cluster
+	styleChip = sc
 
 	-- Boss bar (top center).
 	local bf = Instance.new("Frame")
@@ -465,6 +508,8 @@ function HUDController.Start()
 	refreshStats()
 
 	localPlayer:GetAttributeChangedSignal("Zone"):Connect(showZoneBanner)
+	localPlayer:GetAttributeChangedSignal("FightingStyle"):Connect(refreshStyleChip)
+	refreshStyleChip()
 
 	localPlayer.CharacterAdded:Connect(bindCharacter)
 	if localPlayer.Character then

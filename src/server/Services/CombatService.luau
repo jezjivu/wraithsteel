@@ -32,6 +32,7 @@ local WeaponConfig = require(Config:WaitForChild("WeaponConfig"))
 local EnemyConfig = require(Config:WaitForChild("EnemyConfig"))
 local BossConfig = require(Config:WaitForChild("BossConfig"))
 local StyleConfig = require(Config:WaitForChild("StyleConfig"))
+local StyleLogic = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("StyleLogic"))
 local MapConfig = require(Config:WaitForChild("MapConfig"))
 
 local Logic = script.Parent.Parent:WaitForChild("Logic")
@@ -72,6 +73,9 @@ export type Combatant = {
 	flask: number?, -- players: Spring Flask charges left
 	breath: boolean?, -- players: Second Breath still available this life
 	rushUntil: number?, -- players: Blood Rush (skill) active until
+	styleId: string?, -- players: current fighting style (StyleConfig)
+	styleState: StyleLogic.State?, -- players: Flow / Heat stacks, last dash (StyleLogic)
+	armorUntil: number?, -- players: super armor (Iron Mountain heavy attacks) until
 	lives: number?, -- enemies: finishing blows needed (elites take two; the first one only knocks a life off)
 	unaware: boolean?, -- enemies: hasn't noticed any player yet (Shadow Strike possible)
 	deflectChance: number?, -- enemies/bosses: chance to deflect a strike while canDeflect()
@@ -93,6 +97,7 @@ export type Hit = {
 	severing: boolean?, -- Severing Blow on a posture-broken enemy
 	ranged: boolean?, -- projectile / wave / eruption: a parry does not stagger the attacker
 	shadow: boolean?, -- Severing Blow on an enemy that never saw you coming
+	guardCrush: number?, -- posture multiplier if this hit is blocked (Iron Mountain heavies)
 }
 
 local MAX_TARGETS_PER_SWING = 4
@@ -307,6 +312,18 @@ local function syncUltimate(c: Combatant)
 	end
 end
 
+-- Mirrors a player's style stacks (Flow / Heat) to the character for the HUD.
+local function syncStyle(c: Combatant, now: number)
+	local st = c.styleState
+	if st and c.styleId then
+		local n = StyleLogic.Stacks(c.styleId, st, now)
+		if c.model:GetAttribute("StyleStacks") ~= n then
+			c.model:SetAttribute("StyleStacks", n)
+		end
+	end
+end
+CombatService.SyncStyle = syncStyle
+
 -- Applies a hit to `target`. Players resolve parry/block/dodge; enemies/bosses take it directly.
 function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hit): CombatRules.Resolution?
 	if target.dead or target.invulnerable or target.humanoid.Health <= 0 then
@@ -339,6 +356,18 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 			end
 		end
 		res = CombatRules.ResolveIncoming(target.rules, hit, now, ctx)
+		-- Style mechanics on the defending player.
+		local st, sid = target.styleState, target.styleId
+		if st and sid then
+			if res.outcome == "Parried" then
+				StyleLogic.OnParry(sid, st, now)
+			elseif res.outcome == "Hit" then
+				StyleLogic.OnHurt(sid, st)
+			elseif res.outcome == "Dodged" and StyleLogic.DodgeRefund(sid) then
+				target.rules.dodgeReadyAt = now
+			end
+			syncStyle(target, now)
+		end
 	elseif attacker and attacker.player and hit.source == nil and not hit.severing and target.deflectChance
 		and not Posture.IsBroken(target.posture, now)
 		and (if target.canDeflect then target.canDeflect() else (target.guardUntil ~= nil and now < target.guardUntil))
@@ -358,12 +387,26 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	end
 
 	local damage = res.damage
+	-- Iron Mountain: a blocked heavy crushes the guard.
+	if res.outcome == "Blocked" and hit.guardCrush then
+		res = table.clone(res)
+		res.postureDamage *= hit.guardCrush
+	end
+	-- Landing a clean hit stokes Ember Fang's Heat.
+	if attacker and attacker.styleState and attacker.styleId and res.outcome == "Hit" and hit.source == nil then
+		StyleLogic.OnLandHit(attacker.styleId, attacker.styleState, now)
+		syncStyle(attacker, now)
+	end
+	local armored = target.armorUntil ~= nil and now < target.armorUntil
 	if Posture.IsBroken(target.posture, now) and not hit.severing then
 		damage *= CombatConfig.PostureBrokenDamageMultiplier
 	end
 	local postureDamage = res.postureDamage
 	if target.player then
 		postureDamage *= 1 - (CombatService.PlayerStats(target.player).Guard or 0)
+		if armored and target.styleId then
+			postureDamage *= StyleLogic.ArmorPostureTaken(target.styleId)
+		end
 	end
 	if attacker and attacker.player then
 		local stats = CombatService.PlayerStats(attacker.player)
@@ -447,7 +490,7 @@ function CombatService.ApplyHit(attacker: Combatant?, target: Combatant, hit: Hi
 	end
 
 	-- Knockback / launch away from the attacker (halved through a block, none on parry/dodge).
-	if attacker and (hit.knockback or hit.launch) and (res.outcome == "Hit" or res.outcome == "Blocked") then
+	if attacker and not armored and (hit.knockback or hit.launch) and (res.outcome == "Hit" or res.outcome == "Blocked") then
 		local away = target.root.Position - attacker.root.Position
 		local flat = Vector3.new(away.X, 0, away.Z)
 		local dir = if flat.Magnitude > 0.1 then flat.Unit else attacker.root.CFrame.LookVector
@@ -637,25 +680,38 @@ local function onCombatAction(player: Player, req: { [string]: any })
 		return
 	end
 	local now = os.clock()
-	local style = StyleConfig.Get(data.fightingStyle)
+	local styleId = data.fightingStyle
+	local style = StyleConfig.Get(styleId)
+	if c.styleId ~= styleId then
+		c.styleState = nil -- switched style: stacks of the old mechanic do not carry over
+	end
+	c.styleId = styleId
+	local styleState = c.styleState or StyleLogic.New()
+	c.styleState = styleState
+	local smods = StyleLogic.Attack(styleId, styleState, now)
 	local hum = c.humanoid
 	local airborne = hum.FloorMaterial == Enum.Material.Air
 		or hum:GetState() == Enum.HumanoidStateType.Freefall
 		or hum:GetState() == Enum.HumanoidStateType.Jumping
-	local decision = CombatRules.Validate(c.rules :: CombatRules.State, data.equippedWeapon, action, seq, now, { airborne = airborne })
+	local decision = CombatRules.Validate(c.rules :: CombatRules.State, data.equippedWeapon, action, seq, now, { airborne = airborne, dashWindow = StyleLogic.DashWindow(styleId) })
 	if not decision.ok then
 		Net.Server.Fire("CombatEvent", player, { kind = "Rejected", seq = seq, reason = decision.reason })
 		return
 	end
 	local stats = CombatService.PlayerStats(player)
 	local dodgeMult = (1 - (stats.Haste or 0)) * style.dashCooldown
-	CombatRules.Commit(c.rules :: CombatRules.State, decision, now, dodgeMult, { speed = style.speed, parryWindowBonus = style.parryWindowBonus + (stats.ParryWindow or 0) })
+	local total = CombatRules.Commit(c.rules :: CombatRules.State, decision, now, dodgeMult, { speed = smods.speed, parryWindowBonus = style.parryWindowBonus + (stats.ParryWindow or 0) })
 	syncUltimate(c)
 	if action == "Dodge" then
 		c.dodgeAt = now
 		c.dodgeDir = sanitizeAim(req.move) or c.root.CFrame.LookVector
+		StyleLogic.OnDodge(styleState, now)
 	end
-	broadcast({ kind = "Action", sourceId = c.id, action = action, moveId = decision.moveId, seq = seq, route = decision.kind, speed = style.speed })
+	if StyleLogic.Armored(styleId, action, decision.kind) and total > 0 then
+		c.armorUntil = now + total
+	end
+	syncStyle(c, now)
+	broadcast({ kind = "Action", sourceId = c.id, action = action, moveId = decision.moveId, seq = seq, route = decision.kind, speed = smods.speed, style = styleId })
 
 	local moveId = decision.moveId
 	local move = moveId and WeaponConfig.Moves[moveId]
@@ -665,7 +721,8 @@ local function onCombatAction(player: Player, req: { [string]: any })
 	local power = ProgressionService.GetPower(player)
 	local aim = sanitizeAim(req.aim)
 	local kb = move.knockback or defaultKnockback(action)
-	task.delay(move.windup / style.speed, function()
+	local guardCrush = StyleLogic.GuardCrush(styleId, action, decision.kind)
+	task.delay(move.windup / smods.speed, function()
 		-- Interrupted by posture break or death during windup: no hit.
 		local rules = c.rules :: CombatRules.State
 		if c.dead or os.clock() < rules.stunnedUntil or byPlayer[player] ~= c then
@@ -728,10 +785,15 @@ local function onCombatAction(player: Player, req: { [string]: any })
 				continue
 			end
 			local critMult, crit = CombatService.RollCrit(player)
+			if smods.crit then
+				-- Wind Step: strikes off a dash always crit.
+				critMult, crit = math.max(critMult, smods.critMultiplier), true
+			end
 			CombatService.ApplyHit(c, target, {
 				crit = crit,
-				damage = CombatRules.ScaleDamage(move.damage, power, rng:NextNumber()) * style.damage * mult * attackMult * critMult,
-				postureDamage = move.postureDamage * style.posture * mult,
+				damage = CombatRules.ScaleDamage(move.damage, power, rng:NextNumber()) * smods.damage * mult * attackMult * critMult,
+				postureDamage = move.postureDamage * smods.posture * mult,
+				guardCrush = if guardCrush ~= 1 then guardCrush else nil,
 				perilous = false,
 				moveId = moveId :: string,
 				knockback = kb * style.knockback,
@@ -778,6 +840,8 @@ local function onCharacterAdded(player: Player, character: Model)
 		invulnerable = false,
 		dead = false,
 		contributions = {},
+		styleId = if data then data.fightingStyle else StyleConfig.Default,
+		styleState = StyleLogic.New(),
 	}
 	c.flask = flaskMax(c)
 	character:SetAttribute("Flask", c.flask)

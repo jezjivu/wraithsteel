@@ -115,6 +115,7 @@ function __client(opts)
 	end
 	DataController.PolicyFlags = { paidRandomItemsRestricted = false, paidItemTradingAllowed = true }
 	game:GetService("Players").LocalPlayer:SetAttribute("Power", 1840)
+	game:GetService("Players").LocalPlayer:SetAttribute("FightingStyle", data.fightingStyle)
 	return data
 end
 
