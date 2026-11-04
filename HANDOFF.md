@@ -238,3 +238,19 @@ The guide is **still not in the repo**; this run followed the task brief + night
   (DataStores fail with 403 so ProfileStore uses its mock; task.wait parks threads until the
   next tick; os.clock does not advance, so timed loops and rate limits are only roughly
   exercised). Add actions to its SPEC to cover new remotes.
+
+## Night 6 (same branch)
+- **Styles**: `StyleConfig.Styles.*.mechanic` + `Shared/StyleLogic` (pure). CombatService keeps
+  `styleId`, `styleState`, `armorUntil` per player combatant; stacks published as character
+  attribute `StyleStacks`. `CombatRules.Validate` takes `opts.dashWindow`. Hit field `guardCrush`.
+- **Animations**: `AnimationConfig.StyleStances` (additive on the class stance; stance keys
+  look like "OneHanded:mountain"), `AnimationConfig.StyleFlavor`, `DefaultFlavor`.
+  Preview: `python3 tools/render_poses.py <luau> out.png`.
+- **Duels**: `PvpConfig`, `Logic/DuelLogic`, `DuelService` (priority 55), remotes
+  `DuelRequest(op, userId?)` / `DuelEvent`, `DuelController`, panel `Duels` (Bonds tab).
+  `Combatant.duelId` marks fighters (TargetsInArc lets duel opponents hit each other;
+  SpellService/KunaiService/SpiritAbilityService refuse during duels; RefreshStats skips).
+  `CombatService.OnDuelLethal` is called instead of a kill. Player attributes `InDuel`, `InArena`.
+  Profile v16: `pvpWins`, `pvpLosses`, `pvpStreak`.
+- **Smoke test** gained `__giveCharacter` / `__advance` (tools/server_mock.luau) and a scripted
+  duel + style checks.

@@ -120,6 +120,90 @@ cases["boot"] = function()
 	call(kaito, "GetStoreInfo")
 	local d = DataService.GetData(kaito)
 	print(string.format("[smoke] after: ember %s, chips %s, spirits %d, equipped %d", tostring(d.ember), tostring(d.chips), (function() local n = 0 for _ in d.spirits do n += 1 end return n end)(), #d.equippedSpirits))
+	-- Combat + duel playtest with simple characters.
+	print("[smoke] --- combat & duel ---")
+	local CombatSvc = require(SSS.Services.CombatService)
+	__giveCharacter(kaito, Vector3.new(0, 5, 150))
+	__giveCharacter(mirelle, Vector3.new(0, 5, 154))
+	__advance(0.3)
+	local ca, cb = CombatSvc.GetByPlayer(kaito), CombatSvc.GetByPlayer(mirelle)
+	print(string.format("[smoke] combatants: kaito %s, mirelle %s", tostring(ca ~= nil), tostring(cb ~= nil)))
+	if ca and cb then
+		local combat = remotes:FindFirstChild("CombatAction")
+		local seq = 0
+		local function swing(player, action, aimAt)
+			seq += 100
+			local aim = nil
+			if aimAt then
+				local d = aimAt - CombatSvc.GetByPlayer(player).root.Position
+				aim = Vector3.new(d.X, 0, d.Z).Unit
+			end
+			combat.OnServerEvent:Fire(player, { action = action, seq = seq, aim = aim })
+		end
+		local before = cb.humanoid.Health
+		swing(kaito, "LightAttack", cb.root.Position)
+		__advance(0.4)
+		print(string.format("[smoke] open world: friendly hit changed health %s -> %s (must not change)", tostring(before), tostring(cb.humanoid.Health)))
+		call(kaito, "DuelRequest", "challenge", mirelle.UserId)
+		call(mirelle, "DuelRequest", "accept", kaito.UserId)
+		local function report(tag)
+			print(string.format("[smoke] %s: kaito hp %.0f/%.0f duel %s at %.0f,%.0f | mirelle hp %.0f/%.0f duel %s", tag,
+				ca.humanoid.Health, ca.humanoid.MaxHealth, tostring(ca.duelId), ca.root.Position.X, ca.root.Position.Z,
+				cb.humanoid.Health, cb.humanoid.MaxHealth, tostring(cb.duelId)))
+		end
+		report("duel start")
+		__advance(3.3)
+		-- step in: put Kaito 4 studs in front of Mirelle, facing her
+		local mp = cb.root.Position
+		ca.root.CFrame = CFrame.lookAt(mp + Vector3.new(0, 0, 4), mp)
+		local h0 = cb.humanoid.Health
+		swing(kaito, "LightAttack", mp)
+		__advance(0.5)
+		print(string.format("[smoke] duel light hit: mirelle %.1f -> %.1f", h0, cb.humanoid.Health))
+		-- a lethal blow ends the round instead of killing
+		CombatSvc.ApplyHit(ca, cb, { damage = 99999, postureDamage = 0, moveId = "jian_light_1" })
+		__advance(0.3)
+		report("after lethal blow (round 1)")
+		print("[smoke] mirelle dead? " .. tostring(cb.dead) .. ", InDuel " .. tostring(mirelle:GetAttribute("InDuel")))
+		__advance(3.5) -- between rounds + countdown
+		report("round 2 countdown/fight")
+		__advance(3.2)
+		CombatSvc.ApplyHit(ca, cb, { damage = 99999, postureDamage = 0, moveId = "jian_light_1" })
+		__advance(0.3)
+		report("after lethal blow (round 2)")
+		__advance(4.5) -- result screen, then home
+		report("after the duel")
+		local dk = DataService.GetData(kaito)
+		local dm = DataService.GetData(mirelle)
+		print(string.format("[smoke] record: kaito %d-%d (ember %d), mirelle %d-%d (ember %d)", dk.pvpWins, dk.pvpLosses, dk.ember, dm.pvpWins, dm.pvpLosses, dm.ember))
+		-- styles: Ember Fang heat from landed hits on an enemy
+		dk.level = 20
+		call(kaito, "SetFightingStyle", "ember")
+		print("[smoke] style now " .. tostring(dk.fightingStyle))
+		local enemy
+		for _, c in CombatSvc.All() do
+			if c.kind == "Enemy" and not c.dead then
+				enemy = c
+				break
+			end
+		end
+		if enemy then
+			ca.styleId = "ember"
+			ca.styleState = nil
+			ca.styleState = require(game:GetService("ReplicatedStorage").Shared.StyleLogic).New()
+			for _ = 1, 3 do
+				CombatSvc.ApplyHit(ca, enemy, { damage = 1, postureDamage = 0, moveId = "jian_light_1" })
+			end
+			print("[smoke] ember heat after 3 landed hits: " .. tostring(ca.model:GetAttribute("StyleStacks")))
+			CombatSvc.ApplyHit(enemy, ca, { damage = 1, postureDamage = 0, moveId = "x" })
+			print("[smoke] ember heat after being hit: " .. tostring(ca.model:GetAttribute("StyleStacks")))
+			cb.styleId = "river"
+			cb.styleState = require(game:GetService("ReplicatedStorage").Shared.StyleLogic).New()
+			cb.rules.parryUntil = os.clock() + 5
+			CombatSvc.ApplyHit(enemy, cb, { damage = 10, postureDamage = 10, moveId = "x" })
+			print("[smoke] river flow after a perfect deflect: " .. tostring(cb.model:GetAttribute("StyleStacks")))
+		end
+	end
 	local errs = __smokeErrors()
 	local seen = {}
 	for _, e in errs do

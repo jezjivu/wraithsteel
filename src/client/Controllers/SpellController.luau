@@ -170,7 +170,7 @@ local function buildBar()
 	local gui = Kit.Screen(localPlayer:WaitForChild("PlayerGui"), "ArtsBar", 4)
 	local bar = Instance.new("Frame")
 	bar.AnchorPoint = Vector2.new(0.5, 1)
-	bar.Position = UDim2.new(0.5, 0, 1, -96)
+	bar.Position = UDim2.new(0.5, 0, 1, -104)
 	bar.Size = UDim2.fromOffset(4 * 58 + 3 * 10 + 16, 72)
 	bar.BackgroundTransparency = 1
 	bar.Parent = gui
@@ -202,13 +202,13 @@ local function buildBar()
 	grad.Color = ColorSequence.new(Color3.fromRGB(80, 140, 255), Color3.fromRGB(170, 230, 255))
 	grad.Parent = fill
 	local txt = Instance.new("TextLabel")
-	txt.AnchorPoint = Vector2.new(1, 0)
-	txt.Position = UDim2.new(1, 0, 0, 7)
+	txt.AnchorPoint = Vector2.new(0, 0)
+	txt.Position = UDim2.new(0, 0, 0, 7) -- left: the style chip sits on the right
 	txt.Size = UDim2.fromOffset(120, 14)
 	txt.BackgroundTransparency = 1
 	txt.Font = Kit.BoldFont
 	txt.TextSize = 12
-	txt.TextXAlignment = Enum.TextXAlignment.Right
+	txt.TextXAlignment = Enum.TextXAlignment.Left
 	txt.TextColor3 = Color3.fromRGB(150, 200, 255)
 	txt.TextStrokeTransparency = 0.6
 	txt.ZIndex = 2

@@ -233,6 +233,13 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] `tools/smoke_server.py`: boots all 40 services headless, 2 fake players join, scripted remote calls (lantern, equip, daily, dice, market, party, trade, raid, weapon, skills, store) - 0 errors
 - [ ] Studio: sculpt the castle (KeepBuilder is a blockout), rigs/anims for the new enemies and bosses, tune Tessai/Ashrei
 
+## Night 6 (cloud run, code only): styles that matter, style animations, PvP duels
+- [x] Fighting styles have signature mechanics (Shared/StyleLogic): River Flow (deflects), Mountain Unshaken (armored heavies + guard crush), Wind Gale (dash crits, longer dash window, dodge refund), Ember Heat (combo stacks, reset when hit); HUD style chip; Dojo panel explains them
+- [x] Animations: per-style stance overlays and swing flavor (coil, follow-through, lean, settle); `tools/render_poses.py` stick-figure preview (assets/pose_preview.png)
+- [x] PvP: Proving Ring duels (best of three, fair 300 HP, no Power/stat bonuses, no arts/kunai/companions, lethal blow ends the round, no deaths or Ember loss, small rate-limited rewards, record saved v16); Duels panel + duel HUD
+- [x] Headless playtest (`tools/smoke_server.py`): characters, friendly-fire check, full duel (challenge, accept, countdown, hit, lethal -> round, best of 3, sent home, stats restored, record + rewards), Heat/Flow through real ApplyHit - 0 errors; fixed HUD overlap (Qi label vs style chip)
+- [ ] Studio: duel feel with two real clients (latency on deflects!), tune PvpConfig and StyleConfig numbers, look at style stances on real rigs
+
 ## Publish readiness (honest)
 NOT ready to publish yet. Blockers, in order:
 1. Never run inside Roblox: one full Studio playtest (solo + 2 players) end to end.

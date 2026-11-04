@@ -201,3 +201,40 @@ function __joinPlayer(userId, name)
 	Players.PlayerAdded:Fire(p)
 	return p
 end
+
+-- A simple character (Humanoid + HumanoidRootPart) at `pos`; fires CharacterAdded.
+function __giveCharacter(p, pos)
+	local ch = Instance.new("Model")
+	ch.Name = p.Name
+	local hum = Instance.new("Humanoid")
+	hum.Name = "Humanoid"
+	hum.MaxHealth = 100
+	hum.Health = 100
+	hum.WalkSpeed = 16
+	hum.JumpPower = 50
+	hum.FloorMaterial = "Material.Plastic"
+	hum.GetState = function()
+		return "HumanoidStateType.Running"
+	end
+	hum.MoveTo = function() end
+	hum.ChangeState = function() end
+	hum.Parent = ch
+	local root = Instance.new("Part")
+	root.Name = "HumanoidRootPart"
+	root.CFrame = CFrame.new(pos.X, pos.Y, pos.Z)
+	root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+	root.Parent = ch
+	ch.PrimaryPart = root
+	ch.Parent = workspace
+	p.Character = ch
+	p.CharacterAdded:Fire(ch)
+	return ch
+end
+
+-- Runs the scheduler for `seconds` of real time (timers in the game use os.clock).
+function __advance(seconds)
+	local stop = os.clock() + seconds
+	while os.clock() < stop do
+		__tick()
+	end
+end
