@@ -240,6 +240,14 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Headless playtest (`tools/smoke_server.py`): characters, friendly-fire check, full duel (challenge, accept, countdown, hit, lethal -> round, best of 3, sent home, stats restored, record + rewards), Heat/Flow through real ApplyHit - 0 errors; fixed HUD overlap (Qi label vs style chip)
 - [ ] Studio: duel feel with two real clients (latency on deflects!), tune PvpConfig and StyleConfig numbers, look at style stances on real rigs
 
+## Night 7 (cloud run, code only): prove the loop end to end
+- [x] **Found + fixed a game-blocking bug:** `data.chapter` never advanced (chapters 0 and 1 listed no bosses), so Rustwood/Tidewater lanterns, chapter-1+ weapons, expeditions, Night Market items and higher Power caps were unreachable. Chapters now follow the story (`SagaConfig.unlocksChapter`, `ChapterService.SetAtLeast`); chapter names match the realms
+- [x] Neon gate lowered 8 -> 5 (the Ashen Valley questline only reaches level 5); `tests/progression.spec.luau` walks a fresh profile through every quest and asserts every realm / raid / style / lantern / weapon / expedition / market gate is reachable (144 tests)
+- [x] Headless playtest scenarios (`tools/smoke_scenarios.luau`, run with `tools/smoke_server.py`): enemy AI hitting players, all 5 bosses (arenas incl. Castle/Throne layouts, moves, phases, Fail), full trade through the escrow ledger, raid launch -> boss -> victory -> rewards, Studio test purchases + passes, expedition start/claim, realm portals + waystone travel, and the whole 14-quest story through the real services (chapter 0 -> 4). 0 thread errors
+- [x] Test harness: real-time scheduler (waits/delays honor time, Heartbeat at 30 Hz), more engine methods; the full run takes ~2 minutes
+- [x] `STUDIO_ANLEITUNG.md`: plain-German step-by-step for what only a human can do (open the .rbxl, 2-player test, create passes/products with a table of names and prices, questionnaire answers, publish)
+- **Decided default (no further input needed):** Ember lanterns stay policy-gated paid randomness (Ember is sold for Robux); free opens work everywhere. To flip it later: remove the Ember products (`EmberSmall`, `EmberLarge`, Ember part of `StarterBundle`) from `MonetizationConfig` - `LanternOdds.IsPaid` re-derives it.
+
 ## Publish readiness (honest)
 NOT ready to publish yet. Blockers, in order:
 1. Never run inside Roblox: one full Studio playtest (solo + 2 players) end to end.
@@ -267,8 +275,7 @@ After 1-5 pass: ready for a small closed test (friends/group). After 6-7: public
 0. Studio look at the new UI (dock, HUD, Lanterns, Spirits) on PC and phone; tweak Kit tokens.
 1. Add `WRAITHSTEEL_AGENT_GUIDE.md` to the repo (still missing in night 2) and reconcile
    `Shared/Types`, `NetSchema`, service APIs and this checklist with §8.3/§11.
-2. Decide the Ember-in-store question (see HANDOFF "Night 2"): keep Ember lanterns policy-gated,
-   or stop selling Ember for Robux so Ember lanterns are free randomness again.
+2. (Decided: Ember lanterns stay policy-gated; see Night 7. Nothing to do.)
 3. Studio session: playtest trades (two clients), Night Market, Raid lobby (runs in place in
    Studio), combat timings; then a published test place for ReserveServer/MemoryStore/ledger.
 4. Dedicated raid boss + arena; chapter gates (`ZoneService.CanEnter`); Chapter 2 content.

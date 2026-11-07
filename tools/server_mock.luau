@@ -12,9 +12,11 @@ function __smokeErrors()
 	return errors
 end
 
--- task: cooperative scheduler driven by __tick()
-local waiting = {}
-local delayed = {}
+-- task: cooperative scheduler driven by __tick(); waits and delays honor real time (os.clock),
+-- Heartbeat fires at most every HEARTBEAT_EVERY seconds.
+local waiting = {} -- { { co, due } }
+local delayed = {} -- { { f, args, due } }
+local HEARTBEAT_EVERY = 1 / 30
 local function resume(co, ...)
 	if coroutine.status(co) ~= "suspended" then
 		return
@@ -30,24 +32,53 @@ task.spawn = function(f, ...)
 	return co
 end
 task.defer = task.spawn
-task.wait = function()
+task.wait = function(t)
 	if coroutine.isyieldable() then
-		table.insert(waiting, coroutine.running())
+		table.insert(waiting, { co = coroutine.running(), due = os.clock() + (t or 1 / 30) })
 		coroutine.yield()
 	end
-	return 0.1
+	return t or 1 / 30
 end
-task.delay = function(_, f, ...)
-	table.insert(delayed, { f = f, args = table.pack(...) })
+task.delay = function(t, f, ...)
+	table.insert(delayed, { f = f, args = table.pack(...), due = os.clock() + (t or 0) })
+	return nil
 end
+task.cancel = function() end
+local lastBeat = os.clock()
 function __tick()
-	local w, d = waiting, delayed
-	waiting, delayed = {}, {}
-	for _, co in w do
-		resume(co)
+	local nowT = os.clock()
+	if nowT - lastBeat >= HEARTBEAT_EVERY then
+		local rs = rawget(game, "__children").RunService
+		if rs and rs.Heartbeat and rs.Heartbeat.Fire then
+			rs.Heartbeat:Fire(math.min(nowT - lastBeat, 0.1))
+		end
+		lastBeat = nowT
 	end
-	for _, x in d do
-		task.spawn(x.f, table.unpack(x.args, 1, x.args.n))
+	local keepW = {}
+	local dueW = {}
+	for _, w in waiting do
+		if w.due <= nowT then
+			table.insert(dueW, w)
+		else
+			table.insert(keepW, w)
+		end
+	end
+	waiting = keepW
+	for _, w in dueW do
+		resume(w.co)
+	end
+	local keepD = {}
+	local dueD = {}
+	for _, d in delayed do
+		if d.due <= nowT then
+			table.insert(dueD, d)
+		else
+			table.insert(keepD, d)
+		end
+	end
+	delayed = keepD
+	for _, d in dueD do
+		task.spawn(d.f, table.unpack(d.args, 1, d.args.n))
 	end
 end
 

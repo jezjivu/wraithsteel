@@ -20,6 +20,7 @@ TICKS = int(sys.argv[2]) if len(sys.argv) > 2 else 20
 
 SPEC = """
 local cases = {}
+-- __SCENARIOS__
 cases["boot"] = function()
 	__serverSetup()
 	local SSS = game:GetService("ServerScriptService")
@@ -57,9 +58,7 @@ cases["boot"] = function()
 	print("[smoke] booted " .. #list .. " services")
 	__joinPlayer(101, "Kaito")
 	__joinPlayer(102, "Mirelle")
-	for _ = 1, __TICKS__ do
-		__tick()
-	end
+	__advance(__TICKS__ / 10) -- real time: profiles load, services settle
 	local DataService = require(SSS.Services.DataService)
 	for _, pl in __allPlayers do
 		local d = DataService.GetData(pl)
@@ -204,6 +203,9 @@ cases["boot"] = function()
 			print("[smoke] river flow after a perfect deflect: " .. tostring(cb.model:GetAttribute("StyleStacks")))
 		end
 	end
+	if __scenarios then
+		__scenarios(call, kaito, mirelle, remotes, SSS)
+	end
 	local errs = __smokeErrors()
 	local seen = {}
 	for _, e in errs do
@@ -220,13 +222,22 @@ return cases
 
 
 def main():
-    bundle = build_bundle([("smoke", SPEC.replace("__TICKS__", str(TICKS)))], preludes=("tests/engine_mock.luau", "tools/ui_mock.luau", "tools/server_mock.luau"))
+    scenarios = (ROOT / "tools" / "smoke_scenarios.luau").read_text() if (ROOT / "tools" / "smoke_scenarios.luau").exists() else ""
+    only = [a for a in sys.argv[3:]]
+    if only:
+        scenarios = scenarios.replace("__ONLY__", "{" + ",".join('"%s"' % o for o in only) + "}")
+    else:
+        scenarios = scenarios.replace("__ONLY__", "nil")
+    bundle = build_bundle([("smoke", SPEC.replace("__TICKS__", str(TICKS)).replace("-- __SCENARIOS__", scenarios))], preludes=("tests/engine_mock.luau", "tools/ui_mock.luau", "tools/server_mock.luau"))
     out = ROOT / "build" / "smoke.bundle.luau"
     out.parent.mkdir(exist_ok=True)
     out.write_text(bundle)
     res = subprocess.run([LUAU, str(out)], capture_output=True, text=True, timeout=600)
+    seen_warn = {}
     for line in (res.stdout + res.stderr).splitlines():
-        if line.startswith("[smoke]") or line.startswith("[warn]") or "FAIL" in line or "error" in line.lower():
+        if "[RigBuilder] could not build rig" in line:
+            continue  # known: the mock has no CreateHumanoidModelFromDescription (code falls back to blocks)
+        if line.startswith("[smoke]") or line.startswith("[warn]") or "FAIL" in line or "error" in line.lower() or ".luau:" in line or line.startswith("    "):
             print(line)
 
 

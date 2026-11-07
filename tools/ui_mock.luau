@@ -151,6 +151,19 @@ function methods.Clone(self)
 	return c
 end
 function methods.SetNetworkOwner() end
+function methods.MoveTo(self, pos)
+	rawget(self, "__props").__moveTarget = pos
+end
+function methods.GetState()
+	return "HumanoidStateType.Running"
+end
+function methods.ChangeState() end
+function methods.TakeDamage(self, d)
+	self.Health = math.max(0, self.Health - d)
+end
+function methods.Move() end
+function methods.EquipTool() end
+function methods.UnequipTools() end
 function methods.SetExperimentalFeatures() end
 function methods.AddTag(self, tag)
 	local t = rawget(self, "__tags") or {}

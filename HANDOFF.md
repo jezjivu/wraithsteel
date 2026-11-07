@@ -254,3 +254,16 @@ The guide is **still not in the repo**; this run followed the task brief + night
   Profile v16: `pvpWins`, `pvpLosses`, `pvpStreak`.
 - **Smoke test** gained `__giveCharacter` / `__advance` (tools/server_mock.luau) and a scripted
   duel + style checks.
+
+## Night 7 (same branch)
+- **Chapter progression**: `ChapterConfig` chapters follow the realms (0 Ashen Valley, 1 Neon,
+  2 Aeloria, 3 Ironcrow Keep, 4 next, 5 reserved). `SagaConfig.Quests[*].unlocksChapter` (warden 1,
+  static_spire 2, noon 3, ember_throne 4) -> `SagaService.QuestFinished` -> `ChapterService.SetAtLeast`.
+  The old boss-finale hook still works for chapters that list bosses (kagura_9, archon_helion,
+  tessai/ashrei). `RealmConfig.neon.unlockLevel` is 5 (guarded by tests/progression.spec.luau).
+- **Smoke scenarios**: `python3 tools/smoke_server.py <luau> 20 [ai boss trade raid market expedition travel saga]`
+  (no names = all). Scenarios live in `tools/smoke_scenarios.luau` and are spliced into the SPEC.
+  `tools/server_mock.luau` now has a real-time scheduler: `task.wait/delay` honor durations,
+  Heartbeat fires ~30 Hz, `__advance(seconds)` runs it. Known noise filtered: RigBuilder can't build
+  rigs in the mock (the code falls back to block rigs - intended).
+- **Decision recorded**: Ember lanterns are paid randomness (policy-gated, free opens allowed).

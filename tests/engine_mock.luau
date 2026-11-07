@@ -28,6 +28,7 @@ function V3.Cross(a, b)
 	return v3(a.Y * b.Z - a.Z * b.Y, a.Z * b.X - a.X * b.Z, a.X * b.Y - a.Y * b.X)
 end
 function V3.Dot(a, b) return a.X * b.X + a.Y * b.Y + a.Z * b.Z end
+function V3.Lerp(a, b, t) return v3(a.X + (b.X - a.X) * t, a.Y + (b.Y - a.Y) * t, a.Z + (b.Z - a.Z) * t) end
 Vector3 = { new = v3 }
 
 local function mat(a, b)
@@ -41,6 +42,7 @@ local function mat(a, b)
 	return r
 end
 local CF = {}
+local function s_get(self, i, j) return self.R[i][j] end
 local function cf(p, R) return setmetatable({ p = p, R = R }, CF) end
 local I3 = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } }
 CF.__mul = function(a, b)
@@ -69,6 +71,30 @@ CF.__index = function(self, k)
 		return v3(-self.R[1][3], -self.R[2][3], -self.R[3][3])
 	elseif k == "RightVector" then
 		return v3(self.R[1][1], self.R[2][1], self.R[3][1])
+	elseif k == "VectorToWorldSpace" then
+		return function(s, v)
+			local R = s.R
+			return v3(
+				R[1][1] * v.X + R[1][2] * v.Y + R[1][3] * v.Z,
+				R[2][1] * v.X + R[2][2] * v.Y + R[2][3] * v.Z,
+				R[3][1] * v.X + R[3][2] * v.Y + R[3][3] * v.Z
+			)
+		end
+	elseif k == "VectorToObjectSpace" then
+		return function(s, v)
+			local R = s.R
+			return v3(
+				R[1][1] * v.X + R[2][1] * v.Y + R[3][1] * v.Z,
+				R[1][2] * v.X + R[2][2] * v.Y + R[3][2] * v.Z,
+				R[1][3] * v.X + R[2][3] * v.Y + R[3][3] * v.Z
+			)
+		end
+	elseif k == "PointToWorldSpace" then
+		return function(s, v)
+			return s * v
+		end
+	elseif k == "UpVector" then
+		return v3(s_get(self, 1, 2), s_get(self, 2, 2), s_get(self, 3, 2))
 	elseif k == "Inverse" then
 		return function(s)
 			local Rt = { { s.R[1][1], s.R[2][1], s.R[3][1] }, { s.R[1][2], s.R[2][2], s.R[3][2] }, { s.R[1][3], s.R[2][3], s.R[3][3] } }
@@ -213,6 +239,8 @@ local function newInstance(cls)
 		props.Transparency = 0
 		props.Material = "Material.Plastic"
 		props.CanCollide = true
+		props.AssemblyLinearVelocity = v3(0, 0, 0)
+		props.AssemblyAngularVelocity = v3(0, 0, 0)
 	end
 	return setmetatable({ __props = props, __children = {}, __attrs = {} }, Inst)
 end
