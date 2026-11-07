@@ -18,14 +18,14 @@ local WeaponLogic = require(Logic.WeaponLogic)
 
 local cases = {}
 
-cases["Content: chapter boss lists (the Ashen Valley has none)"] = function()
+cases["Content: chapter boss lists (every listed boss exists)"] = function()
 	local count = 0
 	for chapter = 0, ChapterConfig.FinalChapter do
 		count += #ChapterConfig.Chapters[chapter].bosses
 	end
-	expectEq(count, 16, "total bosses (Prologue and Chapter 1 have none)")
-	expectEq(#ChapterConfig.Chapters[0].bosses + #ChapterConfig.Chapters[1].bosses, 0)
-	for chapter = 0, 1 do
+	expectEq(count, 4, "chapter finales and keep bosses are real bosses now")
+	expectEq(#ChapterConfig.Chapters[0].bosses, 0)
+	for chapter = 0, ChapterConfig.FinalChapter do
 		for _, bossId in ChapterConfig.Chapters[chapter].bosses do
 			expectTrue(BossConfig.Bosses[bossId] ~= nil, "missing boss " .. bossId)
 		end

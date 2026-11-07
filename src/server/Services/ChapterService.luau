@@ -8,6 +8,7 @@
 -- API:
 --   ChapterService.HasUnlocked(player, chapter) -> boolean
 --   ChapterService.Advance(player) -- called when the chapter finale is cleared
+--   ChapterService.SetAtLeast(player, chapter) -- story quests (SagaConfig unlocksChapter)
 --   ChapterService.ChapterAdvanced: Signal(player, newChapter)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -22,6 +23,8 @@ local DataService = require(script.Parent.DataService)
 local ProgressionService = require(script.Parent.ProgressionService)
 local QuestService = require(script.Parent.QuestService)
 local BossService = require(script.Parent.BossService)
+local SagaService = require(script.Parent.SagaService)
+local SagaConfig = require(Config:WaitForChild("SagaConfig"))
 local AnalyticsService = require(script.Parent.AnalyticsService)
 
 local ChapterService = {
@@ -33,6 +36,17 @@ local ChapterService = {
 function ChapterService.HasUnlocked(player: Player, chapter: number): boolean
 	local data = DataService.GetData(player)
 	return data ~= nil and data.chapter >= chapter
+end
+
+-- Raises the chapter to at least `chapter` (story quests; never lowers it).
+function ChapterService.SetAtLeast(player: Player, chapter: number)
+	local data = DataService.GetData(player)
+	if data == nil then
+		return
+	end
+	while data.chapter < math.min(chapter, ChapterConfig.FinalChapter) do
+		ChapterService.Advance(player)
+	end
 end
 
 function ChapterService.Advance(player: Player)
@@ -64,6 +78,13 @@ function ChapterService.Start()
 				if chapter and chapter.bosses[#chapter.bosses] == bossId then
 					ChapterService.Advance(player)
 				end
+			end
+		end
+	end)
+	SagaService.QuestFinished:Connect(function(player: Player, questId: string)
+		for _, q in SagaConfig.Quests do
+			if q.id == questId and q.unlocksChapter then
+				ChapterService.SetAtLeast(player, q.unlocksChapter)
 			end
 		end
 	end)

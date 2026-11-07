@@ -48,6 +48,7 @@ export type QuestDef = {
 	steps: { StepDef },
 	outro: { string },
 	rewards: { ember: number, xp: number, jade: number },
+	unlocksChapter: number?, -- finishing this quest raises the player's chapter to at least this (ChapterService)
 }
 
 local SagaConfig = {}
@@ -173,6 +174,7 @@ SagaConfig.Quests = {
 			"Beyond it lies a city that never stopped ringing. Find a fixer called Juno-7. Go.",
 		},
 		rewards = { ember = 500, xp = 600, jade = 20 },
+		unlocksChapter = 1,
 	},
 	-- Neon Verge -----------------------------------------------------------------------------
 	{
@@ -214,6 +216,7 @@ SagaConfig.Quests = {
 			"A new gate opened by the square. Gold light. Smells like olives and old arguments. Go see who's on the other side.",
 		},
 		rewards = { ember = 1500, xp = 1600, jade = 30 },
+		unlocksChapter = 2,
 	},
 	-- Aeloria ----------------------------------------------------------------------------------
 	{
@@ -257,6 +260,7 @@ SagaConfig.Quests = {
 			"West of the agora a fourth gate smokes like a forge. Beyond it: a castle that tried to keep the toll out.",
 		},
 		rewards = { ember = 3000, xp = 3500, jade = 50 },
+		unlocksChapter = 3,
 	},
 	-- Ironcrow Keep ---------------------------------------------------------------------------
 	{
@@ -301,6 +305,7 @@ SagaConfig.Quests = {
 			"Four gates open, bell-bearer. Five remain. The bell is still counting. (To be continued...)",
 		},
 		rewards = { ember = 6000, xp = 6500, jade = 60 },
+		unlocksChapter = 4,
 	},
 } :: { QuestDef }
 

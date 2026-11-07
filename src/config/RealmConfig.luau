@@ -50,7 +50,7 @@ RealmConfig.Realms = {
 		order = 2,
 		origin = { -4000, 0, 0 },
 		half = 360,
-		unlockLevel = 8, -- (no boss for now)
+		unlockLevel = 5, -- the Ashen Valley questline alone reaches level 5 (tests/progression.spec.luau)
 		color = { 60, 230, 255 },
 		areas = {
 			{ id = "neon_square", name = "Circuit Square", subtitle = "Holograms where the stars should be", center = { 0, 0 }, radius = 50 },
