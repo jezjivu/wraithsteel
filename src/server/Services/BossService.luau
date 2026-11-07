@@ -9,10 +9,13 @@
 --   otherwise). Animations: BossConfig move animationId (all placeholders today).
 --
 -- API:
---   BossService.StartEncounter(bossId, cframe, participants, arena?, opts?) -> encounterId?
---     opts (EncounterOpts) makes it an open-world encounter (world bosses)
+--   BossService.StartEncounter(bossId, cframe, participants, arena?, opts?, healthMultiplier?)
+--     -> encounterId?   opts (EncounterOpts) makes it an open-world encounter (world bosses);
+--     healthMultiplier scales max health on top of co-op scaling (raids)
 --   BossService.IsActive(encounterId) -> boolean
+--   BossService.Fail(encounterId)                         ends it as a defeat (raid time limit)
 --   BossService.BossDefeated: Signal(bossId, participants: {Player}, firstClears: {Player})
+--   BossService.EncounterEnded: Signal(encounterId, bossId, victory: boolean, participants)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -77,6 +80,7 @@ local BossService = {
 	Name = "BossService",
 	Priority = 31,
 	BossDefeated = Signal.new(),
+	EncounterEnded = Signal.new(),
 }
 
 local encounters: { [string]: Encounter } = {}
@@ -524,9 +528,17 @@ local function finish(e: Encounter, victory: boolean)
 		CombatService.Unregister(e.c.id)
 		e.c.model:Destroy()
 	end
+	BossService.EncounterEnded:Fire(e.id, e.bossId, victory, e.participants)
 end
 
-function BossService.StartEncounter(bossId: string, cframe: CFrame, participants: { Player }, arena: BasePart?, opts: EncounterOpts?): string?
+function BossService.StartEncounter(
+	bossId: string,
+	cframe: CFrame,
+	participants: { Player },
+	arena: BasePart?,
+	opts: EncounterOpts?,
+	healthMultiplier: number?
+): string?
 	local def = BossConfig.Bosses[bossId]
 	if def == nil or (#participants == 0 and opts == nil) then
 		return nil
@@ -540,7 +552,7 @@ function BossService.StartEncounter(bossId: string, cframe: CFrame, participants
 	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart
 	-- Stand the rig on the spawn point (scaled bosses have tall hips).
 	model:PivotTo(cframe + Vector3.new(0, humanoid.HipHeight + root.Size.Y / 2, 0))
-	local hp = BossStateMachine.ScaledHealth(bossId, #participants)
+	local hp = math.floor(BossStateMachine.ScaledHealth(bossId, #participants) * (healthMultiplier or 1) + 0.5)
 	humanoid.MaxHealth = hp
 	humanoid.Health = hp
 	humanoid.WalkSpeed = def.walkSpeed
@@ -759,6 +771,13 @@ local function setupArena(arena: BasePart)
 			end
 		end)
 	end)
+end
+
+function BossService.Fail(encounterId: string)
+	local e = encounters[encounterId]
+	if e then
+		finish(e, false)
+	end
 end
 
 function BossService.IsActive(encounterId: string): boolean

@@ -154,3 +154,118 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
   EnemyConfig.Alert.radius aware for a few seconds.
 - Secrets: waterfall cave (MapConfig.WaterfallCave, relic with `absY`), rooftop hooks on intact
   village houses. Map panel (M) draws MapConfig; K opens Skills.
+
+## Night 2 (cloud run, branch `claude/dreamy-fermi-wfrtop`, built on night 1's PR branch)
+The guide is **still not in the repo**; this run followed the task brief + night 1 contracts.
+- **Compliance fix (decide):** MonetizationConfig sells Ember (EmberSmall/EmberLarge/
+  StarterBundle), which makes Ember lanterns *paid random items* under Roblox rules. Now
+  `Shared/LanternOdds.IsPaid(lanternId)` = `paid` flag OR currency is Robux-purchasable (derived
+  from the product list). LanternService refuses paid opens where PolicyService restricts paid
+  random items (free opens still work); the client hides those lanterns unless the player has
+  free opens. Alternative: remove the Ember products, then Ember lanterns are unpaid again
+  automatically.
+- **Spirit `paid` flag** (new optional `SpiritInstance.paid`): set when a Spirit is bought with
+  currency from a paid lantern or the Night Market; fusion keeps it; trades carry it.
+- **Trades:** `TradeLogic.New(a, b, allowPaid)`; `Validate` split from `Execute`. TradeService
+  commits via `Logic/TradeLedger` (DataStore `TradeConfig.LedgerStoreName`, in-memory in Studio
+  without API access). Keys: `t_<tradeId>` record, `u_<userId>` index. Profile `tradesApplied` /
+  `tradeOrder` (v12, private). `DataService.AddLoadHook` runs recovery before the snapshot.
+  `Logic/TradeLock` freezes Spirit-changing requests (Spirit/Fusion/Expedition services check it).
+- **Night Market:** `NightMarketConfig` (items, weights, limits), `Shared/NightMarketLogic`
+  (Stock(window), CanBuy), `Shared/SeededRandom` (mulberry32; never for paid rolls). Remotes
+  `GetNightMarket()`, `BuyNightMarket(slot, window)`. Profile `nightMarket` (v13). Station kind
+  `NightMarket` maps to the panel (stall itself is a Studio TODO); menu button "Market".
+- **Raids:** `RaidConfig`, `Logic/RaidLogic`, `RaidService` (priority 54), remotes
+  `RaidRequest(op, arg?)` / `RaidEvent`. Raid server = `PrivateServerId ~= ""` and
+  `PrivateServerOwnerId == 0`; manifest from MemoryStore `RaidConfig.ManifestStore` keyed by
+  PrivateServerId. Profile `raidClears` (v14). `BossService.StartEncounter(..., healthMultiplier?)`,
+  `BossService.Fail(id)`, `BossService.EncounterEnded(id, bossId, victory, participants)`.
+  Placeholder: the raid fights `archon_helion` until a raid boss exists.
+- **Security:** `SecurityService` (priority 7), `Logic/ExploitScore`, server-only
+  `ServerConfig/SecurityConfig`. Analytics custom events `SecurityFlag`, `SecurityKick`.
+- Tooling used: luau 0.700 + luau-lsp 1.53.0 with the matching `globalTypes.None.d.luau` from
+  the luau-lsp 1.53.0 tag (the defs on luau-lsp `main` need a newer luau-lsp).
+- Not done from the brief: a separate GiftService - gifting already lives in MarketService
+  (gift products, gift tokens, offline delivery via profile messages).
+
+## Night 3 (UI pass + content, same branch)
+- **Design tokens live only in `src/client/UI/Kit.luau`** (`Kit.Colors`, fonts, `Kit.Radius`).
+  Button style follows the color passed: `C.Accent` = vermilion primary (use once per screen),
+  `C.Row`/`C.Steel` = quiet, anything else = tinted. New components: `Seal`, `GateLine`,
+  `Icon(kind)`, `Section`, `Chip`, `Progress`, `BarLine`, `KeyValue`, `Currency` (returns pill +
+  value label), `Wallet`, `Toggle`, `Empty`, `Strip`, `AutoScale`, `ScaleFor`.
+  `Kit.Window(parent, title, { tabs, activeTab, onTab, glyph?, subtitle? })`.
+- **Dock** (`UIController`): groups table `GROUPS`; add a panel to a group's `tabs` to give it a
+  tab. Station prompts still open panels directly (with `atStation`).
+- **HUD**: bottom meters live in the `Vitals` frame (scaled as one block). Arts bar, objective,
+  controls card, toasts and dock each carry `Kit.AutoScale`.
+- **Preview tool**: `python3 tools/render_ui.py <luau> [scene ...] [--size WxH] [--out dir]`
+  runs real client code with `tests/engine_mock.luau` + `tools/ui_mock.luau` +
+  `tools/ui_fixture.luau` and draws PNGs. It approximates Roblox (stand-in fonts, no images or
+  3D in viewports). New scene = a file in `tools/ui_scenes/` returning a builder function
+  (`__client()`, `__openPanel(name)`). `tools/ui_sheet.py` tiles PNGs.
+- **Content**: `BossConfig.kurozuma` (Raid), Tidewater Spirits + abilities in `SpiritConfig`,
+  `LanternConfig.tidewater_lantern` (added to `HubConfig.ShrineLanterns`, so the generated hub
+  now has 4 pedestals), Night Market `crab_ashen` / `kite_gilded`.
+
+## Night 4 (same branch)
+- **Bell Dice** (`Shared/DiceLogic`, `DiceConfig`, `DiceService` priority 25, `DiceController`,
+  panel `BellDice` in the Market dock group). Remotes `DiceState()`, `DiceBet(betId, amount)`,
+  `DiceExchange(amount)`, `DiceEvent` (broadcast). Profile v15: `chips`, `chipsDay`,
+  `chipsExchangedDay`, `chipsExchanged`. **Compliance:** chips must never get a Robux, Ember or
+  Jade path in, never be tradeable, never be a code/bundle reward (tests/dice.spec.luau checks
+  products and codes). It is refused where PolicyService restricts paid random items. Real-
+  money/Robux gambling is not allowed on Roblox; this is simulated gambling with free chips and
+  must be declared in the experience questionnaire.
+- **Enemy AI**: `Logic/EnemyMovement` (ring slots, separation, step back, pack offsets,
+  anti-guard weight), knobs in `EnemyConfig.Movement`. EnemyService brains gained
+  `attackedAt`, `attackHandled`, `retreatUntil`, `driftSign`.
+- **World**: `MapConfig.Clutter` (gate counts), `MapConfig.MinSpawnGap` / `MinSentryGap`
+  (enforced by tests/world.spec.luau). The map itself was not scaled: Saga NPCs, waystones,
+  the river and the waterfall cave are hand-placed and would need moving together.
+- **Party frames**: `PartyFramesController` (reads PartyController.State + characters).
+  The dock now sits at 60% height so the frames fit above it.
+
+## Night 5 (same branch)
+- **Ironcrow Keep**: `RealmConfig.Realms.keep` (origin {0, 0, -5000}, half 420, unlocked by
+  `archon_helion`), `World/KeepBuilder` (blockout), portals greek <-> keep, `LightingConfig.Realms.keep`,
+  `RealmConfig.FallRespawnDepth` (RealmService sends fallen players to the realm's nearest waystone).
+  Map preview: `python3 tools/render_map.py <luau> out.png keep` (assets/keep_top_preview.png).
+- **Bosses** `tessai` (ArenaConfig layout "Castle") and `ashrei` (layout "Throne"); enemies
+  `keep_footman`, `crow_knight`, `ember_archer`, elite `castellan`.
+- **Story**: NPC `hanabusa` (keep), quests `iron_gate`, `crows_over_ash`, `ember_throne`.
+- **Smoke test**: `python3 tools/smoke_server.py <luau> [ticks]` with `tools/server_mock.luau`
+  (DataStores fail with 403 so ProfileStore uses its mock; task.wait parks threads until the
+  next tick; os.clock does not advance, so timed loops and rate limits are only roughly
+  exercised). Add actions to its SPEC to cover new remotes.
+
+## Night 6 (same branch)
+- **Styles**: `StyleConfig.Styles.*.mechanic` + `Shared/StyleLogic` (pure). CombatService keeps
+  `styleId`, `styleState`, `armorUntil` per player combatant; stacks published as character
+  attribute `StyleStacks`. `CombatRules.Validate` takes `opts.dashWindow`. Hit field `guardCrush`.
+- **Animations**: `AnimationConfig.StyleStances` (additive on the class stance; stance keys
+  look like "OneHanded:mountain"), `AnimationConfig.StyleFlavor`, `DefaultFlavor`.
+  Preview: `python3 tools/render_poses.py <luau> out.png`.
+- **Duels**: `PvpConfig`, `Logic/DuelLogic`, `DuelService` (priority 55), remotes
+  `DuelRequest(op, userId?)` / `DuelEvent`, `DuelController`, panel `Duels` (Bonds tab).
+  `Combatant.duelId` marks fighters (TargetsInArc lets duel opponents hit each other;
+  SpellService/KunaiService/SpiritAbilityService refuse during duels; RefreshStats skips).
+  `CombatService.OnDuelLethal` is called instead of a kill. Player attributes `InDuel`, `InArena`.
+  Profile v16: `pvpWins`, `pvpLosses`, `pvpStreak`.
+- **Smoke test** gained `__giveCharacter` / `__advance` (tools/server_mock.luau) and a scripted
+  duel + style checks.
+
+## Night 7 (same branch)
+- **Chapter progression**: `ChapterConfig` chapters follow the realms (0 Ashen Valley, 1 Neon,
+  2 Aeloria, 3 Ironcrow Keep, 4 next, 5 reserved). `SagaConfig.Quests[*].unlocksChapter` (warden 1,
+  static_spire 2, noon 3, ember_throne 4) -> `SagaService.QuestFinished` -> `ChapterService.SetAtLeast`.
+  The old boss-finale hook still works for chapters that list bosses (kagura_9, archon_helion,
+  tessai/ashrei). `RealmConfig.neon.unlockLevel` is 5 (guarded by tests/progression.spec.luau).
+- **Smoke scenarios**: `python3 tools/smoke_server.py <luau> 20 [ai boss trade raid market expedition travel saga]`
+  (no names = all). Scenarios live in `tools/smoke_scenarios.luau` and are spliced into the SPEC.
+  `tools/server_mock.luau` now has a real-time scheduler: `task.wait/delay` honor durations,
+  Heartbeat fires ~30 Hz, `__advance(seconds)` runs it. Known noise filtered: RigBuilder can't build
+  rigs in the mock (the code falls back to block rigs - intended).
+- **Decision recorded**: Ember lanterns are paid randomness (policy-gated, free opens allowed).
+- **Client smoke**: `python3 tools/smoke_client.py <luau> [seconds]` boots every controller like
+  ClientBootstrap does under ui_mock + ui_fixture (camera, services, signals mocked).

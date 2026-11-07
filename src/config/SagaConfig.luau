@@ -1,6 +1,7 @@
 --!strict
 -- SagaConfig: the story. NPCs you can talk to, and the main questline that runs through all
--- three realms (Ashen Valley -> Neon Verge -> Aeloria). All characters and text are original.
+-- four realms (Ashen Valley -> Neon Verge -> Aeloria -> Ironcrow Keep). All characters and text
+-- are original.
 --
 -- Positions: {x, z} local to the NPC's realm (RealmConfig). Ashen Valley NPCs with hub = true
 -- are relative to the hub center instead.
@@ -47,6 +48,7 @@ export type QuestDef = {
 	steps: { StepDef },
 	outro: { string },
 	rewards: { ember: number, xp: number, jade: number },
+	unlocksChapter: number?, -- finishing this quest raises the player's chapter to at least this (ChapterService)
 }
 
 local SagaConfig = {}
@@ -104,6 +106,12 @@ SagaConfig.Npcs = {
 		id = "lysander", name = "Lysander", title = "Philosopher (unpaid)", realm = "greek", at = { 30, 26 }, facing = 200,
 		look = { skin = { 215, 185, 155 }, body = { 220, 210, 190 }, legs = { 200, 190, 170 }, headwear = "Hair", accent = { 120, 110, 100 }, outfit = "Robe", face = "Calm", scale = 1 },
 		chatter = { "If a bell cracks and no one hears it, does the world still end? I have a pamphlet.", "The statues argue at night. I've been taking notes." },
+	},
+	-- Ironcrow Keep ---------------------------------------------------------------------------
+	{
+		id = "hanabusa", name = "Hanabusa", title = "Deserter of the Ironcrow", realm = "keep", at = { 14, 300 }, facing = 200,
+		look = { skin = { 200, 170, 145 }, body = { 70, 60, 55 }, legs = { 45, 40, 38 }, headwear = "Kasa", accent = { 150, 40, 40 }, weapon = "spear_crimson_tassel", outfit = "Ronin", face = "Calm", scale = 1 },
+		chatter = { "I carried the regent's banner for nine years. Then I saw what she did with the embers.", "The bridge crows have eyes. Real ones. Don't ask how I know." },
 	},
 } :: { NpcDef }
 
@@ -166,6 +174,7 @@ SagaConfig.Quests = {
 			"Beyond it lies a city that never stopped ringing. Find a fixer called Juno-7. Go.",
 		},
 		rewards = { ember = 500, xp = 600, jade = 20 },
+		unlocksChapter = 1,
 	},
 	-- Neon Verge -----------------------------------------------------------------------------
 	{
@@ -207,6 +216,7 @@ SagaConfig.Quests = {
 			"A new gate opened by the square. Gold light. Smells like olives and old arguments. Go see who's on the other side.",
 		},
 		rewards = { ember = 1500, xp = 1600, jade = 30 },
+		unlocksChapter = 2,
 	},
 	-- Aeloria ----------------------------------------------------------------------------------
 	{
@@ -246,9 +256,56 @@ SagaConfig.Quests = {
 		steps = { { kind = "Boss", bossId = "archon_helion", text = "Defeat Helion in the Temple of the Sun-Archon" } },
 		outro = {
 			"The sun is free. Look - it's setting. It hasn't set in four hundred years.",
-			"Three gates open, bell-bearer. Six remain. The bell is still counting. (To be continued...)",
+			"Three gates open, bell-bearer. Six remain. The bell is still counting.",
+			"West of the agora a fourth gate smokes like a forge. Beyond it: a castle that tried to keep the toll out.",
 		},
 		rewards = { ember = 3000, xp = 3500, jade = 50 },
+		unlocksChapter = 3,
+	},
+	-- Ironcrow Keep ---------------------------------------------------------------------------
+	{
+		id = "iron_gate", title = "The Iron Gate", realm = "keep", giver = "hanabusa",
+		intro = {
+			"You came through the smoke gate? Then you are either brave or lost. Both are useful here.",
+			"The garrison still marches as if the regent lived. Footmen guard behind their shields - break the guard, then strike.",
+			"Tessai holds the bailey. He was my captain. He does not remember me. Free him.",
+		},
+		steps = {
+			{ kind = "Reach", realm = "keep", at = { 0, 160 }, radius = 30, text = "Pass under the Ironcrow Gatehouse" },
+			{ kind = "Kill", enemies = { "keep_footman" }, count = 4, text = "Break the Ironcrow Footmen" },
+			{ kind = "Boss", bossId = "tessai", text = "Defeat Tessai, the Iron Ward (Outer Bailey)" },
+		},
+		outro = { "...He thanked you? Before the end? Then some of him was still there.", "The inner keep is past the Crow Bridge. Clear the walls first, or the archers will pin you on it." },
+		rewards = { ember = 3200, xp = 3800, jade = 20 },
+	},
+	{
+		id = "crows_over_ash", title = "Crows over Ash", realm = "keep", giver = "hanabusa",
+		intro = {
+			"Two ways to the bridge: the High Ramparts or the Chapel of Ash. The Castellan walks the ramparts. He rises twice.",
+			"Crow Knights deflect like duelists - press them until their posture cracks. Ember arrows can be sent back.",
+		},
+		steps = {
+			{ kind = "Kill", enemies = { "crow_knight" }, count = 3, text = "Defeat Crow Knights" },
+			{ kind = "Kill", enemies = { "ember_archer" }, count = 2, text = "Silence the Ember Archers" },
+			{ kind = "Kill", enemies = { "castellan" }, count = 1, text = "Defeat Castellan Gorou (High Ramparts)" },
+			{ kind = "Reach", realm = "keep", at = { 0, -150 }, radius = 20, text = "Cross the Crow Bridge" },
+		},
+		outro = { "You crossed. Good. The regent will have felt it - every stone here reports to her." },
+		rewards = { ember = 3800, xp = 4200, jade = 20 },
+	},
+	{
+		id = "ember_throne", title = "The Ember Throne", realm = "keep", giver = "hanabusa",
+		intro = {
+			"Ashrei crowned herself with the bell's embers. She fights like fire: fast, then everywhere.",
+			"Her crescents can be turned back. When she raises the crown, get away from her - or deflect the ring.",
+		},
+		steps = { { kind = "Boss", bossId = "ashrei", text = "Defeat Ashrei, the Ember-Crowned Regent (Inner Keep)" } },
+		outro = {
+			"The embers are out. The keep is just stone again. Stone I can live with.",
+			"Four gates open, bell-bearer. Five remain. The bell is still counting. (To be continued...)",
+		},
+		rewards = { ember = 6000, xp = 6500, jade = 60 },
+		unlocksChapter = 4,
 	},
 } :: { QuestDef }
 

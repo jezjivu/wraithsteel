@@ -6,6 +6,7 @@ local BossConfig = require(Config.BossConfig)
 local ChapterConfig = require(Config.ChapterConfig)
 local EnemyConfig = require(Config.EnemyConfig)
 local LanternConfig = require(Config.LanternConfig)
+local LanternOdds = require(game:GetService("ReplicatedStorage").Shared.LanternOdds)
 local SpiritConfig = require(Config.SpiritConfig)
 local WeaponConfig = require(Config.WeaponConfig)
 local RewardConfig = require(Config.RewardConfig)
@@ -17,14 +18,14 @@ local WeaponLogic = require(Logic.WeaponLogic)
 
 local cases = {}
 
-cases["Content: chapter boss lists (the Ashen Valley has none)"] = function()
+cases["Content: chapter boss lists (every listed boss exists)"] = function()
 	local count = 0
 	for chapter = 0, ChapterConfig.FinalChapter do
 		count += #ChapterConfig.Chapters[chapter].bosses
 	end
-	expectEq(count, 16, "total bosses (Prologue and Chapter 1 have none)")
-	expectEq(#ChapterConfig.Chapters[0].bosses + #ChapterConfig.Chapters[1].bosses, 0)
-	for chapter = 0, 1 do
+	expectEq(count, 4, "chapter finales and keep bosses are real bosses now")
+	expectEq(#ChapterConfig.Chapters[0].bosses, 0)
+	for chapter = 0, ChapterConfig.FinalChapter do
 		for _, bossId in ChapterConfig.Chapters[chapter].bosses do
 			expectTrue(BossConfig.Bosses[bossId] ~= nil, "missing boss " .. bossId)
 		end
@@ -60,6 +61,10 @@ cases["Content: lanterns, spirits, quests, weapons reference valid ids"] = funct
 			expectTrue(SpiritConfig.Rarities[l.pity.minRarity] ~= nil, id .. " pity rarity")
 		end
 		expectEq(l.paid, l.currency == "Jade", id .. " paid flag must match Jade currency")
+		-- Any lantern priced in a Robux-purchasable currency must count as a paid random item.
+		if LanternOdds.IsPurchasableCurrency(l.currency) then
+			expectTrue(LanternOdds.IsPaid(id), id .. " is bought with Robux-purchasable currency")
+		end
 	end
 	for id, s in SpiritConfig.Spirits do
 		expectTrue(SpiritConfig.Rarities[s.rarity] ~= nil, id)

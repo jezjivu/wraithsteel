@@ -13,6 +13,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 
 local ExpeditionLogic = require(script.Parent.Parent:WaitForChild("Logic"):WaitForChild("ExpeditionLogic"))
+local TradeLock = require(script.Parent.Parent:WaitForChild("Logic"):WaitForChild("TradeLock"))
 local DataService = require(script.Parent.DataService)
 local MarketService = require(script.Parent.MarketService)
 local ProgressionService = require(script.Parent.ProgressionService)
@@ -21,6 +22,9 @@ local AnalyticsService = require(script.Parent.AnalyticsService)
 local ExpeditionService = { Name = "ExpeditionService", Priority = 24 }
 
 function ExpeditionService.Send(player: Player, slotId: string, routeId: string, uids: { string }): (boolean, string?)
+	if TradeLock.IsLocked(player.UserId) then
+		return false, TradeLock.Message
+	end
 	local data = DataService.GetData(player)
 	if data == nil then
 		return false, "Loading..."

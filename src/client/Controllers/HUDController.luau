@@ -1,6 +1,6 @@
 --!strict
--- HUDController: code-built HUD (placeholder style until Agent D designs the real one).
---   * top-left: Ember, Jade, Level, Power
+-- HUDController: code-built HUD in the Kit "Ink & Seal" look.
+--   * top-left: level seal + Ember / Jade / Power pills, skill-point reminder
 --   * bottom-center: your Health, Posture and Ultimate meters
 --   * top-center: boss bar (name, title, HP, posture, phase) during boss encounters
 --   * zone banner when entering a new area (ZoneService)
@@ -18,6 +18,7 @@ local FormatNumber = require(Shared:WaitForChild("FormatNumber"))
 local BossConfig = require(Config:WaitForChild("BossConfig"))
 local EffectsConfig = require(Config:WaitForChild("EffectsConfig"))
 local SkillLogic = require(Shared:WaitForChild("SkillLogic"))
+local StyleConfig = require(Config:WaitForChild("StyleConfig"))
 
 local UI = script.Parent.Parent:WaitForChild("UI")
 local Kit = require(UI:WaitForChild("Kit"))
@@ -61,38 +62,35 @@ end
 local C = Kit.Colors
 local localPlayer = Players.LocalPlayer
 
-local stats: TextLabel? = nil
 local showDeathScreen: () -> ()
 
 type Meter = { frame: Frame, fill: Frame, ghost: Frame, label: TextLabel, centered: boolean, last: number }
 
--- WRAITHSTEEL meters: a sharp steel-framed slot, a lit fill and a pale "ghost" that lingers
+-- Meters: a rounded ink track with a hairline, a lit fill and a pale "ghost" that lingers
 -- where you just lost value, then drains after it. Centered meters (posture) grow from the
--- middle outward.
+-- middle outward. The label sits above the bar (left), so the bar itself stays clean.
 local function meter(parent: Instance, pos: UDim2, size: UDim2, color: Color3, text: string, centered: boolean?): Meter
 	local frame = Instance.new("Frame")
 	frame.Position = pos
 	frame.Size = size
 	frame.BackgroundColor3 = C.Ink
-	frame.BackgroundTransparency = 0.15
+	frame.BackgroundTransparency = 0.2
 	frame.BorderSizePixel = 0
 	frame.ClipsDescendants = true
 	frame.Parent = parent
-	local st = Instance.new("UIStroke")
-	st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	st.Color = C.Steel
-	st.Transparency = 0.35
-	st.Parent = frame
+	Kit.Corner(frame, 4)
+	Kit.Stroke(frame, C.Line, 0.7, 1)
 	local anchor = if centered then Vector2.new(0.5, 0) else Vector2.new(0, 0)
 	local at = if centered then UDim2.fromScale(0.5, 0) else UDim2.fromScale(0, 0)
 	local ghost = Instance.new("Frame")
 	ghost.AnchorPoint = anchor
 	ghost.Position = at
 	ghost.Size = UDim2.fromScale(if centered then 0 else 1, 1)
-	ghost.BackgroundColor3 = Color3.fromRGB(245, 235, 215)
-	ghost.BackgroundTransparency = 0.35
+	ghost.BackgroundColor3 = C.Text
+	ghost.BackgroundTransparency = 0.45
 	ghost.BorderSizePixel = 0
 	ghost.Parent = frame
+	Kit.Corner(ghost, 4)
 	local fill = Instance.new("Frame")
 	fill.AnchorPoint = anchor
 	fill.Position = at
@@ -100,8 +98,9 @@ local function meter(parent: Instance, pos: UDim2, size: UDim2, color: Color3, t
 	fill.BackgroundColor3 = color
 	fill.BorderSizePixel = 0
 	fill.Parent = frame
+	Kit.Corner(fill, 4)
 	local g = Instance.new("UIGradient")
-	g.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(150, 150, 150))
+	g.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(175, 175, 175))
 	g.Rotation = 90
 	g.Parent = fill
 	-- Bright leading edge.
@@ -109,20 +108,26 @@ local function meter(parent: Instance, pos: UDim2, size: UDim2, color: Color3, t
 	tip.AnchorPoint = Vector2.new(1, 0)
 	tip.Position = UDim2.fromScale(1, 0)
 	tip.Size = UDim2.new(0, 2, 1, 0)
-	tip.BackgroundColor3 = color:Lerp(Color3.new(1, 1, 1), 0.6)
+	tip.BackgroundColor3 = color:Lerp(Color3.new(1, 1, 1), 0.65)
 	tip.BorderSizePixel = 0
 	tip.Visible = not centered
 	tip.Parent = fill
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.fromScale(1, 1)
+	label.AnchorPoint = Vector2.new(0, 1)
+	label.Position = UDim2.new(0, 2, 0, -3)
+	label.Size = UDim2.new(1, -4, 0, 14)
 	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.GothamBold
-	label.TextSize = 12
+	label.Font = Kit.BoldFont
+	label.TextSize = 13
 	label.TextColor3 = C.Text
-	label.TextStrokeTransparency = 0.4
-	label.Text = string.upper(text)
+	label.TextStrokeTransparency = 0.6
+	label.TextXAlignment = if centered then Enum.TextXAlignment.Center else Enum.TextXAlignment.Left
+	label.Text = text
 	label.ZIndex = 2
-	label.Parent = frame
+	label.Parent = frame.Parent
+	-- keep the label glued above its bar
+	label.Position = UDim2.new(pos.X.Scale, pos.X.Offset + 2, pos.Y.Scale, pos.Y.Offset - 3)
+	label.Size = UDim2.new(size.X.Scale, size.X.Offset - 4, 0, 14)
 	return { frame = frame, fill = fill, ghost = ghost, label = label, centered = centered == true, last = if centered then 0 else 1 }
 end
 
@@ -142,7 +147,7 @@ local function setMeter(m: Meter, frac: number, text: string?)
 	end
 	m.last = f
 	if text then
-		m.label.Text = string.upper(text)
+		m.label.Text = text
 	end
 end
 
@@ -157,24 +162,46 @@ local bossHp: Meter? = nil
 local bossPosture: Meter? = nil
 
 local pointsChip: TextLabel? = nil
-local function refreshStats()
-	local label = stats
-	if label == nil then
+local styleChip: TextLabel? = nil
+
+-- "Flowing River  ◆◆◇" : style name in its color, stacks as filled/empty diamonds.
+local function refreshStyleChip()
+	local chip = styleChip
+	if chip == nil then
 		return
 	end
-	label.Text = string.format(
-		"Ember %s   Jade %s   Lv %s   Power %s",
-		FormatNumber.Short(DataController.Get("ember") or 0),
-		FormatNumber.Short(DataController.Get("jade") or 0),
-		tostring(DataController.Get("level") or 1),
-		FormatNumber.Short(tonumber(localPlayer:GetAttribute("Power")) or 0)
-	)
+	local id = localPlayer:GetAttribute("FightingStyle")
+	local def = StyleConfig.Get(if type(id) == "string" then id else nil)
+	local ch = localPlayer.Character
+	local stacks = if ch then tonumber(ch:GetAttribute("StyleStacks")) or 0 else 0
+	local max = def.mechanic.maxStacks or 0
+	local hex = Color3.fromRGB(def.color[1], def.color[2], def.color[3]):ToHex()
+	local pips = ""
+	if max > 0 then
+		pips = "  " .. string.rep("◆", stacks) .. string.rep("◇", max - stacks)
+	elseif def.mechanic.kind == "Unshaken" then
+		pips = "  heavies armored"
+	elseif def.mechanic.kind == "Gale" then
+		pips = "  dash -> crit"
+	end
+	chip.Text = string.format('<font color="#%s">%s</font>%s', hex, def.name, pips)
+end
+local statLabels: { [string]: TextLabel? } = {}
+local function refreshStats()
+	local lv, em, jd, pw = statLabels.level, statLabels.ember, statLabels.jade, statLabels.power
+	if lv == nil or em == nil or jd == nil or pw == nil then
+		return
+	end
+	lv.Text = tostring(DataController.Get("level") or 1)
+	em.Text = FormatNumber.Short(DataController.Get("ember") or 0)
+	jd.Text = FormatNumber.Short(DataController.Get("jade") or 0)
+	pw.Text = FormatNumber.Short(tonumber(localPlayer:GetAttribute("Power")) or 0)
 	-- Unspent skill points reminder.
 	local chip = pointsChip
 	if chip then
 		local pts = SkillLogic.Available(DataController.Get("level") or 1, DataController.Get("skills") or {}, SkillLogic.Count(DataController.Get("relics")))
 		chip.Visible = pts > 0
-		chip.Text = string.format("✦ %d SKILL POINT%s  ·  PRESS K", pts, if pts == 1 then "" else "S")
+		chip.Text = string.format("%d skill point%s to spend  ·  K", pts, if pts == 1 then "" else "s")
 	end
 end
 
@@ -216,16 +243,16 @@ showDeathScreen = function()
 	t.Position = UDim2.fromScale(0.5, 0.42)
 	t.Size = UDim2.new(1, 0, 0, 80)
 	t.BackgroundTransparency = 1
-	t.Font = Enum.Font.Antique
-	t.TextSize = 72
-	t.TextColor3 = Color3.fromRGB(220, 50, 40)
+	t.Font = Kit.TitleFont
+	t.TextSize = 64
+	t.TextColor3 = C.Accent
 	t.TextTransparency = 1
 	t.Text = "FALLEN"
 	t.ZIndex = 21
 	t.Parent = f
 	local s2 = t:Clone()
 	s2.Position = UDim2.fromScale(0.5, 0.52)
-	s2.Font = Enum.Font.GothamMedium
+	s2.Font = Kit.MediumFont
 	s2.TextSize = 22
 	s2.TextColor3 = Color3.fromRGB(230, 220, 210)
 	s2.Text = "Your spirit returns to Ninefold Crossing..."
@@ -267,16 +294,20 @@ local function bindCharacter(character: Model)
 			local n = tonumber(character:GetAttribute("Flask")) or 0
 			local breath = character:GetAttribute("Breath") == true
 			local kunai = tonumber(character:GetAttribute("Kunai")) or 0
-			flaskLabel.Text = string.format("Flask x%d%s  ·  Kunai %d", n, if breath then " ✦" else "", kunai)
+			flaskLabel.Text = string.format("Flask %d%s   ·   Kunai %d", n, if breath then "  +breath" else "", kunai)
 			flaskLabel.TextColor3 = if n > 0 then Color3.fromRGB(150, 220, 255) else Color3.fromRGB(150, 140, 140)
 		end
 		if posture then
 			local p = tonumber(character:GetAttribute("Posture")) or 0
-			setMeter(posture, p, if p >= 0.75 then "Posture - careful!" else "Posture")
+			setMeter(posture, p, "Posture breaking - guard carefully")
+			posture.label.Visible = p >= 0.75
+			posture.label.TextColor3 = Color3.fromRGB(240, 196, 96)
 		end
 		if ultimate then
 			local u = tonumber(character:GetAttribute("Ultimate")) or 0
-			setMeter(ultimate, u, if u >= 1 then "Ultimate READY (G)" else "Ultimate")
+			setMeter(ultimate, u, "Ultimate ready  ·  G")
+			ultimate.label.Visible = u >= 1
+			ultimate.label.TextColor3 = Color3.fromRGB(150, 190, 255)
 		end
 	end
 	humanoid.Died:Connect(showDeathScreen)
@@ -287,64 +318,89 @@ local function bindCharacter(character: Model)
 	character:GetAttributeChangedSignal("Flask"):Connect(refresh)
 	character:GetAttributeChangedSignal("Breath"):Connect(refresh)
 	character:GetAttributeChangedSignal("Kunai"):Connect(refresh)
+	character:GetAttributeChangedSignal("StyleStacks"):Connect(refreshStyleChip)
 	refresh()
+	refreshStyleChip()
 end
 
 function HUDController.Init()
 	local gui = Kit.Screen(localPlayer:WaitForChild("PlayerGui"), "HUD", 3)
 	hudGui = gui
 
-	local s = Instance.new("TextLabel")
-	s.Position = UDim2.fromOffset(10, 10)
-	s.Size = UDim2.fromOffset(400, 30)
-	s.BackgroundColor3 = C.Ink
-	s.BackgroundTransparency = 0.25
-	s.TextColor3 = C.Gold
-	s.Font = Enum.Font.GothamBold
-	s.TextSize = 15
-	s.Parent = gui
-	local sst = Instance.new("UIStroke")
-	sst.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	sst.Color = C.Steel
-	sst.Transparency = 0.5
-	sst.Parent = s
-	Kit.BladeLine(s, UDim2.new(0, 0, 1, 0), UDim.new(1, 0))
-	stats = s
+	-- Top-left plate: level seal, then Ember / Jade / Power pills.
+	local plate = Instance.new("Frame")
+	plate.Name = "Stats"
+	plate.Position = UDim2.fromOffset(12, 10)
+	plate.Size = UDim2.fromOffset(0, 34)
+	plate.AutomaticSize = Enum.AutomaticSize.X
+	plate.BackgroundTransparency = 1
+	plate.Parent = gui
+	Kit.AutoScale(plate)
+	local row = Instance.new("UIListLayout")
+	row.FillDirection = Enum.FillDirection.Horizontal
+	row.VerticalAlignment = Enum.VerticalAlignment.Center
+	row.Padding = UDim.new(0, 6)
+	row.SortOrder = Enum.SortOrder.LayoutOrder
+	row.Parent = plate
+	local seal = Kit.Seal(plate, "1", 34)
+	local lvText = seal:FindFirstChildOfClass("TextLabel") :: TextLabel
+	lvText.Font = Kit.HeavyFont
+	lvText.TextSize = 17
+	statLabels.level = lvText
+	local _, em = Kit.Currency(plate, "ember", "0")
+	local _, jd = Kit.Currency(plate, "jade", "0")
+	local _, pw = Kit.Currency(plate, "power", "0")
+	statLabels.ember, statLabels.jade, statLabels.power = em, jd, pw
 	local chip = Instance.new("TextLabel")
-	chip.Position = UDim2.fromOffset(10, 46)
-	chip.Size = UDim2.fromOffset(300, 22)
-	chip.BackgroundColor3 = C.Ink
-	chip.BackgroundTransparency = 0.25
+	chip.Position = UDim2.fromOffset(12, 50)
+	chip.Size = UDim2.fromOffset(0, 24)
+	chip.AutomaticSize = Enum.AutomaticSize.X
+	chip.BackgroundColor3 = C.Gold
+	chip.BackgroundTransparency = 0.82
 	chip.BorderSizePixel = 0
-	chip.Font = Enum.Font.GothamBold
-	chip.TextSize = 12
+	chip.Font = Kit.BoldFont
+	chip.TextSize = 13
 	chip.TextColor3 = C.Gold
 	chip.Visible = false
 	chip.Parent = gui
-	local cst = Instance.new("UIStroke")
-	cst.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	cst.Color = C.Gold
-	cst.Transparency = 0.4
-	cst.Parent = chip
+	Kit.AutoScale(chip)
+	Kit.Corner(chip, 999)
+	Kit.Stroke(chip, C.Gold, 0.5, 1)
+	Kit.Pad(chip, 12, 0)
 	pointsChip = chip
 
 	-- Player meters (bottom center, above the default toolbar area).
-	health = meter(gui, UDim2.new(0.5, -160, 1, -92), UDim2.fromOffset(320, 22), Color3.fromRGB(190, 55, 50), "Health")
+	-- Bottom cluster (health, flask, ultimate, posture) scales as one block on small screens.
+	local cluster = Instance.new("Frame")
+	cluster.Name = "Vitals"
+	cluster.AnchorPoint = Vector2.new(0.5, 1)
+	cluster.Position = UDim2.new(0.5, 0, 1, -14)
+	cluster.Size = UDim2.fromOffset(700, 80)
+	cluster.BackgroundTransparency = 1
+	cluster.Parent = gui
+	Kit.AutoScale(cluster)
+	health = meter(cluster, UDim2.new(0.5, -170, 0, 24), UDim2.fromOffset(340, 14), Color3.fromRGB(196, 62, 52), "Health")
+	local flaskPill = Instance.new("Frame")
+	flaskPill.AnchorPoint = Vector2.new(1, 0.5)
+	flaskPill.Position = UDim2.new(0.5, -182, 0, 31)
+	flaskPill.Size = UDim2.fromOffset(0, 28)
+	flaskPill.AutomaticSize = Enum.AutomaticSize.X
+	flaskPill.BackgroundColor3 = C.Ink
+	flaskPill.BackgroundTransparency = 0.25
+	flaskPill.BorderSizePixel = 0
+	flaskPill.Parent = cluster
+	Kit.Corner(flaskPill, 999)
+	Kit.Stroke(flaskPill, C.Line, 0.75, 1)
+	Kit.Pad(flaskPill, 12, 0)
 	local fl = Instance.new("TextLabel")
-	fl.Position = UDim2.new(0.5, -330, 1, -92)
-	fl.Size = UDim2.fromOffset(164, 22)
-	fl.BackgroundColor3 = C.Ink
-	fl.BackgroundTransparency = 0.2
-	fl.Font = Enum.Font.GothamBold
-	fl.TextSize = 13
+	fl.Size = UDim2.new(0, 0, 1, 0)
+	fl.AutomaticSize = Enum.AutomaticSize.X
+	fl.BackgroundTransparency = 1
+	fl.Font = Kit.BoldFont
+	fl.TextSize = 14
 	fl.TextColor3 = Color3.fromRGB(150, 220, 255)
 	fl.Text = "Flask"
-	fl.Parent = gui
-	local flc = Instance.new("UIStroke")
-	flc.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	flc.Color = Color3.fromRGB(150, 220, 255)
-	flc.Transparency = 0.5
-	flc.Parent = fl
+	fl.Parent = flaskPill
 	flaskLabel = fl
 	-- Shield overlay (pale jade over the health bar).
 	local sf = Instance.new("Frame")
@@ -356,8 +412,28 @@ function HUDController.Init()
 	sf.ZIndex = 1
 	sf.Parent = (health :: Meter).frame
 	shieldFill = sf
-	posture = meter(gui, UDim2.new(0.5, -160, 1, -66), UDim2.fromOffset(320, 14), Color3.fromRGB(235, 185, 70), "Posture", true)
-	ultimate = meter(gui, UDim2.new(0.5, -160, 1, -48), UDim2.fromOffset(320, 10), Color3.fromRGB(120, 170, 255), "")
+	local pm = meter(cluster, UDim2.new(0.5, -110, 0, 56), UDim2.fromOffset(220, 7), Color3.fromRGB(232, 186, 82), "Posture", true)
+	pm.label.Visible = false -- the centered bar explains itself; the label shows only when high
+	posture = pm
+	local um = meter(cluster, UDim2.new(0.5, -170, 0, 44), UDim2.fromOffset(340, 4), Color3.fromRGB(120, 168, 240), "")
+	um.label.Visible = false
+	ultimate = um
+	-- Style chip (above the right end of the health bar): style name + its stacks.
+	local sc = Instance.new("TextLabel")
+	sc.Name = "StyleChip"
+	sc.AnchorPoint = Vector2.new(1, 1)
+	sc.Position = UDim2.new(0.5, 170, 0, 21)
+	sc.Size = UDim2.fromOffset(240, 16)
+	sc.BackgroundTransparency = 1
+	sc.Font = Kit.BoldFont
+	sc.TextSize = 13
+	sc.TextXAlignment = Enum.TextXAlignment.Right
+	sc.TextColor3 = C.Muted
+	sc.TextStrokeTransparency = 0.6
+	sc.RichText = true
+	sc.Text = ""
+	sc.Parent = cluster
+	styleChip = sc
 
 	-- Boss bar (top center).
 	local bf = Instance.new("Frame")
@@ -367,17 +443,23 @@ function HUDController.Init()
 	bf.BackgroundTransparency = 1
 	bf.Visible = false
 	bf.Parent = gui
+	Kit.AutoScale(bf)
 	local name = Instance.new("TextLabel")
 	name.Size = UDim2.new(1, 0, 0, 24)
 	name.BackgroundTransparency = 1
-	name.Font = Enum.Font.GothamBlack
+	name.Font = Kit.TitleFont
 	name.TextSize = 20
-	name.TextColor3 = C.Gold
-	name.TextStrokeTransparency = 0.3
+	name.TextColor3 = C.Text
+	name.TextStrokeTransparency = 0.5
 	name.Parent = bf
 	bossName = name
-	bossHp = meter(bf, UDim2.fromOffset(0, 28), UDim2.new(1, 0, 0, 18), Color3.fromRGB(180, 40, 40), "")
-	bossPosture = meter(bf, UDim2.fromOffset(60, 50), UDim2.new(1, -120, 0, 10), Color3.fromRGB(240, 190, 70), "", true)
+	local bh = meter(bf, UDim2.fromOffset(0, 30), UDim2.new(1, 0, 0, 12), C.Accent, "")
+	bh.label.Visible = false
+	bossHp = bh
+	local bp = meter(bf, UDim2.fromOffset(80, 48), UDim2.new(1, -160, 0, 6), Color3.fromRGB(232, 186, 82), "", true)
+	bp.label.Position = UDim2.fromOffset(0, 70)
+	bp.label.Size = UDim2.new(1, 0, 0, 14)
+	bossPosture = bp
 	bossFrame = bf
 
 	local combo = Instance.new("TextLabel")
@@ -385,7 +467,7 @@ function HUDController.Init()
 	combo.Position = UDim2.new(1, -24, 0.55, 0)
 	combo.Size = UDim2.fromOffset(260, 60)
 	combo.BackgroundTransparency = 1
-	combo.Font = Enum.Font.Antique
+	combo.Font = Kit.TitleFont
 	combo.TextSize = 46
 	combo.TextXAlignment = Enum.TextXAlignment.Right
 	combo.TextTransparency = 1
@@ -399,8 +481,8 @@ function HUDController.Init()
 	zb.Position = UDim2.fromScale(0.5, 0.22)
 	zb.Size = UDim2.fromOffset(600, 50)
 	zb.BackgroundTransparency = 1
-	zb.Font = Enum.Font.Antique
-	zb.TextSize = 44
+	zb.Font = Kit.TitleFont
+	zb.TextSize = 40
 	zb.TextColor3 = C.Gold
 	zb.TextTransparency = 1
 	zb.TextStrokeTransparency = 1
@@ -411,7 +493,7 @@ function HUDController.Init()
 	zs.Position = UDim2.new(0.5, 0, 0.22, 52)
 	zs.Size = UDim2.fromOffset(600, 26)
 	zs.BackgroundTransparency = 1
-	zs.Font = Enum.Font.GothamMedium
+	zs.Font = Kit.MediumFont
 	zs.TextSize = 20
 	zs.TextColor3 = C.Text
 	zs.TextTransparency = 1
@@ -426,6 +508,8 @@ function HUDController.Start()
 	refreshStats()
 
 	localPlayer:GetAttributeChangedSignal("Zone"):Connect(showZoneBanner)
+	localPlayer:GetAttributeChangedSignal("FightingStyle"):Connect(refreshStyleChip)
+	refreshStyleChip()
 
 	localPlayer.CharacterAdded:Connect(bindCharacter)
 	if localPlayer.Character then

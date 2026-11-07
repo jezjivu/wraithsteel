@@ -2,8 +2,10 @@
 -- LanternService: opens Spirit Lanterns (the game's eggs) with server RNG.
 -- Compliance (guide §0):
 --   * odds come from Shared/LanternOdds (same function the UI shows via GetLanternOdds)
---   * paid lanterns (bought with Jade, which is Robux-purchasable) are refused when
---     PolicyService says paid random items are restricted for this player
+--   * paid lanterns (LanternOdds.IsPaid: priced in a Robux-purchasable currency, i.e. Jade AND
+--     Ember, since both are sold in the store) are refused when PolicyService says paid random
+--     items are restricted for this player; free opens (rewards/codes) still work there
+--   * Spirits bought with currency from a paid lantern get `paid = true` (trade rule)
 --   * pity rules are part of the displayed odds sheet
 --
 -- API:
@@ -62,9 +64,8 @@ function LanternService.Open(player: Player, lanternId: string, count: number): 
 	if lantern == nil or data == nil then
 		return nil, "Unavailable"
 	end
-	if lantern.paid and not PolicyService.CanBuyPaidRandomItems(player) then
-		return nil, "This lantern is not available in your region."
-	end
+	local isPaid = LanternOdds.IsPaid(lanternId)
+	local restricted = isPaid and not PolicyService.CanBuyPaidRandomItems(player)
 	if data.chapter < lantern.chapter then
 		return nil, "Reach the chapter where this lantern is found first."
 	end
@@ -78,7 +79,11 @@ function LanternService.Open(player: Player, lanternId: string, count: number): 
 	end
 
 	-- Pay: free opens first (Ember lanterns only), then currency.
-	local free = if lantern.paid then 0 else math.min(count, data.freeLanterns[lanternId] or 0)
+	-- Free opens (rewards/codes, never Robux) are not paid randomness, so they work everywhere.
+	local free = math.min(count, data.freeLanterns[lanternId] or 0)
+	if restricted and free < count then
+		return nil, "This lantern is not available in your region."
+	end
 	local cost = lantern.price * (count - free)
 	local paid = if cost == 0
 		then true
@@ -95,9 +100,10 @@ function LanternService.Open(player: Player, lanternId: string, count: number): 
 
 	local luck = ProgressionService.GetLuck(player)
 	local results = {}
-	for _ = 1, count do
+	for i = 1, count do
 		local r = LanternRoll.Roll(lanternId, luck, data.lanternPity, roll01)
-		local inst = SpiritService.Grant(player, r.spirit, r.rarity, r.mutation)
+		-- Opens beyond the free ones were bought with currency; flag them if that currency is paid.
+		local inst = SpiritService.Grant(player, r.spirit, r.rarity, r.mutation, isPaid and i > free)
 		table.insert(results, { uid = inst and inst.uid, spirit = r.spirit, rarity = r.rarity, mutation = r.mutation, pity = r.pityTriggered })
 	end
 	data.hatchedTotal += count

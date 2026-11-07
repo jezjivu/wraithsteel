@@ -27,6 +27,7 @@ export type TalkResult = {
 	kind: "Start" | "Finish" | "Step" | "Chatter",
 	lines: { string },
 	questTitle: string?,
+	questId: string?,
 	rewards: { ember: number, xp: number, jade: number }?,
 }
 
@@ -73,7 +74,7 @@ function SagaLogic.Talk(state: State, npcId: string): TalkResult
 		state.step = 1
 		state.progress = 0
 		state.started = false
-		return { kind = "Finish", lines = q.outro, questTitle = q.title, rewards = q.rewards }
+		return { kind = "Finish", lines = q.outro, questTitle = q.title, questId = q.id, rewards = q.rewards }
 	end
 	if q.giver == npcId and step then
 		return { kind = "Chatter", lines = { step.text .. "." } }

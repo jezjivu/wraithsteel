@@ -50,8 +50,8 @@ end
 
 local function onThrow(player: Player, aim: Vector3)
 	local c = CombatService.GetByPlayer(player)
-	if c == nil or c.dead or c.humanoid.Health <= 0 then
-		return
+	if c == nil or c.dead or c.humanoid.Health <= 0 or c.duelId ~= nil then
+		return -- (no kunai in duels)
 	end
 	local now = os.clock()
 	local rules = c.rules

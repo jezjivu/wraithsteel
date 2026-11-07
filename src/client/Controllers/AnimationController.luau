@@ -207,6 +207,50 @@ local function restoreWeapon(p: Playing)
 	end
 end
 
+-- Fighting style of a character (player attribute; NPCs may set it on the model).
+local function styleIdOf(model: Model): string?
+	local player = Players:GetPlayerFromCharacter(model)
+	local id = if player then player:GetAttribute("FightingStyle") else model:GetAttribute("FightingStyle")
+	return if type(id) == "string" and AnimationConfig.StyleStances[id] then id else nil
+end
+
+-- a + b per joint and component (style stances are offsets on the class stance).
+local function addPose(a: AnimationConfig.Pose, b: AnimationConfig.Pose?): AnimationConfig.Pose
+	if b == nil then
+		return a
+	end
+	local out: { [string]: { number } } = {}
+	for k, v in a :: any do
+		out[k] = table.clone(v)
+	end
+	for k, v in b :: any do
+		local base = out[k] or {}
+		local sum = {}
+		for c = 1, math.max(#base, #v) do
+			sum[c] = (base[c] or 0) + (v[c] or 0)
+		end
+		out[k] = sum
+	end
+	return out :: any
+end
+
+-- "OneHanded" or "OneHanded:mountain" -> the combined stance pose (cached).
+local stanceCache: { [string]: AnimationConfig.Pose } = {}
+local function resolveStance(key: string): AnimationConfig.Pose?
+	local cached = stanceCache[key]
+	if cached then
+		return cached
+	end
+	local name, style = string.match(key, "^([^:]+):?(.*)$")
+	local base = name and AnimationConfig.Stances[name]
+	if base == nil then
+		return nil
+	end
+	local pose = addPose(base, if style and style ~= "" then AnimationConfig.StyleStances[style] else nil)
+	stanceCache[key] = pose
+	return pose
+end
+
 -- Combat stance for whatever the model holds (empty pose when unarmed).
 local EMPTY: AnimationConfig.Pose = {}
 local function stanceFor(model: Model): AnimationConfig.Pose
@@ -216,8 +260,9 @@ local function stanceFor(model: Model): AnimationConfig.Pose
 	end
 	local id = held:GetAttribute("WeaponId")
 	local def = if type(id) == "string" then WeaponConfig.Weapons[id] else nil
-	local name = if def then AnimationConfig.StanceByClass[def.class] else nil
-	return AnimationConfig.Stances[name or "OneHanded"] or EMPTY
+	local name = (if def then AnimationConfig.StanceByClass[def.class] else nil) or "OneHanded"
+	local style = styleIdOf(model)
+	return resolveStance(if style then name .. ":" .. style else name) or EMPTY
 end
 
 -- Generated animation tracks (primary path) --------------------------------------------------
@@ -330,7 +375,8 @@ end
 --   rest -> 75% windup -> coiled windup -> overshot strike -> strike -> relaxed -> settle -> rest
 local NO_FOOTWORK = { HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true, DashForward = true, SideStep = true, Sweep = true, Guard = true, Dodge = true, Drink = true, Flip = true, Stagger = true, Flinch = true, Grasp = true, CastGuard = true, AirSlam = true }
 
-local function moveFrames(styleName: string, style: AnimationConfig.Style, rest: AnimationConfig.Pose, windup: number, active: number, recovery: number): { AnimBuilder.Frame }
+local function moveFrames(styleName: string, style: AnimationConfig.Style, rest: AnimationConfig.Pose, windup: number, active: number, recovery: number, flavor: AnimationConfig.Flavor?): { AnimBuilder.Frame }
+	local F = flavor or AnimationConfig.DefaultFlavor
 	local isMove = not NO_FOOTWORK[styleName] and not style.spin
 	local wPose = if isMove then withAuto(style.windup, AUTO_WINDUP) else (style.windup :: any)
 	local sPose = if isMove then withAuto(style.strike, AUTO_STRIKE) else (style.strike :: any)
@@ -343,10 +389,17 @@ local function moveFrames(styleName: string, style: AnimationConfig.Style, rest:
 	local R = poseOf(nil, rest, keys)
 	local W = poseOf(wPose, rest, keys)
 	local S = poseOf(sPose, rest, keys)
+	if isMove and F.lean ~= 0 then
+		-- The style's body lean into the strike (Wind lunges, River stays upright).
+		local r = S.root or { 0, 0, 0 }
+		local leaned = table.clone(r)
+		leaned[1] = (leaned[1] or 0) + F.lean
+		S.root = leaned
+	end
 	local frames: { AnimBuilder.Frame } = {}
 	table.insert(frames, { t = 0, pose = R })
 	table.insert(frames, { t = windup * 0.7, pose = mix(R, W, 0.85) })
-	table.insert(frames, { t = windup, pose = mix(R, W, 1.08) })
+	table.insert(frames, { t = windup, pose = mix(R, W, F.coil) })
 	if style.spin then
 		for i = 1, 3 do
 			local k = i / 4
@@ -361,13 +414,13 @@ local function moveFrames(styleName: string, style: AnimationConfig.Style, rest:
 			table.insert(frames, { t = windup + active * k, pose = mid })
 		end
 	else
-		table.insert(frames, { t = windup + active * 0.55, pose = mix(W, S, 1.15) })
+		table.insert(frames, { t = windup + active * 0.55, pose = mix(W, S, F.overshoot) })
 	end
 	local strikeEnd = windup + active
 	local rec = math.max(recovery, AnimationConfig.BlendOut + 0.05)
 	table.insert(frames, { t = strikeEnd, pose = S })
 	table.insert(frames, { t = strikeEnd + rec * 0.3, pose = mix(S, R, 0.15) })
-	table.insert(frames, { t = strikeEnd + rec * 0.8, pose = mix(S, R, 1.06) })
+	table.insert(frames, { t = strikeEnd + rec * 0.8, pose = mix(S, R, F.settle) })
 	table.insert(frames, { t = strikeEnd + rec, pose = R })
 	return frames
 end
@@ -379,7 +432,9 @@ local function stanceNameFor(model: Model): string?
 	end
 	local id = held:GetAttribute("WeaponId")
 	local def = if type(id) == "string" then WeaponConfig.Weapons[id] else nil
-	return (if def then AnimationConfig.StanceByClass[def.class] else nil) or "OneHanded"
+	local name = (if def then AnimationConfig.StanceByClass[def.class] else nil) or "OneHanded"
+	local style = styleIdOf(model)
+	return if style then name .. ":" .. style else name
 end
 
 local LOWER = { root = true, leftHip = true, rightHip = true, leftKnee = true, rightKnee = true }
@@ -396,7 +451,7 @@ local function updateStance(model: Model, st: TrackState, still: number)
 			st.stanceLower:Stop(0.2)
 		end
 		st.stanceUpper, st.stanceLower, st.stanceName = nil, nil, name
-		local stance = name and AnimationConfig.Stances[name]
+		local stance = name and resolveStance(name)
 		if stance then
 			local upper: { [string]: { number } } = {}
 			local lower: { [string]: { number } } = {}
@@ -655,8 +710,10 @@ function AnimationController.Play(model: Model, action: string, moveId: string?,
 	-- Body: a real animation track built from the same poses.
 	local st = trackStateOf(model)
 	if st then
+		local fightStyle = styleIdOf(model)
+		local flavor = if fightStyle then AnimationConfig.StyleFlavor[fightStyle] else nil
 		local key = table.concat({ styleName, stanceNameFor(model) or "None", r2(windup), r2(active), r2(recovery) }, "|")
-		local id = AnimBuilder.Get(key, moveFrames(styleName, style, rest, windup, active, recovery), { priority = Enum.AnimationPriority.Action }, model)
+		local id = AnimBuilder.Get(key, moveFrames(styleName, style, rest, windup, active, recovery, flavor), { priority = Enum.AnimationPriority.Action }, model)
 		local track = id and loadTrack(st, id)
 		if track then
 			if st.action and st.action ~= track then

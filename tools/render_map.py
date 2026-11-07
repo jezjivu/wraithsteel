@@ -18,7 +18,7 @@ from render_weapons import corners, hull  # noqa: E402
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 LUAU = sys.argv[1] if len(sys.argv) > 1 else "luau"
 OUT = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "build" / "map_top.png"
-REALM = sys.argv[3] if len(sys.argv) > 3 else "japan"  # japan | neon | greek
+REALM = sys.argv[3] if len(sys.argv) > 3 else "japan"  # japan | neon | greek | keep
 
 SPEC = """
 return {
@@ -54,7 +54,7 @@ return {
 
 
 def main():
-    spec = SPEC if REALM == "japan" else REALM_SPEC % ("NeonBuilder" if REALM == "neon" else "AeloriaBuilder")
+    spec = SPEC if REALM == "japan" else REALM_SPEC % {"neon": "NeonBuilder", "greek": "AeloriaBuilder", "keep": "KeepBuilder"}[REALM]
     bundle = build_bundle([("map", spec)], preludes=["tests/engine_mock.luau"])
     f = ROOT / "build" / "render_map.luau"
     f.parent.mkdir(exist_ok=True)
@@ -71,7 +71,7 @@ def main():
         sys.exit(1)
     terrain = terrain or []
 
-    minx, maxx, minz, maxz = (-750, 750, -1250, 280) if REALM == "japan" else (-400, 400, -400, 400)
+    minx, maxx, minz, maxz = (-750, 750, -1250, 280) if REALM == "japan" else (-420, 420, -420, 420)
     size = 1400
     scale = size / max(maxx - minx, maxz - minz)
 

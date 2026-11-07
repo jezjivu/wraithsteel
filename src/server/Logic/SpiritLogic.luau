@@ -155,6 +155,7 @@ export type FusionPlan = {
 	level: number,
 	fusedCount: number,
 	cost: number,
+	paid: boolean, -- any input was paid -> the result is paid (no laundering through fusion)
 }
 
 local function nextRarity(rarity: string): string?
@@ -184,6 +185,7 @@ function SpiritLogic.PlanFusion(data: SpiritData, uids: { string }): (FusionPlan
 	local bestOrder = 0
 	local level = 1
 	local fused = 0
+	local paid = false
 	for _, uid in uids do
 		local s = data.spirits[uid]
 		if s == nil or seen[uid] then
@@ -209,6 +211,7 @@ function SpiritLogic.PlanFusion(data: SpiritData, uids: { string }): (FusionPlan
 		end
 		level = math.max(level, s.level)
 		fused = math.max(fused, s.fusedCount)
+		paid = paid or s.paid == true
 	end
 	local cost = rarityDef.fuseCostEmber or 0
 	if data.ember < cost then
@@ -223,6 +226,7 @@ function SpiritLogic.PlanFusion(data: SpiritData, uids: { string }): (FusionPlan
 		level = level,
 		fusedCount = fused + 1,
 		cost = cost,
+		paid = paid,
 	},
 		nil
 end
@@ -235,6 +239,9 @@ function SpiritLogic.ApplyFusion(data: SpiritData, plan: FusionPlan, now: number
 	local inst = SpiritLogic.Create(data, plan.id, plan.toRarity, plan.mutation, now)
 	inst.level = plan.level
 	inst.fusedCount = plan.fusedCount
+	if plan.paid then
+		inst.paid = true
+	end
 	return inst
 end
 

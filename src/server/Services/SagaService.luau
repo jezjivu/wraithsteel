@@ -14,6 +14,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = ReplicatedStorage:WaitForChild("Config")
 local Net = require(Shared:WaitForChild("Net"))
 local SagaConfig = require(Config:WaitForChild("SagaConfig"))
+local Signal = require(Shared:WaitForChild("Signal"))
 local RealmConfig = require(Config:WaitForChild("RealmConfig"))
 
 local Logic = script.Parent.Parent:WaitForChild("Logic")
@@ -26,7 +27,7 @@ local HubService = require(script.Parent.HubService)
 local EnemyService = require(script.Parent.EnemyService)
 local BossService = require(script.Parent.BossService)
 
-local SagaService = { Name = "SagaService", Priority = 34 }
+local SagaService = { Name = "SagaService", Priority = 34, QuestFinished = Signal.new() }
 
 local npcModels: { [string]: Model } = {}
 local npcPositions: { [string]: Vector3 } = {}
@@ -103,6 +104,7 @@ function SagaService.Talk(player: Player, npcId: string)
 	})
 	if result.kind == "Finish" and result.rewards then
 		giveRewards(player, result.rewards, result.questTitle or "")
+		SagaService.QuestFinished:Fire(player, result.questId)
 		Net.Server.Fire("StoryEvent", player, { kind = "QuestComplete", title = result.questTitle, ember = result.rewards.ember, xp = result.rewards.xp, jade = result.rewards.jade })
 	elseif result.kind == "Start" then
 		Net.Server.Fire("StoryEvent", player, { kind = "QuestStarted", title = result.questTitle })

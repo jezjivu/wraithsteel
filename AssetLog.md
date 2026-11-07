@@ -22,3 +22,13 @@ the row. Only original assets (made by us or licensed for this game) may be used
 | Touch button images | InputController (TODO) | none | Icons | D | |
 | Hub town build | `Workspace.Hub` (generated blockout until built) | procedural | Real build with Station attributes | D | See HubConfig |
 | Training dummy rig | `ServerStorage.Enemies.training_dummy` | placeholder block | Rig | C | |
+| Night Market stall | Part/Model with attribute `Station = "NightMarket"` | none (menu only) | Build in the hub | D | Night 2 |
+| Raid arena | `Workspace.RaidArena` (Part; boss spawns on it) | none (spawns ahead of first player) | Build | C/D | Night 2 |
+| Kurozuma (raid boss) rig + 9 anims | `ServerStorage.Bosses.kurozuma`, `BossConfig.kurozuma` moves | procedural rig (RigBuilder `look`) / 0 | Sculpted rig + anims | C | Night 3 (config done) |
+| Raid gate prop | hub (opens the Raid panel) | none (menu "Raids") | Build | D | Night 2 |
+| Tidewater Lantern model | `LanternConfig.tidewater_lantern.modelId` | 0 | Model | D | Night 3 |
+| Tidewater Spirits (5) | built from parts (`SpiritConfig.*.visual`); icons in `assets/spirit_icons` | procedural | Optional sculpted models | B/D | Night 3 |
+| UI icons | frame-built geometric icons (`Kit.Icon`) | n/a | Optional uploaded icon set | D | Night 3 |
+| Ironcrow Keep build | `World/KeepBuilder` blockout (parts + terrain) | procedural | Sculpted castle (keep RealmConfig points) | D | Night 5 |
+| Tessai / Ashrei rigs + anims | `BossConfig.tessai/ashrei` moves, `ServerStorage.Bosses.*` | procedural rig / 0 | Rigs + anims | C | Night 5 |
+| Keep enemies (4) rigs + anims | `EnemyConfig.keep_footman/crow_knight/ember_archer/castellan` | procedural rig / 0 | Rigs + anims | C | Night 5 |

@@ -3,6 +3,7 @@
 --   1. Ashen Valley  - feudal Japan (the original map + hub, at the world origin)
 --   2. Neon Verge    - a rain-soaked cyberpunk city
 --   3. Aeloria       - an ancient Greek island of marble and sun
+--   4. Ironcrow Keep - a fortress castle on a mountain of ash (World/KeepBuilder)
 -- Every position inside a realm is LOCAL ({x, z} relative to the realm origin, ground y = 0).
 -- RealmService builds Neon Verge and Aeloria at runtime (World/NeonBuilder, World/AeloriaBuilder).
 
@@ -27,7 +28,7 @@ export type RealmDef = {
 
 local RealmConfig = {}
 
-RealmConfig.Order = { "japan", "neon", "greek" }
+RealmConfig.Order = { "japan", "neon", "greek", "keep" }
 
 RealmConfig.Realms = {
 	japan = {
@@ -49,7 +50,7 @@ RealmConfig.Realms = {
 		order = 2,
 		origin = { -4000, 0, 0 },
 		half = 360,
-		unlockLevel = 8, -- (no boss for now)
+		unlockLevel = 5, -- the Ashen Valley questline alone reaches level 5 (tests/progression.spec.luau)
 		color = { 60, 230, 255 },
 		areas = {
 			{ id = "neon_square", name = "Circuit Square", subtitle = "Holograms where the stars should be", center = { 0, 0 }, radius = 50 },
@@ -105,6 +106,47 @@ RealmConfig.Realms = {
 		},
 		arrival = { 0, 35 },
 	},
+	-- Ironcrow Keep: climb the cliff road, break the gatehouse, cross the bailey, take the
+	-- ramparts or the ash chapel, cross the Crow Bridge over the chasm, and climb the keep.
+	keep = {
+		name = "Ironcrow Keep",
+		subtitle = "Built to keep the bell's toll out. It failed.",
+		order = 4,
+		origin = { 0, 0, -5000 },
+		half = 420,
+		unlockBoss = "archon_helion",
+		color = { 255, 150, 80 },
+		areas = {
+			{ id = "keep_road", name = "Cliff Road", subtitle = "Banners of a house that burned", center = { 0, 260 }, radius = 55 },
+			{ id = "keep_gate", name = "Ironcrow Gatehouse", subtitle = "The portcullis is up. That is worse.", center = { 0, 160 }, radius = 40 },
+			{ id = "keep_bailey", name = "Outer Bailey", subtitle = "Tessai still keeps the gate", center = { 0, 40 }, radius = 80 },
+			{ id = "keep_ramparts", name = "High Ramparts", subtitle = "Archers who never stopped watching", center = { -160, -40 }, radius = 60 },
+			{ id = "keep_chapel", name = "Chapel of Ash", subtitle = "Prayers burned into the beams", center = { 160, -40 }, radius = 60 },
+			{ id = "keep_bridge", name = "Crow Bridge", subtitle = "Do not look down. They are down there.", center = { 0, -150 }, radius = 40 },
+			{ id = "keep_inner", name = "Inner Keep", subtitle = "The Ember-Crowned waits on her stolen throne", center = { 0, -265 }, radius = 65 },
+		},
+		spawns = {
+			{ name = "KeepRoadFootmen", enemyId = "keep_footman", count = 2, respawn = 25, at = { 0, 250 } },
+			{ name = "KeepGateArcher", enemyId = "ember_archer", count = 1, respawn = 25, at = { 40, 160 } },
+			{ name = "KeepBaileyFootmen", enemyId = "keep_footman", count = 2, respawn = 25, at = { -60, 60 } },
+			{ name = "KeepBaileyKnight", enemyId = "crow_knight", count = 1, respawn = 30, at = { 70, 40 } },
+			{ name = "KeepRampartArchers", enemyId = "ember_archer", count = 2, respawn = 25, at = { -160, -20 } },
+			{ name = "KeepChapelKnights", enemyId = "crow_knight", count = 2, respawn = 30, at = { 160, -40 } },
+			{ name = "KeepBridgeFootmen", enemyId = "keep_footman", count = 2, respawn = 25, at = { 0, -150 } },
+			{ name = "KeepInnerKnights", enemyId = "crow_knight", count = 2, respawn = 30, at = { 40, -235 } },
+			{ name = "KeepEliteCastellan", enemyId = "castellan", count = 1, respawn = 180, at = { -150, -125 } },
+		},
+		arenas = {
+			{ name = "TessaiArena", bossId = "tessai", at = { 0, -10 } },
+			{ name = "AshreiArena", bossId = "ashrei", at = { 0, -300 } },
+		},
+		waystones = {
+			{ id = "keep_road", name = "Cliff Road Waystone", at = { 24, 290 } },
+			{ id = "keep_bailey", name = "Outer Bailey Waystone", at = { -30, 128 } },
+			{ id = "keep_inner", name = "Inner Keep Waystone", at = { -34, -205 } },
+		},
+		arrival = { 0, 320 },
+	},
 } :: { [string]: RealmDef }
 
 -- Portals (local positions in their `from` realm). The gate into a realm stays sealed until
@@ -114,9 +156,12 @@ RealmConfig.Portals = {
 	{ from = "neon", to = "japan", at = { 0, 55 }, facing = 0 },
 	{ from = "neon", to = "greek", at = { 70, 40 }, facing = 90 },
 	{ from = "greek", to = "neon", at = { 0, 55 }, facing = 0 },
+	{ from = "greek", to = "keep", at = { -70, 40 }, facing = -90 },
+	{ from = "keep", to = "greek", at = { 0, 345 }, facing = 0 },
 } :: { PortalDef }
 
 RealmConfig.PortalCooldown = 3
+RealmConfig.FallRespawnDepth = 25 -- studs below a realm's ground: sent to its nearest waystone
 
 -- World position of a realm-local point.
 function RealmConfig.World(realmId: string, at: { number }, y: number?): Vector3

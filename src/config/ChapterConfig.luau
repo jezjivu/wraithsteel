@@ -15,12 +15,14 @@ export type ChapterDef = {
 local ChapterConfig = {}
 
 ChapterConfig.Chapters = {
-	[0] = { name = "Prologue: The Cracked Bell", zone = "Zone_Prologue", recommendedPower = 20, stages = 3, bosses = {}, unlockLantern = "paper_lantern" },
-	[1] = { name = "Chapter 1: Rustwood Pass", zone = "Zone_Rustwood", recommendedPower = 200, stages = 5, bosses = {}, unlockLantern = "rustwood_lantern" },
-	[2] = { name = "Chapter 2: The Drowned Market", zone = "Zone_DrownedMarket", recommendedPower = 900, stages = 5, bosses = { "tidewidow", "lantern_magistrate", "eel_of_debts", "gatekeeper_of_tides" } },
-	[3] = { name = "Chapter 3: Ashfall Monastery", zone = "Zone_Ashfall", recommendedPower = 3000, stages = 5, bosses = { "ash_monk_duo", "bellless_novice", "cinder_ox", "gatekeeper_of_ash" } },
-	[4] = { name = "Chapter 4: The Hanging Gardens of Thunder", zone = "Zone_Thunder", recommendedPower = 9000, stages = 5, bosses = { "storm_crane", "copper_general", "silk_tempest", "gatekeeper_of_thunder" } },
-	[5] = { name = "Chapter 5: The Ninth Gate", zone = "Zone_NinthGate", recommendedPower = 25000, stages = 6, bosses = { "wraith_regent", "the_unrung", "steel_that_remembers", "bell_of_nine_gates" } },
+	-- The chapter follows the story (SagaConfig quests with `unlocksChapter`, or a chapter finale
+	-- boss below). It gates lanterns, weapons, expeditions, Night Market items and the Power cap.
+	[0] = { name = "Prologue: The Cracked Bell", zone = "Realm_Japan", recommendedPower = 20, stages = 3, bosses = {}, unlockLantern = "paper_lantern" },
+	[1] = { name = "Chapter 1: The City That Never Stopped Ringing", zone = "Realm_Neon", recommendedPower = 200, stages = 5, bosses = { "kagura_9" }, unlockLantern = "rustwood_lantern" },
+	[2] = { name = "Chapter 2: The Island of the Sun", zone = "Realm_Greek", recommendedPower = 900, stages = 5, bosses = { "archon_helion" }, unlockLantern = "tidewater_lantern" },
+	[3] = { name = "Chapter 3: Ironcrow Keep", zone = "Realm_Keep", recommendedPower = 3000, stages = 5, bosses = { "tessai", "ashrei" } },
+	[4] = { name = "Chapter 4: The Bell Remembers", zone = "Realm_Next", recommendedPower = 9000, stages = 5, bosses = {} }, -- (to be continued)
+	[5] = { name = "Chapter 5: The Ninth Gate", zone = "Realm_NinthGate", recommendedPower = 25000, stages = 6, bosses = {} },
 } :: { [number]: ChapterDef }
 
 ChapterConfig.FinalChapter = 5

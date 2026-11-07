@@ -39,7 +39,7 @@ local Panel: PanelTypes.Panel = {
 			end, 100)
 		end
 
-		Kit.Label(body, if st.inParty then "Your party" else "You are solo", { bold = true, color = C.Gold })
+		Kit.Section(body, if st.inParty then "Your party" else "You are solo")
 		local inParty: { [number]: boolean } = {}
 		for i, m in st.members do
 			inParty[m.userId] = true
@@ -58,7 +58,7 @@ local Panel: PanelTypes.Panel = {
 			end, 150)
 		end
 
-		Kit.Label(body, "Players in this server", { bold = true, color = C.Gold })
+		Kit.Section(body, "Players in this server")
 		local any = false
 		for i, p in Players:GetPlayers() do
 			if p ~= Players.LocalPlayer and not inParty[p.UserId] then

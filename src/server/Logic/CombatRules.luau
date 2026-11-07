@@ -78,7 +78,7 @@ export type Decision = {
 	kind: ("Finisher" | "Air" | "Dash")?, -- special routes (for effects / analytics)
 }
 
-export type Opts = { airborne: boolean? }
+export type Opts = { airborne: boolean?, dashWindow: number? }
 
 -- Fighting-style modifiers used by Commit (StyleConfig).
 export type Mods = { speed: number?, parryWindowBonus: number? }
@@ -132,7 +132,7 @@ function CombatRules.Validate(state: State, weaponId: string, action: string, se
 		if airborne and not state.airUsed then
 			return { ok = true, action = action, moveId = weapon.air, kind = "Air" }
 		end
-		if now - state.lastDodgeAt <= CombatConfig.DashAttackWindow then
+		if now - state.lastDodgeAt <= ((opts and opts.dashWindow) or CombatConfig.DashAttackWindow) then
 			return { ok = true, action = action, moveId = weapon.dash, kind = "Dash" }
 		end
 		local idx = 1
