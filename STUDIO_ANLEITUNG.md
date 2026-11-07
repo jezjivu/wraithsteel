@@ -1,7 +1,8 @@
 # WRAITHSTEEL - Was DU noch tun musst (Schritt für Schritt)
 
-Alles, was Code ist, ist fertig und getestet. Die folgenden Dinge kann nur ein Mensch in
-Roblox Studio / im Roblox-Dashboard machen. Arbeite die Liste von oben nach unten ab.
+Der Code wurde ohne Roblox getestet (automatisch, mit Simulation: Kämpfe, Bosse, Handel, Raids,
+Käufe, die ganze Story). **In echtem Roblox lief er aber noch nie.** Die folgenden Dinge kann nur
+ein Mensch in Roblox Studio / im Roblox-Dashboard machen. Arbeite die Liste von oben nach unten ab.
 **Wenn etwas kaputt ist: kopiere die rote Fehlermeldung aus dem Output-Fenster und schick sie mir.**
 
 ---

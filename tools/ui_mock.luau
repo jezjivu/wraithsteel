@@ -381,6 +381,12 @@ addService("UserInputService", {
 	InputBegan = newSignal(),
 	InputEnded = newSignal(),
 	InputChanged = newSignal(),
+	JumpRequest = newSignal(),
+	TouchStarted = newSignal(),
+	TouchEnded = newSignal(),
+	TouchMoved = newSignal(),
+	TouchTap = newSignal(),
+	GamepadConnected = newSignal(),
 	LastInputTypeChanged = newSignal(),
 	GetLastInputType = function()
 		return "UserInputType.Keyboard"
@@ -405,6 +411,10 @@ addService("RunService", {
 	Heartbeat = newSignal(),
 	RenderStepped = newSignal(),
 	Stepped = newSignal(),
+	PreSimulation = newSignal(),
+	PostSimulation = newSignal(),
+	PreRender = newSignal(),
+	PreAnimation = newSignal(),
 	BindToRenderStep = function() end,
 	UnbindFromRenderStep = function() end,
 })
@@ -426,6 +436,19 @@ addService("MarketplaceService", { PromptProductPurchase = function() end, Promp
 addService("Workspace", workspace)
 workspace.CurrentCamera = Instance.new("Camera")
 workspace.CurrentCamera.ViewportSize = Vector2.new(1280, 720)
+workspace.CurrentCamera.CFrame = CFrame.new(0, 10, 20)
+workspace.CurrentCamera.Focus = CFrame.new(0, 5, 0)
+workspace.CurrentCamera.FieldOfView = 70
+workspace.CurrentCamera.CameraType = "CameraType.Custom"
+workspace.CurrentCamera.WorldToViewportPoint = function(_, p)
+	return Vector3.new(640, 360, 10), true
+end
+workspace.CurrentCamera.WorldToScreenPoint = workspace.CurrentCamera.WorldToViewportPoint
+workspace.CurrentCamera.ViewportPointToRay = function()
+	return { Origin = Vector3.new(0, 10, 20), Direction = Vector3.new(0, 0, -1) }
+end
+-- Enum items are plain strings in the mock; a few places read `.Value`
+rawset(Enum, "RenderPriority", { First = { Value = 0 }, Input = { Value = 100 }, Camera = { Value = 200 }, Character = { Value = 300 }, Last = { Value = 2000 } })
 workspace.GetServerTimeNow = function()
 	return 1700000000
 end

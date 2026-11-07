@@ -157,7 +157,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Part 13: Thunderbell Engine gets its own Foundry arena (cover pillars, molten channels, vents, pipes, the cracked bell); cover blocks rockets/lasers/projectiles; 6 new Valley enemies (Rust Hound, Kite Archer, Ash Monk, Shadow Shinobi, Lantern Wisp, Spear Ronin) + 4 elite super enemies (Gravelord Ishiki, Gorge Matriarch, Crimson Oni Captain, Masked Retainer Kurogiri) with gold names/auras; enemy Rain attacks + creature poses
 - [x] Store: Robux levels / Ember / bundle, DoubleXP / ExtraFlask / VIP passes, intended prices; Studio-only free simulated test purchases (same receipt path)
 - [x] Part 14: Kagehisa (swordmaster duel, moonlit courtyard arena) replaces the robot; elite signature moves; execution cinematic on Severing Blows; Qi arts reworked into blade arts (Thousand Cuts, Ghost Step, Crescent Wave, Earthsplitter, Rising Dragon, Tempest Spin, Heaven's Fall); migration v7
-- [x] Part 15: Prologue boss removed entirely (Neon portal opens at level 8); Ashen Valley rebuilt WIDE and interconnected (MapConfig.Roads: crossroads at Whispering Bamboo, west wing graveyard/springs/village + cliff stair, east wing gorge + Thousand-Step Stair + temple, both meet at the Gate of the Cracked Bell; long shortcut descent back to the crossroads); fewer, smaller enemy groups
+- [x] Part 15: Prologue boss removed entirely (Neon portal opens at level 5 since night 7); Ashen Valley rebuilt WIDE and interconnected (MapConfig.Roads: crossroads at Whispering Bamboo, west wing graveyard/springs/village + cliff stair, east wing gorge + Thousand-Step Stair + temple, both meet at the Gate of the Cracked Bell; long shortcut descent back to the crossroads); fewer, smaller enemy groups
 - [x] Better human models: World/Outfits (samurai armor, ronin, monk, shinobi, bandit, archer, hoplite, cyber, robe, noble) + masks (oni, menpo, kitsune, cloth, skull) + part-built faces; tools/render_rigs.py preview sheet
 - [x] Skill tree (SkillConfig / Shared/SkillLogic / SkillService / Skills panel): 3 paths, 24 skills, ranks, free reset; stats feed combat; 3 skill arts (Moon Severance, Phantom Rush chain-blink, Crimson Lotus) + mechanics (Blood Rush, Ringing Steel, Vanishing Step); profile v8
 - [x] Unique UI look (Kit): lacquer panels, steel hairlines, red blade lines, gold corner brackets, serif titles, new buttons/menu/HUD meters with damage ghost; posture fills from the center
@@ -245,6 +245,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 - [x] Neon gate lowered 8 -> 5 (the Ashen Valley questline only reaches level 5); `tests/progression.spec.luau` walks a fresh profile through every quest and asserts every realm / raid / style / lantern / weapon / expedition / market gate is reachable (144 tests)
 - [x] Headless playtest scenarios (`tools/smoke_scenarios.luau`, run with `tools/smoke_server.py`): enemy AI hitting players, all 5 bosses (arenas incl. Castle/Throne layouts, moves, phases, Fail), full trade through the escrow ledger, raid launch -> boss -> victory -> rewards, Studio test purchases + passes, expedition start/claim, realm portals + waystone travel, and the whole 14-quest story through the real services (chapter 0 -> 4). 0 thread errors
 - [x] Test harness: real-time scheduler (waits/delays honor time, Heartbeat at 30 Hz), more engine methods; the full run takes ~2 minutes
+- [x] Client boot smoke (`tools/smoke_client.py`): all 31 client controllers load, Init, Start and run 4 s with a fake character - 0 errors (mock gaps only; no game bugs). Untested client paths: anything needing real input, rendering, physics or the server round trip
 - [x] `STUDIO_ANLEITUNG.md`: plain-German step-by-step for what only a human can do (open the .rbxl, 2-player test, create passes/products with a table of names and prices, questionnaire answers, publish)
 - **Decided default (no further input needed):** Ember lanterns stay policy-gated paid randomness (Ember is sold for Robux); free opens work everywhere. To flip it later: remove the Ember products (`EmberSmall`, `EmberLarge`, Ember part of `StarterBundle`) from `MonetizationConfig` - `LanternOdds.IsPaid` re-derives it.
 
@@ -252,7 +253,7 @@ Legend: [x] done in code · [~] code done, needs Studio work/playtest · [ ] not
 NOT ready to publish yet. Blockers, in order:
 1. Never run inside Roblox: one full Studio playtest (solo + 2 players) end to end.
 2. Create the passes/products on the Creator Dashboard and fill `MonetizationConfig` ids (all 0).
-3. Decide the Ember-for-Robux question (paid random items) and fill the experience questionnaire
+3. Fill in the experience questionnaire (paid random items incl. Ember lanterns, simulated gambling for Bell Dice) - see STUDIO_ANLEITUNG.md
    (paid random items, simulated gambling for Bell Dice).
 4. Merge https://github.com/jezjivu/wraithsteel/pull/1 then https://github.com/jezjivu/wraithsteel/pull/2.
 5. Live-only systems tested in a published private place: DataStore saves, trade ledger,

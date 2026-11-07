@@ -267,3 +267,5 @@ The guide is **still not in the repo**; this run followed the task brief + night
   Heartbeat fires ~30 Hz, `__advance(seconds)` runs it. Known noise filtered: RigBuilder can't build
   rigs in the mock (the code falls back to block rigs - intended).
 - **Decision recorded**: Ember lanterns are paid randomness (policy-gated, free opens allowed).
+- **Client smoke**: `python3 tools/smoke_client.py <luau> [seconds]` boots every controller like
+  ClientBootstrap does under ui_mock + ui_fixture (camera, services, signals mocked).

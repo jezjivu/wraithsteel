@@ -137,15 +137,28 @@ cases["Progression: the first lantern is free and the start is playable"] = func
 	expectTrue(p.ember < LanternConfig.Lanterns.paper_lantern.price, "the free open is what makes lantern one possible")
 	expectEq(p.chapter, 0)
 	expectTrue(EconomyConfig.PowerCapByChapter[p.chapter] > 0)
-	-- weapons for chapter 0 are affordable with the Ember the first quests give
-	local first = SagaConfig.Quests[1].rewards.ember
+	-- the cheapest chapter-0 Ember weapon is affordable from the Ember the first quests pay out
 	local cheapest = math.huge
-	for id, w in WeaponConfig.Weapons do
+	for _, w in WeaponConfig.Weapons do
 		if w.unlockChapter == 0 and w.price > 0 and w.currency == "Ember" then
 			cheapest = math.min(cheapest, w.price)
 		end
 	end
-	expectTrue(first + p.ember >= 0 and cheapest < math.huge)
+	expectTrue(cheapest < math.huge, "there is a chapter-0 Ember weapon to buy")
+	local ember = p.ember
+	local quests = 0
+	for _, q in SagaConfig.Quests do
+		if q.realm ~= "japan" then
+			break
+		end
+		ember += q.rewards.ember
+		quests += 1
+		if ember >= cheapest then
+			break
+		end
+	end
+	expectTrue(ember >= cheapest, "cheapest weapon (" .. cheapest .. " Ember) affordable within the Ashen Valley quests")
+	expectTrue(quests <= 2, "affordable after at most two quests (" .. quests .. ")")
 end
 
 return cases
