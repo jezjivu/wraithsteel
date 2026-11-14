@@ -1048,6 +1048,22 @@ function AnimationController.Start()
 			if ch and ch.Parent then
 				local rig = if AnimBuilder.Available() then nil else rigOf(ch, false)
 				animate(ch, rig, now, dt)
+				-- Momentum lean on top of the animation tracks (the root joint's C0, which the
+				-- Animator leaves alone): forward when running, banking on turns.
+				if rig == nil and plr == Players.LocalPlayer then
+					local leanRig = rigOf(ch, false)
+					local root = ch:FindFirstChild("HumanoidRootPart")
+					local j = leanRig and leanRig.joints.root
+					if leanRig and j and root and root:IsA("BasePart") then
+						local L = MovementConfig.Lean
+						local v = root.CFrame:VectorToObjectSpace(root.AssemblyLinearVelocity)
+						local fwd = math.clamp(-v.Z / L.fullSpeed, -1, 1)
+						local side = math.clamp(v.X / L.fullSpeed, -1, 1)
+						local target = CFrame.Angles(math.rad(-L.forwardDegrees * fwd), 0, math.rad(-L.sideDegrees * side))
+						leanRig.lean = leanRig.lean:Lerp(target, math.min(1, dt * L.smoothing))
+						pose(j, leanRig.lean)
+					end
+				end
 			end
 		end
 		-- NPCs. LOD: far ones are not animated (unless mid-attack); mid-distance every other frame.
