@@ -261,6 +261,21 @@ AnimationConfig.Styles = {
 		weaponWindup = { 0, 0, 55 },
 		weaponStrike = { -45, 0, 0 },
 	},
+	-- Idle gestures (AnimationController plays them now and then on idle NPCs and unaware enemies).
+	LookAround = {
+		windup = { waist = { -2, 38, 0 }, root = { 0, 10, 0 } },
+		strike = { waist = { -2, -34, 0 }, root = { 0, -8, 0 } },
+	},
+	ShoulderRoll = {
+		windup = { shoulder = { 40, 0, 35 }, elbow = { 95, 0, 0 }, leftShoulder = { 40, 0, -35 }, leftElbow = { 95, 0, 0 }, waist = { 10, 0, 0 } },
+		strike = { shoulder = { 25, 0, 15 }, elbow = { 60, 0, 0 }, leftShoulder = { 25, 0, -15 }, leftElbow = { 60, 0, 0 }, waist = { -4, 0, 0 } },
+	},
+	CheckBlade = {
+		windup = { shoulder = { 75, 0, -30 }, elbow = { 100, 0, 0 }, leftShoulder = { 60, 0, 30 }, leftElbow = { 90, 0, 0 }, waist = { -4, 10, 0 } },
+		strike = { shoulder = { 80, 0, -25 }, elbow = { 95, 0, 0 }, leftShoulder = { 55, 0, 25 }, leftElbow = { 85, 0, 0 }, waist = { -4, -6, 0 } },
+		weaponWindup = { 20, 0, 40 },
+		weaponStrike = { 0, 0, -30 },
+	},
 	Stagger = {
 		windup = { root = { 25, 0, 8, 0, 0, 0.8 }, waist = { 20, 25, 0 }, shoulder = { 60, 0, 50 }, elbow = { 20, 0, 0 }, leftShoulder = { 40, 0, -40 }, leftKnee = { -30, 0, 0 } },
 		strike = { root = { 15, 0, -5 }, waist = { 10, -10, 0 }, shoulder = { 20, 0, 30 } },
@@ -374,6 +389,14 @@ AnimationConfig.Run = {
 	armSwingDegrees = 45,
 	kneeBendDegrees = 85,
 	leanDegrees = 16,
+}
+
+-- Idle gestures: every few seconds a still NPC / unaware enemy plays one of these.
+AnimationConfig.Gestures = {
+	unarmed = { "LookAround", "ShoulderRoll" },
+	armed = { "LookAround", "CheckBlade" },
+	every = { 6, 14 }, -- seconds between gestures (random in range)
+	timing = { windup = 0.8, active = 1.4, recovery = 0.9 },
 }
 
 -- Animation level of detail for NPCs (studs from the camera).

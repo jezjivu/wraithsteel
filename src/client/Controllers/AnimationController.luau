@@ -329,7 +329,7 @@ end
 
 -- A move as keyframes with anticipation, overshoot and settle (so it doesn't look stiff):
 --   rest -> 75% windup -> coiled windup -> overshot strike -> strike -> relaxed -> settle -> rest
-local NO_FOOTWORK = { HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true, DashForward = true, SideStep = true, Sweep = true, Guard = true, Dodge = true, Drink = true, Flip = true, Stagger = true, Flinch = true, Grasp = true, CastGuard = true, AirSlam = true }
+local NO_FOOTWORK = { LookAround = true, ShoulderRoll = true, CheckBlade = true, HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true, DashForward = true, SideStep = true, Sweep = true, Guard = true, Dodge = true, Drink = true, Flip = true, Stagger = true, Flinch = true, Grasp = true, CastGuard = true, AirSlam = true }
 
 local function moveFrames(styleName: string, style: AnimationConfig.Style, rest: AnimationConfig.Pose, windup: number, active: number, recovery: number): { AnimBuilder.Frame }
 	local isMove = not NO_FOOTWORK[styleName] and not style.spin
@@ -743,7 +743,7 @@ end
 -- True while the model is in the windup/active part of an attack (reactions must not cut
 -- an enemy's swing short: the server's timing is what counts).
 local guardHeld: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any
-local REACTIONS = { HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true }
+local REACTIONS = { HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true, LookAround = true, ShoulderRoll = true, CheckBlade = true }
 function AnimationController.IsAttacking(model: Model): boolean
 	local p = playing[model]
 	if p == nil then
@@ -945,6 +945,8 @@ local function trackNpc(model: Instance)
 end
 
 -- Poses one rig for this frame.
+local nextGesture: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+
 local function animate(model: Model, rig: Rig?, now: number, dt: number)
 	local speed = speedOf(model)
 	local armed = model:FindFirstChild("HeldWeapon") ~= nil
@@ -958,6 +960,19 @@ local function animate(model: Model, rig: Rig?, now: number, dt: number)
 		updateStance(model, st, 1 - math.clamp(speed / 6, 0, 1))
 		if not isPlayerCharacter(model) then
 			updateWalk(model, st, speed, armed)
+			-- Idle life: an occasional gesture while standing still and not fighting.
+			local G = AnimationConfig.Gestures
+			local due = nextGesture[model]
+			if due == nil then
+				nextGesture[model] = now + math.random() * G.every[2]
+			elseif now >= due then
+				nextGesture[model] = now + G.every[1] + math.random() * (G.every[2] - G.every[1])
+				local calm = model:GetAttribute("NpcId") ~= nil or model:GetAttribute("Unaware") == true
+				if calm and speed < 1 and playing[model] == nil then
+					local list = if armed then G.armed else G.unarmed
+					AnimationController.Play(model, list[math.random(1, #list)], nil, G.timing)
+				end
+			end
 		end
 		return
 	end
