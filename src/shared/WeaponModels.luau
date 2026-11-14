@@ -96,31 +96,64 @@ end
 
 local shapes: { [string]: (Builder, Visual) -> () } = {}
 
+-- Cord wrap on a grip: thin rings every so often (reads as a bound hilt).
+local function wrap(b: Builder, fromY: number, toY: number, diameter: number, color: { number })
+	local n = math.max(2, math.floor((toY - fromY) / 0.22))
+	for i = 0, n - 1 do
+		local y = fromY + (i + 0.5) * (toY - fromY) / n
+		rod(b, "Wrap", 0.07, diameter, y, color, Enum.Material.Fabric)
+	end
+end
+
+local function lighter(c: { number }, k: number): { number }
+	return { math.min(255, c[1] + (255 - c[1]) * k), math.min(255, c[2] + (255 - c[2]) * k), math.min(255, c[3] + (255 - c[3]) * k) }
+end
+
 shapes.Jian = function(b, v)
 	local w = 0.2 * (v.width or 1)
 	rod(b, "Grip", 1.1, 0.16, 0.25, v.grip, Enum.Material.Fabric)
+	wrap(b, -0.2, 0.75, 0.185, v.accent)
 	ball(b, "Pommel", 0.24, -0.35, v.accent)
 	part(b, "Guard", Vector3.new(0.75, 0.16, 0.26), CFrame.new(0, 0.86, 0), v.accent)
+	part(b, "GuardCap", Vector3.new(0.3, 0.1, 0.3), CFrame.new(0, 0.97, 0), v.accent)
 	local bladeLen = v.length - 0.35
 	part(b, "Blade", Vector3.new(w, bladeLen, 0.05), CFrame.new(0, 0.94 + bladeLen / 2, 0), v.blade)
+	-- Raised center ridge catches the light down the whole length.
+	part(b, "Ridge", Vector3.new(w * 0.18, bladeLen * 0.96, 0.07), CFrame.new(0, 0.94 + bladeLen * 0.49, 0), lighter(v.blade, 0.35))
 	wedge(b, "TipL", Vector3.new(0.05, 0.35, w / 2), CFrame.new(-w / 4, 0.94 + bladeLen + 0.175, 0) * CFrame.Angles(0, math.rad(90), 0), v.blade)
 	wedge(b, "TipR", Vector3.new(0.05, 0.35, w / 2), CFrame.new(w / 4, 0.94 + bladeLen + 0.175, 0) * CFrame.Angles(0, math.rad(-90), 0), v.blade)
 	glowStrip(b, v, bladeLen * 0.9, 1.0, 0.04)
 	tassel(b, v, -0.45)
 end
 
+-- Sabre: a single-edged blade built from short segments that curve back toward the spine,
+-- with a bright cutting edge, a dark spine and a cord-wrapped grip with a ring pommel.
 shapes.Dao = function(b, v)
 	local w = 0.38 * (v.width or 1)
 	rod(b, "Grip", 1.2, 0.18, 0.3, v.grip, Enum.Material.Wood)
-	ball(b, "Pommel", 0.22, -0.32, v.accent)
+	wrap(b, -0.2, 0.82, 0.2, v.accent)
+	part(b, "PommelRing", Vector3.new(0.06, 0.32, 0.32), CFrame.new(0, -0.42, 0) * CFrame.Angles(0, 0, math.rad(90)), v.accent, Enum.Material.Metal, Enum.PartType.Cylinder)
 	part(b, "Guard", Vector3.new(0.14, 0.7, 0.7), CFrame.new(0, 0.94, 0) * CFrame.Angles(0, 0, math.rad(90)), v.accent, Enum.Material.Metal, Enum.PartType.Cylinder)
 	local bladeLen = v.length - 0.6
-	-- Blade sits slightly forward of the grip line, widening toward the tip.
-	part(b, "Blade", Vector3.new(w, bladeLen, 0.06), CFrame.new(w * 0.2, 1.0 + bladeLen / 2, 0), v.blade)
-	part(b, "Spine", Vector3.new(0.05, bladeLen, 0.09), CFrame.new(-w * 0.3, 1.0 + bladeLen / 2, 0), v.accent)
-	wedge(b, "Tip", Vector3.new(0.06, 0.7, w * 1.15), CFrame.new(w * 0.25, 1.0 + bladeLen + 0.35, 0) * CFrame.Angles(0, math.rad(90), 0), v.blade)
-	glowStrip(b, v, bladeLen * 0.9, 1.05, 0.05)
-	tassel(b, v, -0.42)
+	local segs = 4
+	local segLen = bladeLen / segs
+	local curve = math.rad(4) -- per segment
+	local x, y, a = w * 0.2, 1.0, 0
+	for i = 1, segs do
+		local dx, dy = -math.sin(a), math.cos(a)
+		local cx, cy = x + dx * segLen / 2, y + dy * segLen / 2
+		local cf = CFrame.new(cx, cy, 0) * CFrame.Angles(0, 0, a)
+		local grow = 1 + (i - 1) * 0.06 -- widens toward the tip
+		part(b, "Blade", Vector3.new(w * grow, segLen + 0.04, 0.06), cf, v.blade)
+		part(b, "Edge", Vector3.new(0.05, segLen + 0.04, 0.07), cf * CFrame.new(w * grow / 2, 0, 0), lighter(v.blade, 0.55))
+		part(b, "Spine", Vector3.new(0.05, segLen + 0.04, 0.09), cf * CFrame.new(-w * grow / 2, 0, 0), v.accent)
+		x, y = x + dx * segLen, y + dy * segLen
+		a += curve
+	end
+	local tipCf = CFrame.new(x, y, 0) * CFrame.Angles(0, 0, a - curve)
+	wedge(b, "Tip", Vector3.new(0.06, 0.7, w * 1.25), tipCf * CFrame.new(0, 0.33, 0) * CFrame.Angles(0, math.rad(90), 0), v.blade)
+	glowStrip(b, v, bladeLen * 0.85, 1.05, 0.05)
+	tassel(b, v, -0.5)
 end
 
 shapes.Spear = function(b, v)
