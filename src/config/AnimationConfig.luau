@@ -72,6 +72,21 @@ AnimationConfig.Styles = {
 		weaponWindup = { -45, 0, 0 },
 		weaponStrike = { -45, 0, 0, 0.6 },
 	},
+	-- Falling diagonal: both hands high over the right shoulder, cut down through the target to
+	-- the left hip.
+	Kesa = {
+		windup = { shoulder = { 180, 30, 30 }, elbow = { 50, 0, 0 }, leftShoulder = { 165, 0, 10 }, leftElbow = { 70, 0, 0 }, waist = { 6, -20, 0 }, root = { 6, -8, 0, 0, -0.4, 0.5 }, leftHip = { 18, 0, -6 }, rightHip = { -26, 0, 10 }, leftKnee = { -32, 0, 0 }, rightKnee = { -30, 0, 0 } },
+		strike = { shoulder = { 40, -20, -30 }, elbow = { 0, 0, 0 }, leftShoulder = { 40, 0, 30 }, leftElbow = { 15, 0, 0 }, waist = { -16, 25, 0 }, root = { -12, 10, 0, 0, -1.0, -1.4 }, leftHip = { -50, 0, -4 }, rightHip = { 38, 0, 6 }, leftKnee = { -46, 0, 0 }, rightKnee = { -12, 0, 0 } },
+		weaponWindup = { 30, 0, 0 },
+		weaponStrike = { -50, 0, 0 },
+	},
+	-- Rising diagonal: from low at the left, up across the body to high on the right.
+	RisingCut = {
+		windup = { shoulder = { 50, 20, -30 }, elbow = { 10, 0, 0 }, leftShoulder = { 20, 0, -30 }, leftElbow = { 40, 0, 0 }, waist = { -14, 25, 0 }, root = { -8, 10, 0, 0, -0.9, 0.3 }, leftHip = { 18, 0, -6 }, rightHip = { -26, 0, 10 }, leftKnee = { -32, 0, 0 }, rightKnee = { -30, 0, 0 } },
+		strike = { shoulder = { 160, -20, 30 }, elbow = { 0, 0, 0 }, leftShoulder = { 60, 0, -40 }, leftElbow = { 20, 0, 0 }, waist = { 8, -25, 0 }, root = { -6, -12, 0, 0, -0.4, -1.2 }, leftHip = { -50, 0, -4 }, rightHip = { 38, 0, 6 }, leftKnee = { -46, 0, 0 }, rightKnee = { -12, 0, 0 } },
+		weaponWindup = { -50, 0, 0 },
+		weaponStrike = { -45, 0, 0 },
+	},
 	-- Whirl: blade held out level at arm's length while the whole body turns.
 	Spin = {
 		windup = { shoulder = { 0, -40, 90 }, elbow = { 10, 0, 0 }, leftShoulder = { 0, 0, -80 }, leftElbow = { 10, 0, 0 }, waist = { 0, -30, 0 }, root = { 0, 0, 0, 0, -0.6, 0 }, leftHip = { -20, 0, -15 }, rightHip = { 20, 0, 15 }, leftKnee = { -30, 0, 0 }, rightKnee = { -30, 0, 0 } },
@@ -319,6 +334,10 @@ AnimationConfig.BlendOut = 0.18 -- seconds to return to neutral after recovery
 
 -- Explicit style per move id; anything not listed is inferred (see AnimationController.StyleFor).
 AnimationConfig.MoveStyles = {
+	jian_light_2 = "RisingCut",
+	dao_light_2 = "Kesa",
+	gb_light_2 = "Kesa",
+	staff_light_2 = "RisingCut",
 	jian_light_3 = "Thrust",
 	jian_heavy = "Thrust",
 	jian_light_4 = "Overhead",

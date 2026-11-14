@@ -40,4 +40,34 @@ cases["Every Spirit has a visual"] = function()
 	end
 end
 
+cases["Every animation style named in configs exists"] = function()
+	local A = require(Config.AnimationConfig)
+	local function check(where, style)
+		if style then
+			expectTrue(A.Styles[style] ~= nil, where .. " style " .. tostring(style))
+		end
+	end
+	for id, def in require(Config.EnemyConfig).Enemies do
+		for aid, atk in def.attacks or {} do
+			if not def.creature then
+				check(id .. "." .. aid, atk.style)
+			end
+		end
+	end
+	for id, def in require(Config.BossConfig).Bosses do
+		for mid, mv in def.moves do
+			check(id .. "." .. mid, mv.style)
+		end
+	end
+	for moveId, style in A.MoveStyles do
+		check(moveId, style)
+	end
+	for kind, style in A.CastStyles do
+		check("cast " .. kind, style)
+	end
+	for class, stance in A.StanceByClass do
+		expectTrue(A.Stances[stance] ~= nil, class .. " stance")
+	end
+end
+
 return cases
