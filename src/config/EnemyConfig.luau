@@ -74,7 +74,7 @@ export type EnemyDef = {
 	look: RigLook?,
 	elite: boolean?, -- super enemy: gold name + aura, much tougher, bigger rewards
 	lives: number?, -- finishing blows needed (default 1); elites rise again after the first
-	creature: string?, -- part-built body instead of a humanoid rig (World/CreatureBuilder): "Drone" | "Tiger"
+	creature: string?, -- part-built body instead of a humanoid rig (World/CreatureBuilder): "Tiger" | "Hound" | "Drone" | "Wisp"
 }
 
 local EnemyConfig = {}
@@ -340,8 +340,8 @@ EnemyConfig.Enemies = {
 		comboChance = 0.4,
 		flinch = true,
 		modelId = 0,
-		creature = "Tiger",
-		look = { skin = { 200, 170, 140 }, body = { 150, 80, 50 }, legs = { 60, 40, 30 }, accent = { 60, 35, 25 }, glow = { 255, 140, 60 }, scale = 0.6 },
+		creature = "Hound",
+		look = { skin = { 200, 170, 140 }, body = { 150, 80, 50 }, legs = { 60, 40, 30 }, accent = { 60, 35, 25 }, glow = { 255, 140, 60 }, scale = 0.75 },
 	},
 	-- Kite Archer: shoots from range; arrows can be deflected back.
 	kite_archer = {
@@ -439,7 +439,7 @@ EnemyConfig.Enemies = {
 		xpReward = 15,
 		flinch = true,
 		modelId = 0,
-		creature = "Drone",
+		creature = "Wisp",
 		look = { skin = { 0, 0, 0 }, body = { 230, 210, 170 }, legs = { 0, 0, 0 }, accent = { 190, 50, 40 }, glow = { 255, 160, 60 }, scale = 0.85 },
 	},
 	-- Spear Ronin: long reach, thrust strings, a low sweep.

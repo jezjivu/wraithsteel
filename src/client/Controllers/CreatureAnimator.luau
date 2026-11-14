@@ -132,7 +132,8 @@ local function animateDrone(model: Model, b: Beast, dt: number, now: number)
 		return
 	end
 	local v = root.CFrame:VectorToObjectSpace(root.AssemblyLinearVelocity)
-	b.phase += dt * 25
+	local paper = model:GetAttribute("Creature") == "Wisp"
+	b.phase += dt * (if paper then 1.6 else 25) -- talismans drift, rotors whirl
 	local rotor = b.motors.Rotor
 	if rotor and b.base[rotor] then
 		rotor.C0 = b.base[rotor] * CFrame.Angles(0, b.phase, 0)
@@ -141,6 +142,11 @@ local function animateDrone(model: Model, b: Beast, dt: number, now: number)
 	if body and b.base[body] then
 		local tilt = CFrame.Angles(math.rad(math.clamp(v.Z * 1.5, -20, 20)), 0, math.rad(math.clamp(-v.X * 1.5, -20, 20)))
 		local bob = CFrame.new(0, math.sin(now * 2.5) * 0.5, 0)
+		if paper then
+			-- A lantern on an invisible string: slow pendulum sway, a lazy turn, a deeper bob.
+			bob = CFrame.new(0, math.sin(now * 1.7) * 0.7, 0)
+				* CFrame.Angles(math.rad(math.sin(now * 1.1) * 7), math.sin(now * 0.4) * 0.5, math.rad(math.sin(now * 1.3 + 1) * 9))
+		end
 		local recoil = CFrame.new()
 		local a = b.action
 		if a then
@@ -161,6 +167,17 @@ local function animateDrone(model: Model, b: Beast, dt: number, now: number)
 	local eye = b.motors.Eye
 	if eye and b.base[eye] then
 		eye.C0 = b.base[eye] * CFrame.Angles(0, math.sin(now * 1.3) * 0.4, 0)
+	end
+	-- Cloth streamers ripple and trail behind the movement.
+	for k = 1, 3 do
+		local s1, s2 = b.motors["Streamer" .. k], b.motors["StreamerTip" .. k]
+		local trail = math.clamp(v.Z * 2.5, -35, 35)
+		if s1 and b.base[s1] then
+			s1.C0 = b.base[s1] * CFrame.Angles(math.rad(trail + math.sin(now * 3 + k * 2) * 14), 0, math.rad(math.sin(now * 2.3 + k) * 10))
+		end
+		if s2 and b.base[s2] then
+			s2.C0 = b.base[s2] * CFrame.Angles(math.rad(trail * 0.6 + math.sin(now * 3 + k * 2 - 0.9) * 22), 0, 0)
+		end
 	end
 end
 
@@ -277,12 +294,22 @@ local function animateBiped(model: Model, b: Beast, dt: number, now: number)
 	end
 end
 
+local function familyOf(model: Model): string
+	local f = model:GetAttribute("CreatureFamily")
+	if type(f) == "string" then
+		return f
+	end
+	local c = model:GetAttribute("Creature")
+	return if c == "Mech" then "Biped" elseif c == "Drone" or c == "Wisp" then "Hover" else "Quadruped"
+end
+
 local function animate(model: Model, b: Beast, dt: number, now: number)
-	if model:GetAttribute("Creature") == "Mech" then
+	local family = familyOf(model)
+	if family == "Biped" then
 		animateBiped(model, b, dt, now)
 		return
 	end
-	if model:GetAttribute("Creature") == "Drone" then
+	if family == "Hover" then
 		animateDrone(model, b, dt, now)
 		return
 	end
@@ -312,6 +339,27 @@ local function animate(model: Model, b: Beast, dt: number, now: number)
 		Neck = { -breathe, math.sin(now * 0.7) * 8, 0 },
 		Jaw = { -math.max(0, math.sin(now * 0.9)) * 6, 0, 0 },
 	}
+	if amount > 0.75 then
+		-- Gallop: front legs reach together, back legs drive together, the spine flexes and the
+		-- head pumps with each bound.
+		local g = math.sin(b.phase)
+		local reach = 42 * amount
+		offsets.Hip_FL = { g * reach, 0, 0 }
+		offsets.Hip_FR = { g * reach * 0.85, 0, 0 }
+		offsets.Hip_BL = { -g * reach, 0, 0 }
+		offsets.Hip_BR = { -g * reach * 0.85, 0, 0 }
+		offsets.Knee_FL = { -math.max(0, -g) * 70, 0, 0 }
+		offsets.Knee_FR = { -math.max(0, -g) * 60, 0, 0 }
+		offsets.Knee_BL = { -math.max(0, g) * 55, 0, 0 }
+		offsets.Knee_BR = { -math.max(0, g) * 50, 0, 0 }
+		offsets.Spine = { g * 7, 0, 0 }
+		offsets.Neck = { -g * 10 - 6, 0, 0 }
+	elseif amount < 0.05 then
+		-- Idle: sniff the air now and then, weight shifting.
+		local sniff = math.max(0, math.sin(now * 0.45)) ^ 4
+		offsets.Neck = { -breathe - sniff * 14, math.sin(now * 0.7) * 10, 0 }
+		offsets.Jaw = { -sniff * 4 - math.max(0, math.sin(now * 0.9)) * 4, 0, 0 }
+	end
 	for i = 1, 4 do
 		offsets["Tail" .. i] = { 8 + math.sin(now * 3 - i * 0.6) * 6, math.sin(now * 2.2 - i * 0.7) * (14 + i * 4), 0 }
 	end

@@ -128,7 +128,7 @@ Enum = setmetatable({}, { __index = function(_, cat)
 	return setmetatable({}, { __index = function(_, item) return cat .. "." .. item end })
 end })
 
-local BASEPART = { Part = true, WedgePart = true, SpawnLocation = true, MeshPart = true }
+local BASEPART = { Part = true, WedgePart = true, CornerWedgePart = true, SpawnLocation = true, MeshPart = true }
 local Inst = {}
 local methods = {}
 function methods.GetChildren(self) return table.clone(rawget(self, "__children")) end
@@ -160,6 +160,7 @@ function methods.IsA(self, cls)
 	local cn = self.ClassName
 	if cls == "BasePart" then return BASEPART[cn] == true end
 	if cls == "PVInstance" then return BASEPART[cn] == true or cn == "Model" end
+	if cls == "JointInstance" then return cn == "Motor6D" or cn == "Weld" end
 	return cn == cls
 end
 function methods.SetAttribute(self, k, v) rawget(self, "__attrs")[k] = v end
@@ -213,6 +214,10 @@ local function newInstance(cls)
 		props.Transparency = 0
 		props.Material = "Material.Plastic"
 		props.CanCollide = true
+	end
+	if cls == "Motor6D" or cls == "Weld" then
+		props.C0 = CFrame.new()
+		props.C1 = CFrame.new()
 	end
 	return setmetatable({ __props = props, __children = {}, __attrs = {} }, Inst)
 end

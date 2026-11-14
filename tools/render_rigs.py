@@ -60,6 +60,19 @@ return {
 			if n.look.outfit then table.insert(list, { n.id, n.name, n.look }) end
 		end
 		table.sort(list, function(a, b) return a[1] < b[1] end)
+		local CreatureBuilder = require(game:GetService("ServerScriptService").World.CreatureBuilder)
+		local beasts = {}
+		for id, d in require(RS.Config.EnemyConfig).Enemies do
+			if d.creature and d.look then table.insert(beasts, { id, d.name, d.creature, d.look }) end
+		end
+		table.sort(beasts, function(a, b) return a[1] < b[1] end)
+		for _, e in beasts do
+			local model = CreatureBuilder.Build(e[3], e[4])
+			if model then
+				print("RIG " .. e[1] .. "|" .. e[2] .. "|" .. e[3] .. "|")
+				__dumpParts(model)
+			end
+		end
 		for _, e in list do
 			local look = e[3]
 			local model = Instance.new("Model")
@@ -121,7 +134,8 @@ def render(s, size=256, yaw_deg=25):
         depth = sum(p[2] for p in pts) / len(pts)
         polys.append((depth, hull([(p[0], p[1]) for p in pts]), part))
     ss = 4
-    scale = size * 0.8 / 6.5
+    span = max(max(abs(c) for part in s["parts"] for c in part["p"][:2]) * 2.2, 6.5)
+    scale = size * 0.8 / span
     img = Image.new("RGBA", (size * ss, size * ss), (40, 36, 44, 255))
     d = ImageDraw.Draw(img)
     c0x, c0y = size * ss / 2, size * ss * 0.46
