@@ -290,6 +290,12 @@ AnimationConfig.Styles = {
 		weaponWindup = { 0, 0, 55 },
 		weaponStrike = { -45, 0, 0 },
 	},
+	-- Kunai throw: the free left hand whips over the shoulder and snaps forward; the sword
+	-- hand stays on guard.
+	Throw = {
+		windup = { leftShoulder = { 150, 0, -25 }, leftElbow = { 100, 0, 0 }, waist = { 6, 25, 0 }, root = { 2, 10, 0, 0, -0.3, 0.3 }, shoulder = { 40, 10, -14 }, elbow = { 48, 0, 0 } },
+		strike = { leftShoulder = { 85, -10, -5 }, leftElbow = { 0, 0, 0 }, waist = { -10, -20, 0 }, root = { -6, -8, 0, 0, -0.4, -0.5 }, shoulder = { 30, 10, 10 }, elbow = { 40, 0, 0 }, leftHip = { -30, 0, 0 }, rightHip = { 20, 0, 0 }, leftKnee = { -30, 0, 0 } },
+	},
 	-- Idle gestures (AnimationController plays them now and then on idle NPCs and unaware enemies).
 	LookAround = {
 		windup = { waist = { -2, 38, 0 }, root = { 0, 10, 0 } },

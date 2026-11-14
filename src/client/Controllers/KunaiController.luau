@@ -50,7 +50,7 @@ local function throw()
 		-- Face the throw.
 		root.CFrame = CFrame.lookAt(root.Position, root.Position + dir)
 	end
-	AnimationController.Play(ch, "CastPush", nil, { windup = 0.05, active = 0.1, recovery = 0.2 })
+	AnimationController.Play(ch, "Throw", nil, { windup = 0.06, active = 0.1, recovery = 0.22 })
 	Net.Client.Fire("ThrowKunai", dir)
 end
 

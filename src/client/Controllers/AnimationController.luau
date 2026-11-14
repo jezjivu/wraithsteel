@@ -329,7 +329,7 @@ end
 
 -- A move as keyframes with anticipation, overshoot and settle (so it doesn't look stiff):
 --   rest -> 75% windup -> coiled windup -> overshot strike -> strike -> relaxed -> settle -> rest
-local NO_FOOTWORK = { HitReactLeft = true, HitReactRight = true, LookAround = true, ShoulderRoll = true, CheckBlade = true, HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true, DashForward = true, SideStep = true, Sweep = true, Guard = true, Dodge = true, Drink = true, Flip = true, Stagger = true, Flinch = true, Grasp = true, CastGuard = true, AirSlam = true }
+local NO_FOOTWORK = { Throw = true, HitReactLeft = true, HitReactRight = true, LookAround = true, ShoulderRoll = true, CheckBlade = true, HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true, DashForward = true, SideStep = true, Sweep = true, Guard = true, Dodge = true, Drink = true, Flip = true, Stagger = true, Flinch = true, Grasp = true, CastGuard = true, AirSlam = true }
 
 local function moveFrames(styleName: string, style: AnimationConfig.Style, rest: AnimationConfig.Pose, windup: number, active: number, recovery: number): { AnimBuilder.Frame }
 	local isMove = not NO_FOOTWORK[styleName] and not style.spin
