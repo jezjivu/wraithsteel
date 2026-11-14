@@ -289,13 +289,16 @@ AnimationConfig.Stances = {
 		waist = { -6, -10, 0 }, root = { -4, 10, 0, 0, -0.45, 0 },
 		leftHip = { 24, 0, -4 }, rightHip = { -16, 0, 6 }, leftKnee = { -26, 0, 0 }, rightKnee = { -22, 0, 0 },
 	},
-	-- Long weapons: rear hand at the hip, front hand far up the shaft, side-on, point forward.
+	-- Long weapons: rear hand at the hip, front hand on the shaft ahead of it, body side-on,
+	-- point forward and up.
 	TwoHanded = {
-		shoulder = { 20, 15, 5 }, elbow = { 70, 0, 0 },
-		leftShoulder = { 55, -15, 25 }, leftElbow = { 25, 0, 0 },
-		waist = { -6, -25, 0 }, root = { -4, 22, 0, 0, -0.5, 0 },
+		-- Solved so the left hand sits on the shaft (tools/render_poses.py / arm search).
+		shoulder = { 0, 60, -20 }, elbow = { 60, 0, 0 },
+		leftShoulder = { 10, 0, 50 }, leftElbow = { 60, 0, 0 },
+		waist = { -6, -30, 0 }, root = { -4, -15, 0, 0, -0.5, 0 },
 		leftHip = { 28, 0, -6 }, rightHip = { -20, 0, 8 }, leftKnee = { -30, 0, 0 }, rightKnee = { -26, 0, 0 },
 	},
+
 	-- Townsfolk (unarmed NPCs): relaxed, hands clasped in front, weight on one leg.
 	Relaxed = {
 		shoulder = { 18, 0, -12 }, elbow = { 55, 0, 0 },
