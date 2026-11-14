@@ -329,7 +329,7 @@ end
 
 -- A move as keyframes with anticipation, overshoot and settle (so it doesn't look stiff):
 --   rest -> 75% windup -> coiled windup -> overshot strike -> strike -> relaxed -> settle -> rest
-local NO_FOOTWORK = { LookAround = true, ShoulderRoll = true, CheckBlade = true, HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true, DashForward = true, SideStep = true, Sweep = true, Guard = true, Dodge = true, Drink = true, Flip = true, Stagger = true, Flinch = true, Grasp = true, CastGuard = true, AirSlam = true }
+local NO_FOOTWORK = { HitReactLeft = true, HitReactRight = true, LookAround = true, ShoulderRoll = true, CheckBlade = true, HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true, DashForward = true, SideStep = true, Sweep = true, Guard = true, Dodge = true, Drink = true, Flip = true, Stagger = true, Flinch = true, Grasp = true, CastGuard = true, AirSlam = true }
 
 local function moveFrames(styleName: string, style: AnimationConfig.Style, rest: AnimationConfig.Pose, windup: number, active: number, recovery: number): { AnimBuilder.Frame }
 	local isMove = not NO_FOOTWORK[styleName] and not style.spin
@@ -743,7 +743,7 @@ end
 -- True while the model is in the windup/active part of an attack (reactions must not cut
 -- an enemy's swing short: the server's timing is what counts).
 local guardHeld: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any
-local REACTIONS = { HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true, LookAround = true, ShoulderRoll = true, CheckBlade = true }
+local REACTIONS = { HitReactLeft = true, HitReactRight = true, HitReact = true, HitHeavy = true, BlockRecoil = true, DeflectStrike = true, Kneel = true, LookAround = true, ShoulderRoll = true, CheckBlade = true }
 function AnimationController.IsAttacking(model: Model): boolean
 	local p = playing[model]
 	if p == nil then

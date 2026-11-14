@@ -160,6 +160,19 @@ AnimationConfig.Styles = {
 		weaponWindup = { 20, 0, 0 },
 		weaponStrike = { 0, 0, 0 },
 	},
+	-- Struck from the left / right side: the body twists away from the blow.
+	HitReactLeft = {
+		windup = { root = { 8, 18, -10, 0.5, -0.3, 0.4 }, waist = { 12, 30, -12 }, shoulder = { 30, 0, 40 }, elbow = { 30, 0, 0 }, leftShoulder = { 10, 0, -50 }, leftHip = { -10, 0, -8 }, rightHip = { 8, 0, 10 }, leftKnee = { -20, 0, 0 }, rightKnee = { -25, 0, 0 } },
+		strike = { root = { 4, 8, -4 }, waist = { 6, 12, -4 }, shoulder = { 30, 0, 25 }, elbow = { 30, 0, 0 }, leftShoulder = { 15, 0, -25 } },
+		weaponWindup = { 20, 0, 0 },
+		weaponStrike = { 0, 0, 0 },
+	},
+	HitReactRight = {
+		windup = { root = { 8, -18, 10, -0.5, -0.3, 0.4 }, waist = { 12, -30, 12 }, shoulder = { 20, 0, 60 }, elbow = { 40, 0, 0 }, leftShoulder = { 30, 0, -25 }, leftHip = { -8, 0, -10 }, rightHip = { 10, 0, 8 }, leftKnee = { -25, 0, 0 }, rightKnee = { -20, 0, 0 } },
+		strike = { root = { 4, -8, 4 }, waist = { 6, -12, 4 }, shoulder = { 30, 0, 30 }, elbow = { 30, 0, 0 }, leftShoulder = { 20, 0, -20 } },
+		weaponWindup = { 30, 0, 0 },
+		weaponStrike = { 0, 0, 0 },
+	},
 	HitHeavy = {
 		windup = { root = { 28, 0, 12, 0, -0.8, 1.8 }, waist = { 24, -22, 0 }, shoulder = { -10, 0, 60 }, elbow = { 20, 0, 0 }, leftShoulder = { 10, 0, -60 }, leftHip = { -30, 0, 0 }, rightHip = { 25, 0, 0 }, leftKnee = { -45, 0, 0 }, rightKnee = { -50, 0, 0 } },
 		strike = { root = { 14, 0, 5 }, waist = { 10, -10, 0 }, shoulder = { 20, 0, 30 }, elbow = { 20, 0, 0 }, leftShoulder = { 20, 0, -30 }, leftKnee = { -30, 0, 0 }, rightKnee = { -30, 0, 0 } },

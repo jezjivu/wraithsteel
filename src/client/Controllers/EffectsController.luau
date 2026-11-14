@@ -370,7 +370,17 @@ local function onDamage(e: { [string]: any })
 		if e.outcome == "Blocked" then
 			AnimationController.React(target, "BlockRecoil", 0.32)
 		elseif (e.damage or 0) > 0 and not e.severing then
-			AnimationController.React(target, if (e.damage or 0) >= EffectsConfig.DamageNumber.bigHitThreshold or e.crit then "HitHeavy" else "HitReact", if e.crit then 0.42 else 0.3)
+			local heavy = (e.damage or 0) >= EffectsConfig.DamageNumber.bigHitThreshold or e.crit
+			local react = if heavy then "HitHeavy" else "HitReact"
+			-- Light hits from the side twist the body away from the blow.
+			local sp = source and anchorPart(source)
+			if not heavy and sp then
+				local rel = part.CFrame:PointToObjectSpace(sp.Position)
+				if math.abs(rel.X) > math.abs(rel.Z) * 0.7 then
+					react = if rel.X < 0 then "HitReactLeft" else "HitReactRight"
+				end
+			end
+			AnimationController.React(target, react, if e.crit then 0.42 else 0.3)
 		end
 		playSound(EffectsConfig.Sounds.hit, part, 0.7)
 		local sparkColor = if e.outcome == "Blocked" then rgb(EffectsConfig.Guard.color) elseif mine then Color3.fromRGB(255, 90, 70) else rgb(EffectsConfig.Sparks.color)
