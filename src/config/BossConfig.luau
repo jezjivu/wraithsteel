@@ -118,7 +118,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.45,
 		rewards = { ember = 1200, xp = 1400, jadeFirstClear = 40 },
 		modelId = 0,
-		look = { skin = { 220, 215, 225 }, body = { 30, 30, 40 }, legs = { 20, 20, 28 }, headwear = "Visor", accent = { 200, 200, 215 }, glow = { 255, 60, 200 }, weapon = "jian_ninth_bell", outfit = "Cyber", scale = 1.35 },
+		look = { skin = { 220, 215, 225 }, body = { 30, 30, 40 }, legs = { 20, 20, 28 }, headwear = "Visor", accent = { 200, 200, 215 }, glow = { 255, 60, 200 }, weapon = "jian_ninth_bell", outfit = "Cyber", build = "Slim", scale = 1.35 },
 	},
 	-- Aeloria boss: the bronze Sun-Archon. Slow, enormous, fights with the sun itself.
 	archon_helion = {
@@ -151,7 +151,7 @@ BossConfig.Bosses = {
 		idleBetweenMoves = 0.6,
 		rewards = { ember = 2500, xp = 2800, jadeFirstClear = 60 },
 		modelId = 0,
-		look = { skin = { 200, 150, 80 }, body = { 190, 130, 60 }, legs = { 170, 110, 50 }, headwear = "Laurel", accent = { 230, 200, 120 }, glow = { 255, 205, 90 }, weapon = "spear_skypiercer", outfit = "Hoplite", scale = 2.4 },
+		look = { skin = { 200, 150, 80 }, body = { 190, 130, 60 }, legs = { 170, 110, 50 }, headwear = "Laurel", accent = { 230, 200, 120 }, glow = { 255, 205, 90 }, weapon = "spear_skypiercer", outfit = "Hoplite", build = "Towering", scale = 2.4 },
 	},
 } :: { [string]: BossDef }
 

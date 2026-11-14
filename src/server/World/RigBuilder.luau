@@ -61,6 +61,13 @@ function RigBuilder.Build(look: RigLook, name: string): Model?
 	desc.TorsoColor = rgb(look.body)
 	desc.LeftLegColor = rgb(look.legs)
 	desc.RightLegColor = rgb(look.legs)
+	local build = look.build and EnemyConfig.Builds[look.build]
+	if build then
+		desc.HeightScale = build.height
+		desc.WidthScale = build.width
+		desc.DepthScale = build.depth
+		desc.HeadScale = build.head
+	end
 	local ok, result = pcall(function()
 		return Players:CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R15)
 	end)

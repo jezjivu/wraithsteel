@@ -26,6 +26,9 @@ cases["Every enemy/boss rig look references a real weapon"] = function()
 				expectTrue(WeaponConfig.Weapons[look.weapon] ~= nil, id .. " weapon " .. look.weapon)
 			end
 			expectTrue(look.scale > 0, id)
+			if look.build then
+				expectTrue(require(Config.EnemyConfig).Builds[look.build] ~= nil, id .. " build " .. look.build)
+			end
 		end
 	end
 end
