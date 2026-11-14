@@ -405,6 +405,53 @@ local headwear: { [string]: (Model, BasePart, Look, Attach) -> () } = {
 	end,
 }
 
+-- Footwear + hands --------------------------------------------------------------------------
+-- Straw sandals over split-toe socks, armored boots, or plain wraps; gloves or hand wraps.
+local FOOTWEAR: { [string]: string } = {
+	Ronin = "Waraji", Samurai = "Armored", Monk = "Waraji", Archer = "Waraji", Noble = "Waraji",
+	Shinobi = "Tabi", Bandit = "Waraji", Hoplite = "Strapped", Cyber = "Boots", Robe = "Strapped",
+}
+local HANDS: { [string]: string } = { Shinobi = "Wraps", Cyber = "Gloves", Samurai = "Gloves", Bandit = "Wraps" }
+
+local function footwear(k: Kit, kind: string)
+	local straw = Color3.fromRGB(196, 168, 110)
+	local sock = Color3.fromRGB(235, 230, 220)
+	both(function(side)
+		local foot = side .. "Foot"
+		if kind == "Waraji" then
+			piece(k, foot, "Tabi", 1.06, 1.1, 1.06, CFrame.new(0, 0.05, 0), sock, FABRIC)
+			piece(k, foot, "Sole", 1.12, 0.35, 1.15, CFrame.new(0, -0.45, -0.02), straw, FABRIC)
+			piece(k, foot, "Strap", 1.1, 0.22, 0.2, CFrame.new(0, 0.1, -0.25), shade(straw, -0.3), FABRIC)
+		elseif kind == "Tabi" then
+			piece(k, foot, "Tabi", 1.08, 1.15, 1.08, CFrame.new(0, 0.05, 0), Color3.fromRGB(28, 26, 30), FABRIC)
+		elseif kind == "Armored" then
+			piece(k, foot, "Boot", 1.12, 1.2, 1.12, CFrame.new(0, 0.05, 0), Color3.fromRGB(40, 32, 28), Enum.Material.Leather)
+			piece(k, foot, "Toe", 1.0, 0.5, 0.4, CFrame.new(0, 0.1, -0.45), shade(k.body, -0.2), METAL)
+		elseif kind == "Strapped" then
+			piece(k, foot, "Sole", 1.1, 0.35, 1.12, CFrame.new(0, -0.45, 0), Color3.fromRGB(120, 85, 50), Enum.Material.Leather)
+			for i = 0, 1 do
+				piece(k, foot, "Strap", 1.12, 0.15, 1.12, CFrame.new(0, 0.05 + i * 0.4, 0), Color3.fromRGB(110, 75, 45), Enum.Material.Leather)
+			end
+		elseif kind == "Boots" then
+			piece(k, foot, "Boot", 1.14, 1.25, 1.2, CFrame.new(0, 0.05, -0.04), Color3.fromRGB(30, 30, 36), METAL)
+			if k.glow then
+				piece(k, foot, "BootLight", 1.16, 0.12, 0.12, CFrame.new(0, 0.3, -0.55), k.glow, NEON)
+			end
+		end
+	end)
+end
+
+local function handwear(k: Kit, kind: string)
+	both(function(side)
+		local hand = side .. "Hand"
+		if kind == "Gloves" then
+			piece(k, hand, "Glove", 1.1, 1.1, 1.1, CFrame.new(), Color3.fromRGB(35, 30, 30), Enum.Material.Leather)
+		elseif kind == "Wraps" then
+			piece(k, hand, "HandWrap", 1.08, 0.6, 1.08, CFrame.new(0, 0.2, 0), Color3.fromRGB(190, 175, 145), FABRIC)
+		end
+	end)
+end
+
 -- Masks ---------------------------------------------------------------------------------------
 local masks: { [string]: (Kit, BasePart) -> () } = {
 	-- Red demon face plate with fangs and brow ridges.
@@ -515,6 +562,18 @@ function Outfits.Apply(model: Model, look: Look, attach: Attach)
 		end)
 		if not ok then
 			warn("[Outfits] headwear", look.headwear, err)
+		end
+	end
+	if look.outfit then
+		local o = look.outfit
+		local ok, err = pcall(function()
+			footwear(k, FOOTWEAR[o] or "Waraji")
+			if HANDS[o] then
+				handwear(k, HANDS[o])
+			end
+		end)
+		if not ok then
+			warn("[Outfits] footwear", o, err)
 		end
 	end
 	local build = if look.outfit then outfits[look.outfit] else nil

@@ -33,6 +33,10 @@ local BODY = {
 	RightUpperLeg = { 0.5, -1.0, 1, 1.2, 1, "legs" },
 	LeftLowerLeg = { -0.5, -2.2, 1, 1.2, 1, "legs" },
 	RightLowerLeg = { 0.5, -2.2, 1, 1.2, 1, "legs" },
+	LeftFoot = { -0.5, -2.95, 1, 0.3, 1, "legs" },
+	RightFoot = { 0.5, -2.95, 1, 0.3, 1, "legs" },
+	LeftHand = { -1.5, -0.95, 1, 0.3, 1, "skin" },
+	RightHand = { 1.5, -0.95, 1, 0.3, 1, "skin" },
 }
 local function attach(model, base, name, size, offset, color, material, shape)
 	local p = Instance.new("Part")
