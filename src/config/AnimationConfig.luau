@@ -87,6 +87,22 @@ AnimationConfig.Styles = {
 		weaponWindup = { -50, 0, 0 },
 		weaponStrike = { -45, 0, 0 },
 	},
+	-- Fan flick: the fan sweeps high across the front while the other arm counter-swings, like
+	-- a dancer's turn.
+	FanFlick = {
+		windup = { shoulder = { 10, -35, 95 }, elbow = { 40, 0, 0 }, leftShoulder = { 70, 0, 15 }, leftElbow = { 30, 0, 0 }, waist = { 4, -30, 0 }, root = { 4, -12, 0, 0, -0.4, 0.4 }, leftHip = { 10, 0, -10 }, rightHip = { -20, 0, 12 }, leftKnee = { -25, 0, 0 }, rightKnee = { -30, 0, 0 } },
+		strike = { shoulder = { 35, 125, 80 }, elbow = { 10, 0, 0 }, leftShoulder = { 10, 0, -85 }, leftElbow = { 10, 0, 0 }, waist = { -8, 32, 0 }, root = { -8, 14, 0, 0, -0.5, -0.9 }, leftHip = { -35, 0, -8 }, rightHip = { 30, 0, 8 }, leftKnee = { -30, 0, 0 }, rightKnee = { -10, 0, 0 } },
+		weaponWindup = { 0, 0, -30 },
+		weaponStrike = { 0, 0, 40 },
+	},
+	-- Fan whirl: both arms raised wide, the body turns on one foot.
+	FanWhirl = {
+		windup = { shoulder = { 30, 0, 100 }, elbow = { 20, 0, 0 }, leftShoulder = { 30, 0, -100 }, leftElbow = { 20, 0, 0 }, waist = { 0, -25, 0 }, root = { 0, 0, 0, 0, -0.3, 0 }, leftHip = { 30, 0, 0 }, leftKnee = { -60, 0, 0 }, rightKnee = { -10, 0, 0 } },
+		strike = { shoulder = { 20, 0, 110 }, elbow = { 10, 0, 0 }, leftShoulder = { 20, 0, -110 }, leftElbow = { 10, 0, 0 }, waist = { 0, 25, 0 }, root = { 0, 0, 0, 0, -0.3, 0 }, leftHip = { 35, 0, 0 }, leftKnee = { -70, 0, 0 }, rightKnee = { -10, 0, 0 } },
+		spin = true,
+		weaponWindup = { 0, 0, 0 },
+		weaponStrike = { 0, 0, 0 },
+	},
 	-- Whirl: blade held out level at arm's length while the whole body turns.
 	Spin = {
 		windup = { shoulder = { 0, -40, 90 }, elbow = { 10, 0, 0 }, leftShoulder = { 0, 0, -80 }, leftElbow = { 10, 0, 0 }, waist = { 0, -30, 0 }, root = { 0, 0, 0, 0, -0.6, 0 }, leftHip = { -20, 0, -15 }, rightHip = { 20, 0, 15 }, leftKnee = { -30, 0, 0 }, rightKnee = { -30, 0, 0 } },
@@ -380,7 +396,10 @@ AnimationConfig.MoveStyles = {
 	staff_heavy = "Overhead",
 	gb_light_3 = "Overhead",
 	gb_heavy = "Overhead",
-	fan_heavy = "Thrust",
+	fan_heavy = "FanWhirl",
+	fan_light_1 = "FanFlick",
+	fan_light_3 = "FanFlick",
+	fan_light_5 = "FanWhirl",
 } :: { [string]: string }
 
 -- Procedural walk cycle for code-built NPC rigs (they have no Animate script).

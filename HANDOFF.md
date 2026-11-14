@@ -154,3 +154,20 @@ Reward/Code/Spirit -> Lantern/Fusion/Combat -> Enemy/Boss -> Chapter.
   EnemyConfig.Alert.radius aware for a few seconds.
 - Secrets: waterfall cave (MapConfig.WaterfallCave, relic with `absY`), rooftop hooks on intact
   village houses. Map panel (M) draws MapConfig; K opens Skills.
+
+## Part 18: models + animation pass
+- **Pose tooling.** `tools/render_poses.py` renders AnimationConfig styles on an R15 skeleton with
+  the held weapon (stance / windup / strike, top + side views, blade-tip arc; `Death` shows the
+  death keys). `tools/pose_solver.py` searches arm angles for a hand target / blade direction /
+  second hand on the weapon. `tools/render_creatures.py` previews creature attack poses.
+- **Conventions (verified):** shoulder {X, Y, Z} = vector rotated by Z (lift out), then Y (level
+  sweep, + = toward front/left), then X (pitch, 90 = forward). waist/root: -X leans FORWARD.
+  Weapon swing: X -45 lays the blade along the forearm. `WeaponConfig.GripRotation` is now -125.
+- Every combat style was redesigned with these rules; two-handed cuts were solved so both hands
+  hold the hilt. New styles: Kesa, RisingCut, FanFlick, FanWhirl, HitReactLeft/Right, idle
+  gestures (LookAround, ShoulderRoll, CheckBlade), Death keys, Run cycle.
+- Moves get in-between keyframes during the active window (the engine blends the shortest way).
+- Creatures: CreatureFamily attribute (Quadruped / Hover) picks the animator; Hound + Wisp models;
+  poses in AnimationConfig.CreaturePoses.
+- Cloth: Outfits `hang()` makes Motor6D "Sway*" pieces; ClothController swings them client-side.
+- Enemy rigs: BreakJointsOnDeath = false, root anchored on death, client plays the death keys.
