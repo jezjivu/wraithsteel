@@ -562,6 +562,8 @@ function EnemyService.Spawn(enemyId: string, cframe: CFrame, onDespawn: (() -> (
 	end, os.clock())
 
 	humanoid.Died:Connect(function()
+		-- Hold the body where it fell so the client's death animation (and dissolve) reads.
+		root.Anchored = true
 		scheduler:Remove(id)
 		director:Release(id, os.clock())
 		task.delay(EnemyConfig.DespawnAfterDeath, function()

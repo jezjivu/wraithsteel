@@ -324,6 +324,7 @@ local function track(model: Instance)
 			local hum = model:FindFirstChildOfClass("Humanoid")
 			if hum then
 				hum.Died:Connect(function()
+					AnimationController.PlayDeath(model)
 					Fx.Dissolve(model, rgb(EffectsConfig.Death.color), EffectsConfig.Death.seconds)
 				end)
 			end

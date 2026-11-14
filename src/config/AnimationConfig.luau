@@ -253,6 +253,15 @@ AnimationConfig.Styles = {
 	},
 } :: { [string]: Style }
 
+-- Death (AnimationController.PlayDeath): the blow lands, the knees go, the body folds forward
+-- and stays down while it dissolves. Keys are seconds from the killing blow.
+AnimationConfig.Death = {
+	{ t = 0.12, pose = { root = { 22, 0, 6, 0, -0.2, 0.8 }, waist = { -22, -12, 0 }, shoulder = { 40, 0, 50 }, elbow = { 30, 0, 0 }, leftShoulder = { 30, 0, -45 }, leftHip = { -18, 0, 0 }, rightHip = { 12, 0, 0 }, leftKnee = { -20, 0, 0 }, rightKnee = { -30, 0, 0 } } },
+	{ t = 0.55, pose = { root = { 10, 0, 4, 0, -1.4, 0.4 }, waist = { 18, -8, 0 }, shoulder = { 10, 0, 25 }, elbow = { 10, 0, 0 }, leftShoulder = { 15, 0, -25 }, leftElbow = { 10, 0, 0 }, leftHip = { 80, 0, 0 }, rightHip = { 70, 0, 0 }, leftKnee = { -100, 0, 0 }, rightKnee = { -105, 0, 0 } } },
+	{ t = 1.1, pose = { root = { -70, 0, 8, 0, -2.4, -1.2 }, waist = { 25, 10, 0 }, shoulder = { 150, 0, 30 }, elbow = { 20, 0, 0 }, leftShoulder = { 160, 0, -30 }, leftElbow = { 25, 0, 0 }, leftHip = { 60, 0, 0 }, rightHip = { 40, 0, 0 }, leftKnee = { -80, 0, 0 }, rightKnee = { -50, 0, 0 } } },
+	{ t = 1.35, pose = { root = { -82, 0, 10, 0, -2.6, -1.4 }, waist = { 20, 10, 0 }, shoulder = { 165, 0, 35 }, elbow = { 15, 0, 0 }, leftShoulder = { 168, 0, -35 }, leftElbow = { 20, 0, 0 }, leftHip = { 30, 0, 0 }, rightHip = { 20, 0, 0 }, leftKnee = { -40, 0, 0 }, rightKnee = { -30, 0, 0 } } },
+}
+
 -- Combat stances: the rest pose of every armed character (moves start from and return to it,
 -- so arms and body always stay connected to the weapon). Legs fade out while walking.
 AnimationConfig.Stances = {

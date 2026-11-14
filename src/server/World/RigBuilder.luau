@@ -70,6 +70,10 @@ function RigBuilder.Build(look: RigLook, name: string): Model?
 	end
 	local model = result :: Model
 	model.Name = name
+	local hum = model:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.BreakJointsOnDeath = false -- clients play a death animation instead of a limb burst
+	end
 
 	Outfits.Apply(model, look :: any, attach)
 	local torso = model:FindFirstChild("UpperTorso")

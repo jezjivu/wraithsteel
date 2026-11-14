@@ -675,6 +675,38 @@ function AnimationController.Play(model: Model, action: string, moveId: string?,
 	end
 end
 
+-- Death: folds the body down and HOLDS the last frame (the dissolve runs over it).
+function AnimationController.PlayDeath(model: Model)
+	if model:GetAttribute("Creature") ~= nil then
+		return
+	end
+	local st = trackStateOf(model)
+	if st == nil then
+		return
+	end
+	playing[model] = nil
+	local frames: { AnimBuilder.Frame } = { { t = 0, pose = stanceFor(model) :: any } }
+	for _, f in AnimationConfig.Death do
+		table.insert(frames, { t = f.t, pose = f.pose :: any })
+	end
+	local id = AnimBuilder.Get("Death|" .. (stanceNameFor(model) or "None"), frames, { priority = Enum.AnimationPriority.Action4 }, model)
+	local track = id and loadTrack(st, id)
+	if track then
+		for _, t in { st.action, st.stanceUpper, st.stanceLower, st.walk } do
+			if t and t ~= track then
+				t:Stop(0.1)
+			end
+		end
+		track:Play(0.05, 1, 1)
+		local last = AnimationConfig.Death[#AnimationConfig.Death].t
+		task.delay(last - 0.02, function()
+			if track.IsPlaying then
+				track:AdjustSpeed(0) -- freeze on the final frame
+			end
+		end)
+	end
+end
+
 -- True while the model is in the windup/active part of an attack (reactions must not cut
 -- an enemy's swing short: the server's timing is what counts).
 local guardHeld: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any

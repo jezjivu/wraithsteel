@@ -48,7 +48,7 @@ return {
 	dump = function()
 		local A = require(game:GetService("ReplicatedStorage").Config.AnimationConfig)
 		local W = require(game:GetService("ReplicatedStorage").Config.WeaponConfig)
-		print("ANIM" .. enc({ Styles = A.Styles, Stances = A.Stances, Grip = W.GripRotation, GripDepth = W.GripDepth }))
+		print("ANIM" .. enc({ Styles = A.Styles, Stances = A.Stances, Death = A.Death, Grip = W.GripRotation, GripDepth = W.GripDepth }))
 	end,
 }
 """
@@ -295,6 +295,14 @@ def main():
     except OSError:
         font = ImageFont.load_default()
     for r, name in enumerate(names):
+        if name == "Death":
+            # Keyframe sequence: stance, each key (front), the last key from the side.
+            keys = [rest] + [merged(rest, k["pose"], None) for k in data["Death"]]
+            views = [(keys[i], 30, 10) for i in range(len(keys))] + [(keys[-1], -100, 5)]
+            for c, (pose, yaw, pitch) in enumerate(views[:6]):
+                sheet.alpha_composite(draw(boxes(pose, [30, 0, 0]), yaw, pitch, cell), (150 + c * cell, r * cell))
+            dr.text((8, r * cell + 8), "Death", fill=(240, 225, 200), font=font)
+            continue
         st = styles[name]
         move = name not in NO_FOOTWORK and not st.get("spin")
         W = merged(rest, st.get("windup", {}), AUTO_WINDUP if move else None)
