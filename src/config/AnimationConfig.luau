@@ -60,10 +60,10 @@ AnimationConfig.Styles = {
 	},
 	-- Two-handed vertical cut: blade raised behind the head, chopped down along the arms.
 	Overhead = {
-		windup = { shoulder = { 170, 0, -8 }, elbow = { 60, 0, 0 }, leftShoulder = { 165, 0, 12 }, leftElbow = { 70, 0, 0 }, waist = { 14, 0, 0 }, root = { 8, 0, 0, 0, -0.3, 0.5 }, leftHip = { 18, 0, -6 }, rightHip = { -26, 0, 10 }, leftKnee = { -32, 0, 0 }, rightKnee = { -30, 0, 0 } },
-		strike = { shoulder = { 55, 0, -14 }, elbow = { 0, 0, 0 }, leftShoulder = { 55, 0, 18 }, leftElbow = { 8, 0, 0 }, waist = { -22, 0, 0 }, root = { -14, 0, 0, 0, -1.1, -1.6 }, leftHip = { -50, 0, -4 }, rightHip = { 38, 0, 6 }, leftKnee = { -46, 0, 0 }, rightKnee = { -12, 0, 0 } },
+		windup = { shoulder = { 170, 30, -40 }, elbow = { 45, 0, 0 }, leftShoulder = { 160, 0, 50 }, leftElbow = { 15, 0, 0 }, waist = { 14, 0, 0 }, root = { 8, 0, 0, 0, -0.3, 0.5 }, leftHip = { 18, 0, -6 }, rightHip = { -26, 0, 10 }, leftKnee = { -32, 0, 0 }, rightKnee = { -30, 0, 0 } },
+		strike = { shoulder = { 50, 0, -40 }, elbow = { 0, 0, 0 }, leftShoulder = { 50, 0, 60 }, leftElbow = { 0, 0, 0 }, waist = { -22, 0, 0 }, root = { -14, 0, 0, 0, -1.1, -1.6 }, leftHip = { -50, 0, -4 }, rightHip = { 38, 0, 6 }, leftKnee = { -46, 0, 0 }, rightKnee = { -12, 0, 0 } },
 		weaponWindup = { 45, 0, 0 },
-		weaponStrike = { -50, 0, 0 },
+		weaponStrike = { -50, 0, -35 },
 	},
 	-- Blade drawn back at the hip, then driven straight out with a long lunge.
 	Thrust = {
@@ -75,8 +75,8 @@ AnimationConfig.Styles = {
 	-- Falling diagonal: both hands high over the right shoulder, cut down through the target to
 	-- the left hip.
 	Kesa = {
-		windup = { shoulder = { 180, 30, 30 }, elbow = { 50, 0, 0 }, leftShoulder = { 165, 0, 10 }, leftElbow = { 70, 0, 0 }, waist = { 6, -20, 0 }, root = { 6, -8, 0, 0, -0.4, 0.5 }, leftHip = { 18, 0, -6 }, rightHip = { -26, 0, 10 }, leftKnee = { -32, 0, 0 }, rightKnee = { -30, 0, 0 } },
-		strike = { shoulder = { 40, -20, -30 }, elbow = { 0, 0, 0 }, leftShoulder = { 40, 0, 30 }, leftElbow = { 15, 0, 0 }, waist = { -16, 25, 0 }, root = { -12, 10, 0, 0, -1.0, -1.4 }, leftHip = { -50, 0, -4 }, rightHip = { 38, 0, 6 }, leftKnee = { -46, 0, 0 }, rightKnee = { -12, 0, 0 } },
+		windup = { shoulder = { 160, 15, -40 }, elbow = { 45, 0, 0 }, leftShoulder = { 160, 0, 50 }, leftElbow = { 15, 0, 0 }, waist = { 6, -20, 0 }, root = { 6, -8, 0, 0, -0.4, 0.5 }, leftHip = { 18, 0, -6 }, rightHip = { -26, 0, 10 }, leftKnee = { -32, 0, 0 }, rightKnee = { -30, 0, 0 } },
+		strike = { shoulder = { 30, -15, -50 }, elbow = { 0, 0, 0 }, leftShoulder = { 40, -15, 60 }, leftElbow = { 15, 0, 0 }, waist = { -16, 25, 0 }, root = { -12, 10, 0, 0, -1.0, -1.4 }, leftHip = { -50, 0, -4 }, rightHip = { 38, 0, 6 }, leftKnee = { -46, 0, 0 }, rightKnee = { -12, 0, 0 } },
 		weaponWindup = { 30, 0, 0 },
 		weaponStrike = { -50, 0, 0 },
 	},
@@ -140,18 +140,18 @@ AnimationConfig.Styles = {
 	},
 	-- Plunging air attack: both hands high, blade hammered down along the arms.
 	AirSlam = {
-		windup = { shoulder = { 175, 0, -5 }, elbow = { 50, 0, 0 }, leftShoulder = { 170, 0, 10 }, leftElbow = { 60, 0, 0 }, root = { 15, 0, 0 }, waist = { 12, 0, 0 }, leftKnee = { -70, 0, 0 }, rightKnee = { -70, 0, 0 }, leftHip = { 40, 0, 0 }, rightHip = { 40, 0, 0 } },
-		strike = { shoulder = { 35, 0, -12 }, elbow = { 0, 0, 0 }, leftShoulder = { 35, 0, 15 }, leftElbow = { 5, 0, 0 }, root = { -25, 0, 0 }, waist = { -25, 0, 0 }, leftKnee = { -60, 0, 0 }, rightKnee = { -20, 0, 0 }, leftHip = { 20, 0, 0 }, rightHip = { 30, 0, 0 } },
+		windup = { shoulder = { 170, 30, -40 }, elbow = { 45, 0, 0 }, leftShoulder = { 160, 0, 50 }, leftElbow = { 15, 0, 0 }, root = { 15, 0, 0 }, waist = { 12, 0, 0 }, leftKnee = { -70, 0, 0 }, rightKnee = { -70, 0, 0 }, leftHip = { 40, 0, 0 }, rightHip = { 40, 0, 0 } },
+		strike = { shoulder = { 50, 0, -40 }, elbow = { 0, 0, 0 }, leftShoulder = { 50, 0, 60 }, leftElbow = { 0, 0, 0 }, root = { -25, 0, 0 }, waist = { -25, 0, 0 }, leftKnee = { -60, 0, 0 }, rightKnee = { -20, 0, 0 }, leftHip = { 20, 0, 0 }, rightHip = { 30, 0, 0 } },
 		weaponWindup = { 40, 0, 0 },
-		weaponStrike = { -60, 0, 0 },
+		weaponStrike = { -50, 0, -35 },
 	},
 	-- Spinning flash cut that ends in a rising arc.
 	Ultimate = {
-		windup = { shoulder = { 170, 0, -8 }, elbow = { 60, 0, 0 }, leftShoulder = { 165, 0, 12 }, leftElbow = { 70, 0, 0 }, waist = { 15, 0, 0 }, root = { 10, 0, 0, 0, -0.4, 0 }, leftKnee = { -60, 0, 0 }, rightKnee = { -60, 0, 0 }, leftHip = { 30, 0, 0 }, rightHip = { 30, 0, 0 } },
-		strike = { shoulder = { 55, 0, -14 }, elbow = { 0, 0, 0 }, leftShoulder = { 55, 0, 18 }, leftElbow = { 8, 0, 0 }, waist = { -20, 0, 0 }, root = { -10, 0, 0, 0, -1.0, 0 }, leftHip = { -50, 0, 0 }, rightHip = { 40, 0, 0 }, leftKnee = { -45, 0, 0 } },
+		windup = { shoulder = { 170, 30, -40 }, elbow = { 45, 0, 0 }, leftShoulder = { 160, 0, 50 }, leftElbow = { 15, 0, 0 }, waist = { 15, 0, 0 }, root = { 10, 0, 0, 0, -0.4, 0 }, leftKnee = { -60, 0, 0 }, rightKnee = { -60, 0, 0 }, leftHip = { 30, 0, 0 }, rightHip = { 30, 0, 0 } },
+		strike = { shoulder = { 50, 0, -40 }, elbow = { 0, 0, 0 }, leftShoulder = { 50, 0, 60 }, leftElbow = { 0, 0, 0 }, waist = { -20, 0, 0 }, root = { -10, 0, 0, 0, -1.0, 0 }, leftHip = { -50, 0, 0 }, rightHip = { 40, 0, 0 }, leftKnee = { -45, 0, 0 } },
 		spin = true,
 		weaponWindup = { 45, 0, 0 },
-		weaponStrike = { -50, 0, 0 },
+		weaponStrike = { -50, 0, -35 },
 	},
 	-- Reactions (EffectsController): getting hit, guarding a hit, deflecting, posture broken.
 	HitReact = {
@@ -230,10 +230,10 @@ AnimationConfig.Styles = {
 	},
 	-- Severing Blow (finishing a posture-broken enemy): two-handed downward plunge.
 	Sever = {
-		windup = { shoulder = { 165, 0, -6 }, elbow = { 70, 0, 0 }, leftShoulder = { 160, 0, 10 }, leftElbow = { 75, 0, 0 }, waist = { 20, 0, 0 }, root = { 8, 0, 0 }, leftKnee = { -30, 0, 0 } },
-		strike = { shoulder = { 40, 0, -12 }, elbow = { 0, 0, 0 }, leftShoulder = { 40, 0, 14 }, leftElbow = { 5, 0, 0 }, waist = { -35, 0, 0 }, root = { -15, 0, 0, 0, -1.2, -0.8 }, leftHip = { -60, 0, 0 }, rightHip = { 30, 0, 0 }, leftKnee = { -60, 0, 0 }, rightKnee = { -40, 0, 0 } },
+		windup = { shoulder = { 170, 0, -50 }, elbow = { 0, 0, 0 }, leftShoulder = { 150, 0, 40 }, leftElbow = { 15, 0, 0 }, waist = { 20, 0, 0 }, root = { 8, 0, 0 }, leftKnee = { -30, 0, 0 } },
+		strike = { shoulder = { 40, 0, -40 }, elbow = { 0, 0, 0 }, leftShoulder = { 50, 0, 60 }, leftElbow = { 0, 0, 0 }, waist = { -35, 0, 0 }, root = { -15, 0, 0, 0, -1.2, -0.8 }, leftHip = { -60, 0, 0 }, rightHip = { 30, 0, 0 }, leftKnee = { -60, 0, 0 }, rightKnee = { -40, 0, 0 } },
 		weaponWindup = { 60, 0, 0 },
-		weaponStrike = { -85, 0, 0 },
+		weaponStrike = { -85, 0, -35 },
 	},
 	-- Qi arts (SpellController plays these by name with explicit timing).
 	CastPush = {
