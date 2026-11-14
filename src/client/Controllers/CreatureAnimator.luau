@@ -24,6 +24,16 @@ local POSES: { [string]: { windup: PoseSet, strike: PoseSet, spin: boolean? } } 
 		windup = { Hip_FR = { 85, 0, 25 }, Knee_FR = { -50, 0, 0 }, Spine = { 8, 20, 0 }, Neck = { 10, -15, 0 }, Jaw = { -20, 0, 0 } },
 		strike = { Hip_FR = { 20, 0, -40 }, Knee_FR = { -10, 0, 0 }, Spine = { -4, -25, 0 }, Neck = { -5, 20, 0 }, Jaw = { -30, 0, 0 } },
 	},
+	-- Rear the head back with the jaw wide, then snap forward and shut it.
+	Bite = {
+		windup = { Spine = { 6, 0, 0 }, Neck = { 28, 0, 0 }, Jaw = { -45, 0, 0 }, Hip_FL = { -15, 0, 0 }, Hip_FR = { -15, 0, 0 }, Hip_BL = { 20, 0, 0 }, Hip_BR = { 20, 0, 0 }, Knee_BL = { -30, 0, 0 }, Knee_BR = { -30, 0, 0 } },
+		strike = { Spine = { -8, 0, 0 }, Neck = { -30, 0, 0 }, Jaw = { -2, 0, 0 }, Hip_FL = { 35, 0, 0 }, Hip_FR = { 30, 0, 0 }, Hip_BL = { -25, 0, 0 }, Hip_BR = { -25, 0, 0 } },
+	},
+	-- Spotted you: head thrown back in a howl.
+	Howl = {
+		windup = { Neck = { 45, 0, 0 }, Jaw = { -20, 0, 0 }, Spine = { 12, 0, 0 }, Hip_FL = { 10, 0, 0 }, Hip_FR = { 10, 0, 0 } },
+		strike = { Neck = { 55, 0, 0 }, Jaw = { -50, 0, 0 }, Spine = { 14, 0, 0 } },
+	},
 	Pounce = {
 		windup = { Spine = { -10, 0, 0 }, Hip_FL = { -25, 0, 0 }, Hip_FR = { -25, 0, 0 }, Hip_BL = { 30, 0, 0 }, Hip_BR = { 30, 0, 0 }, Knee_BL = { -60, 0, 0 }, Knee_BR = { -60, 0, 0 }, Neck = { -10, 0, 0 } },
 		strike = { Spine = { 14, 0, 0 }, Hip_FL = { 75, 0, 0 }, Hip_FR = { 75, 0, 0 }, Hip_BL = { -45, 0, 0 }, Hip_BR = { -45, 0, 0 }, Neck = { 10, 0, 0 }, Jaw = { -40, 0, 0 } },
@@ -133,7 +143,8 @@ local function animateDrone(model: Model, b: Beast, dt: number, now: number)
 	end
 	local v = root.CFrame:VectorToObjectSpace(root.AssemblyLinearVelocity)
 	local paper = model:GetAttribute("Creature") == "Wisp"
-	b.phase += dt * (if paper then 1.6 else 25) -- talismans drift, rotors whirl
+	local charging = b.action ~= nil and now - b.action.start < b.action.windup
+	b.phase += dt * (if paper then (if charging then 9 else 1.6) else 25) -- talismans drift (whirl when charging), rotors spin
 	local rotor = b.motors.Rotor
 	if rotor and b.base[rotor] then
 		rotor.C0 = b.base[rotor] * CFrame.Angles(0, b.phase, 0)
@@ -142,7 +153,10 @@ local function animateDrone(model: Model, b: Beast, dt: number, now: number)
 	if body and b.base[body] then
 		local tilt = CFrame.Angles(math.rad(math.clamp(v.Z * 1.5, -20, 20)), 0, math.rad(math.clamp(-v.X * 1.5, -20, 20)))
 		local bob = CFrame.new(0, math.sin(now * 2.5) * 0.5, 0)
-		if paper then
+		if paper and charging then
+			-- Gathering fire: the lantern trembles.
+			bob = CFrame.new(0, 0.3, 0) * CFrame.Angles(math.rad(math.sin(now * 40) * 3), 0, math.rad(math.cos(now * 37) * 3))
+		elseif paper then
 			-- A lantern on an invisible string: slow pendulum sway, a lazy turn, a deeper bob.
 			bob = CFrame.new(0, math.sin(now * 1.7) * 0.7, 0)
 				* CFrame.Angles(math.rad(math.sin(now * 1.1) * 7), math.sin(now * 0.4) * 0.5, math.rad(math.sin(now * 1.3 + 1) * 9))
@@ -399,7 +413,13 @@ function CreatureAnimator.Start()
 		task.defer(track, m)
 	end)
 	CombatController.EventReceived:Connect(function(e)
-		if e.kind == "Telegraph" then
+		if e.kind == "Alert" then
+			local model = EffectsController.ModelFor(e.sourceId)
+			local b = model and beasts[model]
+			if model and b and familyOf(model) == "Quadruped" and b.action == nil then
+				b.action = { pose = "Howl", start = os.clock(), windup = 0.35, active = 0.6, recovery = 0.5 }
+			end
+		elseif e.kind == "Telegraph" then
 			local model = EffectsController.ModelFor(e.sourceId)
 			local b = model and beasts[model]
 			if b then

@@ -341,7 +341,7 @@ EnemyConfig.Enemies = {
 		preferredRange = 9,
 		attackCooldown = 1.0,
 		attacks = {
-			bite = { name = "Rust Bite", pose = "Swipe", damage = 12, postureDamage = 12, windup = 0.35, active = 0.12, recovery = 0.4, range = 7, arcDegrees = 90, weight = 3, animationId = PLACEHOLDER_ANIM },
+			bite = { name = "Rust Bite", pose = "Bite", damage = 12, postureDamage = 12, windup = 0.35, active = 0.12, recovery = 0.4, range = 7, arcDegrees = 90, weight = 3, animationId = PLACEHOLDER_ANIM },
 			pounce = { name = "Lunging Pounce", pose = "Pounce", damage = 18, postureDamage = 18, windup = 0.6, active = 0.25, recovery = 0.6, range = 18, arcDegrees = 40, weight = 2, lunge = 12, perilous = true, perilousKind = "Pierce", animationId = PLACEHOLDER_ANIM },
 		},
 		emberReward = 14,
