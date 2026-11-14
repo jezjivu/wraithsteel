@@ -345,6 +345,7 @@ local function moveFrames(styleName: string, style: AnimationConfig.Style, rest:
 	local S = poseOf(sPose, rest, keys)
 	local frames: { AnimBuilder.Frame } = {}
 	table.insert(frames, { t = 0, pose = R })
+	table.insert(frames, { t = windup * 0.35, pose = mix(R, W, 0.45) })
 	table.insert(frames, { t = windup * 0.7, pose = mix(R, W, 0.85) })
 	table.insert(frames, { t = windup, pose = mix(R, W, 1.08) })
 	if style.spin then
@@ -361,7 +362,11 @@ local function moveFrames(styleName: string, style: AnimationConfig.Style, rest:
 			table.insert(frames, { t = windup + active * k, pose = mid })
 		end
 	else
-		table.insert(frames, { t = windup + active * 0.55, pose = mix(W, S, 1.15) })
+		-- The engine blends keyframes along the SHORTEST rotation, so a wide sweep needs
+		-- in-between keys to travel the long way round (and look like a real arc).
+		table.insert(frames, { t = windup + active * 0.25, pose = mix(W, S, 0.3) })
+		table.insert(frames, { t = windup + active * 0.5, pose = mix(W, S, 0.62) })
+		table.insert(frames, { t = windup + active * 0.78, pose = mix(W, S, 1.1) })
 	end
 	local strikeEnd = windup + active
 	local rec = math.max(recovery, AnimationConfig.BlendOut + 0.05)
