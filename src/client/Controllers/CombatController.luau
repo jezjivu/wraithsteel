@@ -1,0 +1,386 @@
+--!strict
+-- CombatController: turns ActionPressed into CombatAction requests (with an increasing seq),
+-- buffers presses during the local player's current move, predicts the combo move for instant
+-- animation, dashes on dodge, and relays server CombatEvents to EffectsController.
+-- The server decides everything; this is presentation + requests only.
+-- Animations: uploaded animationIds play when present, otherwise AnimationController poses.
+
+local CollectionService = game:GetService("CollectionService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = ReplicatedStorage:WaitForChild("Config")
+local Net = require(Shared:WaitForChild("Net"))
+local Signal = require(Shared:WaitForChild("Signal"))
+local WeaponConfig = require(Config:WaitForChild("WeaponConfig"))
+local InputConfig = require(Config:WaitForChild("InputConfig"))
+local CombatConfig = require(Config:WaitForChild("CombatConfig"))
+local StyleConfig = require(Config:WaitForChild("StyleConfig"))
+
+local InputController = require(script.Parent.InputController)
+local AnimationController = require(script.Parent.AnimationController)
+local MovementController = require(script.Parent.MovementController)
+local CameraController = require(script.Parent.CameraController)
+local DataController = require(script.Parent.DataController)
+local Fx = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Fx"))
+
+local PLACEHOLDER_ANIM = "rbxassetid://0"
+
+local CombatController = {
+	Name = "CombatController",
+	Priority = 20,
+	-- (payload) for UI: Damage / Telegraph / Action / Rejected
+	EventReceived = Signal.new(),
+	-- (action, moveId?) fired when the local player sends an action (sounds/effects)
+	LocalAction = Signal.new(),
+}
+
+local localPlayer = Players.LocalPlayer
+local seq = 0
+local predictedBusyUntil = 0
+local buffered: { action: string, at: number }? = nil
+local tracks: { [string]: AnimationTrack } = {}
+
+local function playAnimation(animationId: string?)
+	if animationId == nil or animationId == PLACEHOLDER_ANIM then
+		return -- no animation uploaded yet
+	end
+	local character = localPlayer.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
+	if animator == nil then
+		return
+	end
+	local track: AnimationTrack? = tracks[animationId]
+	if not track then
+		local anim = Instance.new("Animation")
+		anim.AnimationId = animationId
+		local loaded = animator:LoadAnimation(anim)
+		tracks[animationId] = loaded
+		track = loaded
+	end
+	(track :: AnimationTrack):Play(0.05)
+end
+
+-- Local prediction of which move the server will run (mirrors Logic/CombatRules combo rules).
+-- Only used for animation/buffering; the server's decision is authoritative.
+local comboIndex = 0
+local lastLightAt = -math.huge
+
+local lastDashAt = -math.huge
+local airUsed = false
+local predictedKind: string? = nil
+
+-- Mirrors Logic/CombatRules routes: air slam, dash strike, combo finisher, combo, skills.
+local function predictMove(action: string): string?
+	local weapon = WeaponConfig.Weapons[DataController.Get("equippedWeapon") or ""]
+	predictedKind = nil
+	if weapon == nil then
+		return nil
+	end
+	local character = localPlayer.Character
+	local hum = character and character:FindFirstChildOfClass("Humanoid")
+	local inAir = hum ~= nil and hum.FloorMaterial == Enum.Material.Air
+	if not inAir then
+		airUsed = false
+	end
+	local now = os.clock()
+	if action == "HeavyAttack" then
+		if now - lastLightAt <= CombatConfig.Validation.ComboResetSeconds and comboIndex >= 2 then
+			comboIndex = 0
+			predictedKind = "Finisher"
+			return weapon.finisher
+		end
+		return weapon.heavy
+	elseif action == "LightAttack" then
+		if inAir and not airUsed then
+			airUsed = true
+			comboIndex = 0
+			predictedKind = "Air"
+			return weapon.air
+		end
+		if now - lastDashAt <= CombatConfig.DashAttackWindow then
+			lastDashAt = -math.huge
+			comboIndex = 0
+			predictedKind = "Dash"
+			return weapon.dash
+		end
+		if now - lastLightAt <= CombatConfig.Validation.ComboResetSeconds and comboIndex < #weapon.lightCombo then
+			comboIndex += 1
+		else
+			comboIndex = 1
+		end
+		lastLightAt = now
+		return weapon.lightCombo[comboIndex]
+	end
+	return weapon.skills[action]
+end
+
+
+-- Soft lock-on: the nearest living enemy in front of the camera within AimAssist range,
+-- otherwise the camera's horizontal look direction.
+local function aimDirection(): Vector3?
+	local character = localPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local cam = workspace.CurrentCamera
+	if root == nil or not root:IsA("BasePart") or cam == nil then
+		return nil
+	end
+	local look = cam.CFrame.LookVector
+	local flatLook = Vector3.new(look.X, 0, look.Z)
+	if flatLook.Magnitude < 1e-3 then
+		return nil
+	end
+	flatLook = flatLook.Unit
+	-- A lock-on target always wins.
+	local locked = CameraController.Target()
+	local lockedRoot = locked and locked:FindFirstChild("HumanoidRootPart")
+	if lockedRoot and lockedRoot:IsA("BasePart") then
+		local d = lockedRoot.Position - root.Position
+		local flat = Vector3.new(d.X, 0, d.Z)
+		if flat.Magnitude > 0.1 then
+			return flat.Unit
+		end
+	end
+	local cfg = CombatConfig.AimAssist
+	local best, bestScore = nil, math.huge
+	local cosLimit = math.cos(math.rad(cfg.coneDegrees))
+	for _, model in CollectionService:GetTagged("Combatant") do
+		if model:IsA("Model") and model ~= character and Players:GetPlayerFromCharacter(model) == nil then
+			local hum = model:FindFirstChildOfClass("Humanoid")
+			local troot = model:FindFirstChild("HumanoidRootPart")
+			if hum and hum.Health > 0 and troot and troot:IsA("BasePart") then
+				local d = troot.Position - root.Position
+				local flat = Vector3.new(d.X, 0, d.Z)
+				local dist = flat.Magnitude
+				if dist > 0.1 and dist <= cfg.range then
+					local dir = flat / dist
+					local dot = dir:Dot(flatLook)
+					if dot >= cosLimit then
+						local score = dist * (2 - dot)
+						if score < bestScore then
+							best, bestScore = dir, score
+						end
+					end
+				end
+			end
+		end
+	end
+	return best or flatLook
+end
+
+CombatController.AimDirection = aimDirection
+
+-- Where a targeted art should land: the lock-on / aim-assist enemy, else nil.
+function CombatController.AimTarget(maxRange: number): Vector3?
+	local character = localPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if root == nil or not root:IsA("BasePart") then
+		return nil
+	end
+	local locked = CameraController.Target()
+	local lockedRoot = locked and locked:FindFirstChild("HumanoidRootPart")
+	if lockedRoot and lockedRoot:IsA("BasePart") then
+		return lockedRoot.Position
+	end
+	local dir = aimDirection()
+	if dir == nil then
+		return nil
+	end
+	local best, bestD = nil, maxRange
+	for _, model in CollectionService:GetTagged("Combatant") do
+		if model:IsA("Model") and model ~= character and Players:GetPlayerFromCharacter(model) == nil then
+			local hum = model:FindFirstChildOfClass("Humanoid")
+			local troot = model:FindFirstChild("HumanoidRootPart")
+			if hum and hum.Health > 0 and troot and troot:IsA("BasePart") then
+				local d = troot.Position - root.Position
+				local flat = Vector3.new(d.X, 0, d.Z)
+				if flat.Magnitude < bestD and flat.Magnitude > 0.1 and flat.Unit:Dot(dir) > 0.8 then
+					best, bestD = troot.Position, flat.Magnitude
+				end
+			end
+		end
+	end
+	return best
+end
+
+local function faceToward(dir: Vector3)
+	local character = localPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if root and root:IsA("BasePart") then
+		local pos = root.Position
+		root.CFrame = CFrame.lookAt(pos, pos + dir)
+	end
+end
+
+CombatController.FaceToward = faceToward
+
+local guardHeld = false
+
+local function brokenEnemyNear(character: Model): boolean
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if root == nil or not root:IsA("BasePart") then
+		return false
+	end
+	for _, model in CollectionService:GetTagged("Combatant") do
+		if model:IsA("Model") and model ~= character and model:GetAttribute("Broken") == true then
+			local troot = model:FindFirstChild("HumanoidRootPart")
+			if troot and troot:IsA("BasePart") and (troot.Position - root.Position).Magnitude <= 10 then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+local function send(action: string)
+	local character0 = localPlayer.Character
+	seq += 1
+	local aim = if action == "Dodge" or action == "Parry" or action == "Flask" then nil else aimDirection()
+	if aim and CombatConfig.AimAssist.faceOnAttack then
+		faceToward(aim)
+	end
+	if action == "Dodge" and not MovementController.CanDash() then
+		seq -= 1
+		return -- out of air dashes
+	end
+	local moveDir: Vector3? = nil
+	if action == "Dodge" then
+		local hum = character0 and character0:FindFirstChildOfClass("Humanoid")
+		local root0 = character0 and character0:FindFirstChild("HumanoidRootPart")
+		if hum and hum.MoveDirection.Magnitude > 0.1 then
+			moveDir = hum.MoveDirection
+		elseif root0 and root0:IsA("BasePart") then
+			moveDir = -root0.CFrame.LookVector -- back-step
+		end
+	end
+	Net.Client.Fire("CombatAction", { action = action, seq = seq, aim = aim, move = moveDir })
+	local character = localPlayer.Character
+	if action == "Dodge" then
+		lastDashAt = os.clock()
+		MovementController.Dash()
+	end
+	local moveId = if action == "Dodge" or action == "Parry" or action == "Flask" then nil else predictMove(action)
+	local move = moveId and WeaponConfig.Moves[moveId]
+	local style = StyleConfig.Get(DataController.Get("fightingStyle"))
+	if move then
+		local windup = move.windup / style.speed
+		predictedBusyUntil = os.clock() + windup + move.active + move.recovery / style.speed
+		-- Body follows the blade: step into the strike, or dive for an air slam.
+		local kind = predictedKind
+		task.delay(windup, function()
+			if kind == "Air" then
+				MovementController.Plunge()
+			elseif move.step then
+				MovementController.Surge(move.step, move.active + 0.05)
+			end
+		end)
+	end
+	if action == "Flask" then
+		if character then
+			if (tonumber(character:GetAttribute("Flask")) or 0) <= 0 then
+				Fx.CenterText("FLASK EMPTY - rest at a waystone", Color3.fromRGB(150, 200, 255), 26, 0.6)
+				return
+			end
+			AnimationController.Play(character, "Drink", nil, { windup = 0.2, active = 0.35, recovery = 0.25 })
+			local hum = character:FindFirstChildOfClass("Humanoid")
+			if hum then
+				-- Drinking slows you down: commit to it.
+				local before = hum.WalkSpeed
+				hum.WalkSpeed = before * 0.35
+				task.delay(CombatConfig.Flask.drinkSeconds, function()
+					if hum.WalkSpeed < before then
+						hum.WalkSpeed = before
+					end
+				end)
+			end
+			predictedBusyUntil = os.clock() + CombatConfig.Flask.drinkSeconds
+		end
+	elseif action == "Parry" then
+		if character then
+			AnimationController.HoldGuard(character, true)
+		end
+		-- Released before the server even answered: drop the guard right after the deflect window.
+		if not guardHeld then
+			task.delay(CombatConfig.ParryWindow, function()
+				if not guardHeld then
+					seq += 1
+					Net.Client.Fire("CombatAction", { action = "GuardRelease", seq = seq })
+					if localPlayer.Character then
+						AnimationController.HoldGuard(localPlayer.Character, false)
+					end
+				end
+			end)
+		end
+	elseif move and character and (action == "LightAttack" or action == "HeavyAttack") and brokenEnemyNear(character) then
+		-- Severing Blow on a posture-broken enemy: the big two-handed finisher.
+		AnimationController.Play(character, "Sever", nil, { windup = move.windup / style.speed, active = math.max(move.active, 0.12), recovery = move.recovery / style.speed + 0.2 })
+	elseif move and move.animationId ~= PLACEHOLDER_ANIM then
+		playAnimation(move.animationId)
+	elseif character and action ~= "Dodge" then
+		AnimationController.Play(character, action, moveId, nil, predictedKind, style.speed)
+	end
+	CombatController.LocalAction:Fire(action, moveId, predictedKind)
+end
+
+local function onAction(action: string)
+	if string.sub(action, 1, 5) == "Spell" or action == "Grapple" or action == "Kunai" then
+		return -- Qi arts: SpellController; hook: GrappleController
+	end
+	local now = os.clock()
+	if now < predictedBusyUntil and action ~= "Dodge" then
+		buffered = { action = action, at = now }
+		return
+	end
+	send(action)
+end
+
+function CombatController.Init() end
+
+function CombatController.Start()
+	InputController.ActionPressed:Connect(function(action: string)
+		if action == "Parry" then
+			guardHeld = true
+		end
+		onAction(action)
+	end)
+	-- Hold-to-guard: releasing F drops the guard (the timed deflect window still counts).
+	InputController.ActionReleased:Connect(function(action: string)
+		if action == "Parry" and guardHeld then
+			guardHeld = false
+			seq += 1
+			Net.Client.Fire("CombatAction", { action = "GuardRelease", seq = seq })
+			if localPlayer.Character then
+				AnimationController.HoldGuard(localPlayer.Character, false)
+			end
+		end
+	end)
+
+	-- Release buffered input when the predicted move ends.
+	task.spawn(function()
+		while true do
+			task.wait(0.03)
+			local b = buffered
+			if b and os.clock() >= predictedBusyUntil then
+				buffered = nil
+				-- Only presses made shortly before the move ended are replayed.
+				if predictedBusyUntil - b.at <= InputConfig.BufferSeconds then
+					send(b.action)
+				end
+			end
+		end
+	end)
+
+	Net.Client.On("CombatEvent", function(payload)
+		if payload.kind == "Rejected" then
+			predictedBusyUntil = 0
+			comboIndex = 0
+		elseif payload.kind == "Knockback" and typeof(payload.velocity) == "Vector3" then
+			MovementController.Knockback(payload.velocity, tonumber(payload.seconds) or 0.18)
+		end
+		CombatController.EventReceived:Fire(payload)
+	end)
+end
+
+return CombatController

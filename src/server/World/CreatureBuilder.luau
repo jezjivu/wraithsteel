@@ -1,0 +1,549 @@
+--!strict
+-- CreatureBuilder: part-built beast bosses (no uploaded meshes). Every limb hangs off a
+-- Motor6D so clients can animate it (Controllers/CreatureAnimator poses the joints by name).
+-- The model still has a HumanoidRootPart + Humanoid, so movement, health and combat work
+-- exactly like any other combatant.
+--
+-- API:
+--   CreatureBuilder.Build(kind: "Tiger" | "Hound" | "Drone" | "Wisp", look) -> Model?
+--   Joint names (Tiger): Spine, Neck, Jaw, Hip_FL/FR/BL/BR, Knee_FL/FR/BL/BR, Tail1..Tail4
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local EnemyConfig = require(ReplicatedStorage:WaitForChild("Config"):WaitForChild("EnemyConfig"))
+
+local CreatureBuilder = {}
+
+local function rgb(c: { number }): Color3
+	return Color3.fromRGB(c[1], c[2], c[3])
+end
+
+type Ctx = { model: Model, s: number }
+
+local function part(ctx: Ctx, name: string, size: Vector3, color: Color3, material: Enum.Material?, shape: Enum.PartType?): Part
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = size * ctx.s
+	p.Color = color
+	p.Material = material or Enum.Material.SmoothPlastic
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.CanCollide = false
+	p.CanTouch = false
+	p.Massless = true
+	if shape then
+		p.Shape = shape
+	end
+	p.Parent = ctx.model
+	return p
+end
+
+-- Joint: Part1 hangs off Part0. `at` is the pivot in Part0 space, `pivot1` the same point in
+-- Part1 space (both unscaled; scaled here).
+local function joint(ctx: Ctx, name: string, p0: BasePart, p1: BasePart, at: Vector3, pivot1: Vector3): Motor6D
+	local m = Instance.new("Motor6D")
+	m.Name = name
+	m.Part0 = p0
+	m.Part1 = p1
+	m.C0 = CFrame.new(at * ctx.s)
+	m.C1 = CFrame.new(pivot1 * ctx.s)
+	m.Parent = p1
+	return m
+end
+
+-- Rigid attachment (decor glued to a moving part).
+local function glue(ctx: Ctx, p0: BasePart, p1: BasePart, offset: CFrame)
+	local w = Instance.new("Weld")
+	w.Part0 = p0
+	w.Part1 = p1
+	w.C0 = CFrame.new(offset.Position * ctx.s) * offset.Rotation
+	w.Parent = p1
+end
+
+local function tiger(look: EnemyConfig.RigLook): Model
+	local model = Instance.new("Model")
+	model.Name = "Tiger"
+	local ctx: Ctx = { model = model, s = look.scale }
+	local fur = rgb(look.body)
+	local belly = rgb(look.skin)
+	local stripe = rgb(look.accent or { 30, 22, 20 })
+	local glow = rgb(look.glow or { 255, 120, 40 })
+	local rust = Color3.fromRGB(120, 70, 45)
+
+	local root = part(ctx, "HumanoidRootPart", Vector3.new(5, 4, 9), fur)
+	root.Transparency = 1
+	root.CanCollide = true
+	root.Massless = false
+
+	local torso = part(ctx, "Torso", Vector3.new(4.6, 3.8, 8.6), fur)
+	joint(ctx, "Spine", root, torso, Vector3.zero, Vector3.zero)
+	local chest = part(ctx, "Chest", Vector3.new(5.2, 4.4, 3.4), fur)
+	glue(ctx, torso, chest, CFrame.new(0, 0.3, -3.2))
+	local under = part(ctx, "Belly", Vector3.new(3.8, 1, 7.6), belly)
+	glue(ctx, torso, under, CFrame.new(0, -1.7, 0))
+	-- Stripes over the back and flanks.
+	for i = -3, 3 do
+		local band = part(ctx, "Stripe", Vector3.new(4.8, 0.3, 0.55), stripe)
+		glue(ctx, torso, band, CFrame.new(0, 1.85, i * 1.15) * CFrame.Angles(0, math.rad(i * 6), 0))
+		for _, side in { -1, 1 } do
+			local flank = part(ctx, "Stripe", Vector3.new(0.3, 2.2, 0.5), stripe)
+			glue(ctx, torso, flank, CFrame.new(side * 2.35, 0.4, i * 1.15 + 0.3) * CFrame.Angles(math.rad(18), 0, 0))
+		end
+	end
+	-- Rusted armor plates with glowing seams along the spine.
+	for i = 0, 4 do
+		local plate = part(ctx, "RustPlate", Vector3.new(2.6, 0.7, 1.5), rust, Enum.Material.CorrodedMetal)
+		glue(ctx, torso, plate, CFrame.new(0, 2.25, -3 + i * 1.6) * CFrame.Angles(math.rad(-12), 0, 0))
+		local seam = part(ctx, "Seam", Vector3.new(2.7, 0.15, 0.25), glow, Enum.Material.Neon)
+		glue(ctx, torso, seam, CFrame.new(0, 2.2, -2.2 + i * 1.6))
+	end
+	for _, side in { -1, 1 } do
+		local spike = Instance.new("WedgePart")
+		spike.Name = "ShoulderSpike"
+		spike.Size = Vector3.new(0.8, 2.2, 1.6) * ctx.s
+		spike.Color = rust
+		spike.Material = Enum.Material.CorrodedMetal
+		spike.CanCollide = false
+		spike.Massless = true
+		spike.Parent = model
+		glue(ctx, torso, spike, CFrame.new(side * 2.2, 2.4, -3.4) * CFrame.Angles(0, 0, math.rad(side * -20)))
+	end
+
+	-- Head + jaw.
+	local head = part(ctx, "Head", Vector3.new(3.6, 3, 3.4), fur)
+	joint(ctx, "Neck", torso, head, Vector3.new(0, 1.4, -5), Vector3.new(0, -0.6, 1.2))
+	local snout = part(ctx, "Snout", Vector3.new(2.2, 1.4, 1.6), belly)
+	glue(ctx, head, snout, CFrame.new(0, -0.5, -2.1))
+	local nose = part(ctx, "Nose", Vector3.new(0.8, 0.5, 0.4), Color3.fromRGB(30, 25, 25))
+	glue(ctx, head, nose, CFrame.new(0, 0.1, -2.95))
+	local jaw = part(ctx, "Jaw", Vector3.new(2, 0.6, 2.2), belly)
+	joint(ctx, "Jaw", head, jaw, Vector3.new(0, -1.3, -0.6), Vector3.new(0, 0, 1))
+	for _, side in { -1, 1 } do
+		local eye = part(ctx, "Eye", Vector3.new(0.6, 0.35, 0.2), glow, Enum.Material.Neon)
+		glue(ctx, head, eye, CFrame.new(side * 0.9, 0.45, -1.72))
+		local ear = Instance.new("WedgePart")
+		ear.Name = "Ear"
+		ear.Size = Vector3.new(0.4, 1.2, 1) * ctx.s
+		ear.Color = fur
+		ear.CanCollide = false
+		ear.Massless = true
+		ear.Parent = model
+		glue(ctx, head, ear, CFrame.new(side * 1.3, 1.9, 0.3))
+		local fang = Instance.new("WedgePart")
+		fang.Name = "Fang"
+		fang.Size = Vector3.new(0.25, 0.8, 0.3) * ctx.s
+		fang.Color = Color3.fromRGB(240, 230, 210)
+		fang.CanCollide = false
+		fang.Massless = true
+		fang.Parent = model
+		glue(ctx, head, fang, CFrame.new(side * 0.6, -1.3, -2.6) * CFrame.Angles(math.rad(180), 0, 0))
+		local whisker = part(ctx, "Whisker", Vector3.new(1.6, 0.08, 0.08), Color3.fromRGB(230, 220, 200))
+		glue(ctx, head, whisker, CFrame.new(side * 1.6, -0.4, -2.2) * CFrame.Angles(0, 0, math.rad(side * 10)))
+	end
+	for i = -1, 1 do
+		local bandH = part(ctx, "Stripe", Vector3.new(0.4, 0.2, 2.6), stripe)
+		glue(ctx, head, bandH, CFrame.new(i * 0.6, 1.52, 0) * CFrame.Angles(0, math.rad(i * 15), 0))
+	end
+	local light = Instance.new("PointLight")
+	light.Color = glow
+	light.Range = 16
+	light.Brightness = 2
+	light.Parent = head
+
+	-- Legs: upper + lower + paw with claws.
+	local legs: { [string]: { number } } = { FL = { -1.9, -1.4, -3.3 }, FR = { 1.9, -1.4, -3.3 }, BL = { -1.9, -1.4, 3.3 }, BR = { 1.9, -1.4, 3.3 } }
+	for id, at in legs do
+		local upper = part(ctx, "Upper_" .. id, Vector3.new(1.5, 3, 1.8), fur)
+		joint(ctx, "Hip_" .. id, torso, upper, Vector3.new(at[1], at[2], at[3]), Vector3.new(0, 1.3, 0))
+		local lower = part(ctx, "Lower_" .. id, Vector3.new(1.2, 2.6, 1.3), fur)
+		joint(ctx, "Knee_" .. id, upper, lower, Vector3.new(0, -1.4, 0), Vector3.new(0, 1.2, 0))
+		local paw = part(ctx, "Paw_" .. id, Vector3.new(1.7, 0.7, 2), belly)
+		glue(ctx, lower, paw, CFrame.new(0, -1.45, -0.3))
+		for c = -1, 1 do
+			local claw = part(ctx, "Claw", Vector3.new(0.2, 0.2, 0.7), Color3.fromRGB(235, 225, 210))
+			glue(ctx, lower, claw, CFrame.new(c * 0.5, -1.55, -1.5))
+		end
+		local band = part(ctx, "Stripe", Vector3.new(1.55, 0.3, 1.85), stripe)
+		glue(ctx, upper, band, CFrame.new(0, 0.3, 0))
+	end
+
+	-- Tail: four segments, each hanging off the previous one.
+	local prev: BasePart = torso
+	local prevAt = Vector3.new(0, 1.2, 4.3)
+	for i = 1, 4 do
+		local seg = part(ctx, "Tail" .. i, Vector3.new(0.8 - i * 0.08, 0.8 - i * 0.08, 2), if i % 2 == 0 then stripe else fur)
+		joint(ctx, "Tail" .. i, prev, seg, prevAt, Vector3.new(0, 0, -0.9))
+		prev = seg
+		prevAt = Vector3.new(0, 0, 0.9)
+	end
+	local tip = part(ctx, "TailFlame", Vector3.new(0.9, 0.9, 0.9), glow, Enum.Material.Neon, Enum.PartType.Ball)
+	glue(ctx, prev, tip, CFrame.new(0, 0, 1.1))
+	local fire = Instance.new("Fire")
+	fire.Color = glow
+	fire.SecondaryColor = Color3.fromRGB(255, 220, 140)
+	fire.Size = 2 * ctx.s
+	fire.Heat = 4
+	fire.Parent = tip
+
+	-- Pose the whole thing once so the welds/joints settle before it is parented.
+	root.CFrame = CFrame.new()
+	for _, d in model:GetDescendants() do
+		if d:IsA("JointInstance") then
+			local p0, p1 = d.Part0, d.Part1
+			if p0 and p1 then
+				p1.CFrame = p0.CFrame * d.C0 * d.C1:Inverse()
+			end
+		end
+	end
+
+	local hum = Instance.new("Humanoid")
+	hum.RigType = Enum.HumanoidRigType.R15
+	-- Root center to the ground: hip offset + leg length.
+	local legReach = (1.4 + 1.3 + 1.4 + 1.2 + 1.45 + 0.35) * ctx.s
+	hum.HipHeight = legReach - root.Size.Y / 2
+	hum.RequiresNeck = false
+	hum.BreakJointsOnDeath = false
+	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	hum.Parent = model
+	model.PrimaryPart = root
+	model:SetAttribute("Creature", "Tiger")
+	model:SetAttribute("CreatureFamily", "Quadruped")
+	return model
+end
+
+-- Hovering security drone: armored sphere, spinning rotor ring, one big glowing eye, a gun.
+-- Joints: Body (bob), Rotor (spin), Eye (aim). It "floats" through a tall HipHeight.
+local function drone(look: EnemyConfig.RigLook): Model
+	local model = Instance.new("Model")
+	model.Name = "Drone"
+	local ctx: Ctx = { model = model, s = look.scale }
+	local shell = rgb(look.body)
+	local trim = rgb(look.accent or { 200, 200, 210 })
+	local glow = rgb(look.glow or { 60, 230, 255 })
+	local root = part(ctx, "HumanoidRootPart", Vector3.new(3, 3, 3), shell)
+	root.Transparency = 1
+	root.CanCollide = true
+	root.Massless = false
+	local body = part(ctx, "Body", Vector3.new(3.2, 3.2, 3.2), shell, Enum.Material.Metal, Enum.PartType.Ball)
+	joint(ctx, "Body", root, body, Vector3.zero, Vector3.zero)
+	local band = part(ctx, "Band", Vector3.new(0.5, 3.5, 3.5), trim, Enum.Material.Metal, Enum.PartType.Cylinder)
+	glue(ctx, body, band, CFrame.Angles(0, 0, math.rad(90)))
+	local rotor = part(ctx, "Rotor", Vector3.new(0.25, 6, 6), glow, Enum.Material.Neon, Enum.PartType.Cylinder)
+	rotor.Transparency = 0.35
+	joint(ctx, "Rotor", body, rotor, Vector3.new(0, 1.9, 0), Vector3.zero)
+	for i = 0, 3 do
+		local blade = part(ctx, "Blade", Vector3.new(2.6, 0.12, 0.5), trim, Enum.Material.Metal)
+		glue(ctx, rotor, blade, CFrame.Angles(0, math.rad(45 + i * 90), 0) * CFrame.new(1.4, 0, 0))
+	end
+	local eye = part(ctx, "Eye", Vector3.new(1.3, 1.3, 0.6), glow, Enum.Material.Neon)
+	joint(ctx, "Eye", body, eye, Vector3.new(0, 0, -1.45), Vector3.zero)
+	local lens = part(ctx, "Lens", Vector3.new(0.6, 0.6, 0.2), Color3.new(1, 1, 1), Enum.Material.Neon)
+	glue(ctx, eye, lens, CFrame.new(0, 0, -0.35))
+	local gun = part(ctx, "Gun", Vector3.new(0.5, 0.5, 2.2), Color3.fromRGB(40, 40, 48), Enum.Material.Metal)
+	glue(ctx, body, gun, CFrame.new(0, -1.5, -0.9))
+	local light = Instance.new("PointLight")
+	light.Color = glow
+	light.Range = 14
+	light.Brightness = 2
+	light.Parent = eye
+	-- Fix the rotor's resting joint so the ring lies flat.
+	local rj = rotor:FindFirstChild("Rotor")
+	if rj and rj:IsA("Motor6D") then
+		rj.C1 = CFrame.Angles(0, 0, math.rad(90))
+	end
+	root.CFrame = CFrame.new()
+	for _, d in model:GetDescendants() do
+		if d:IsA("JointInstance") then
+			local p0, p1 = d.Part0, d.Part1
+			if p0 and p1 then
+				p1.CFrame = p0.CFrame * d.C0 * d.C1:Inverse()
+			end
+		end
+	end
+	local hum = Instance.new("Humanoid")
+	hum.RigType = Enum.HumanoidRigType.R15
+	hum.HipHeight = 5 * ctx.s -- hovers above the ground
+	hum.RequiresNeck = false
+	hum.BreakJointsOnDeath = false
+	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	hum.Parent = model
+	model.PrimaryPart = root
+	model:SetAttribute("Creature", "Drone")
+	model:SetAttribute("CreatureFamily", "Hover")
+	return model
+end
+
+local function wedge(ctx: Ctx, name: string, size: Vector3, color: Color3, material: Enum.Material?): WedgePart
+	local w = Instance.new("WedgePart")
+	w.Name = name
+	w.Size = size * ctx.s
+	w.Color = color
+	w.Material = material or Enum.Material.SmoothPlastic
+	w.CanCollide = false
+	w.CanTouch = false
+	w.Massless = true
+	w.Parent = ctx.model
+	return w
+end
+
+-- Places every jointed/welded part from its joint (parents are created before children).
+local function settle(model: Model, root: BasePart)
+	root.CFrame = CFrame.new()
+	for _, d in model:GetDescendants() do
+		if d:IsA("JointInstance") then
+			local p0, p1 = d.Part0, d.Part1
+			if p0 and p1 then
+				p1.CFrame = p0.CFrame * d.C0 * d.C1:Inverse()
+			end
+		end
+	end
+end
+
+local function finish(model: Model, root: BasePart, hipHeight: number, kind: string, family: string)
+	local hum = Instance.new("Humanoid")
+	hum.RigType = Enum.HumanoidRigType.R15
+	hum.HipHeight = hipHeight
+	hum.RequiresNeck = false
+	hum.BreakJointsOnDeath = false
+	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	hum.Parent = model
+	model.PrimaryPart = root
+	model:SetAttribute("Creature", kind)
+	model:SetAttribute("CreatureFamily", family) -- CreatureAnimator: Quadruped | Hover | Biped
+end
+
+-- Rust Hound: a lean, half-rotted war dog. Exposed rusted ribs with a glow between them, a
+-- spiked iron collar, a ridge of rust plates down the spine, long snout with a hinged jaw,
+-- tall ears and a ragged tail. Same joint names as the tiger (Spine, Neck, Jaw, Hip_*,
+-- Knee_*, Tail1..3) so the quadruped gait drives it.
+local function hound(look: EnemyConfig.RigLook): Model
+	local model = Instance.new("Model")
+	model.Name = "Hound"
+	local ctx: Ctx = { model = model, s = look.scale }
+	local fur = rgb(look.body)
+	local dark = fur:Lerp(Color3.new(0, 0, 0), 0.35)
+	local pale = rgb(look.skin)
+	local rust = rgb(look.accent or { 110, 60, 40 })
+	local glow = rgb(look.glow or { 255, 120, 40 })
+	local bone = Color3.fromRGB(235, 225, 205)
+
+	local root = part(ctx, "HumanoidRootPart", Vector3.new(4, 4, 8), fur)
+	root.Transparency = 1
+	root.CanCollide = true
+	root.Massless = false
+	local torso = part(ctx, "Torso", Vector3.new(3, 2.8, 6.6), fur, Enum.Material.Fabric)
+	joint(ctx, "Spine", root, torso, Vector3.zero, Vector3.zero)
+	local chest = part(ctx, "Chest", Vector3.new(3.4, 3.4, 2.6), dark, Enum.Material.Fabric)
+	glue(ctx, torso, chest, CFrame.new(0, 0, -2.6))
+	local haunch = part(ctx, "Haunch", Vector3.new(3.1, 2.9, 2.2), fur, Enum.Material.Fabric)
+	glue(ctx, torso, haunch, CFrame.new(0, 0.15, 2.5))
+	local belly = part(ctx, "Belly", Vector3.new(2.2, 0.7, 4.2), pale)
+	glue(ctx, torso, belly, CFrame.new(0, -1.4, -0.3))
+	-- Rotted flank: rusted ribs over a glowing gap.
+	for _, side in { -1, 1 } do
+		local gap = part(ctx, "RibGlow", Vector3.new(0.1, 1.6, 2.6), glow, Enum.Material.Neon)
+		glue(ctx, torso, gap, CFrame.new(side * 1.52, 0.1, -0.6))
+		for i = 0, 3 do
+			local rib = part(ctx, "Rib", Vector3.new(0.22, 2.1, 0.32), rust, Enum.Material.CorrodedMetal)
+			glue(ctx, torso, rib, CFrame.new(side * 1.58, 0.1, -1.7 + i * 0.75) * CFrame.Angles(math.rad(-12), 0, 0))
+		end
+	end
+	-- Spine plates, biggest at the shoulders.
+	for i = 0, 5 do
+		local w = wedge(ctx, "SpinePlate", Vector3.new(0.5, 1.2 - i * 0.13, 1.3), rust, Enum.Material.CorrodedMetal)
+		glue(ctx, torso, w, CFrame.new(0, 1.65 - i * 0.05, -2.6 + i * 1.0) * CFrame.Angles(0, math.rad(180), 0))
+	end
+	-- Spiked iron collar.
+	local collar = part(ctx, "Collar", Vector3.new(0.7, 3.2, 3.2), Color3.fromRGB(45, 42, 44), Enum.Material.Metal, Enum.PartType.Cylinder)
+	glue(ctx, torso, collar, CFrame.new(0, 0.6, -3.7) * CFrame.Angles(0, math.rad(90), math.rad(-25)))
+	for k = 0, 5 do
+		local a = k / 6 * math.pi * 2
+		local spike = part(ctx, "CollarSpike", Vector3.new(0.25, 0.7, 0.25), Color3.fromRGB(90, 85, 85), Enum.Material.Metal)
+		glue(ctx, collar, spike, CFrame.Angles(a, 0, 0) * CFrame.new(0, 1.75, 0))
+	end
+
+	-- Head: skull, long snout, hinged jaw with teeth, tall ears, glowing eyes.
+	local head = part(ctx, "Head", Vector3.new(2.3, 2.1, 2.4), fur, Enum.Material.Fabric)
+	joint(ctx, "Neck", torso, head, Vector3.new(0, 1.1, -3.9), Vector3.new(0, -0.5, 0.9))
+	local snout = part(ctx, "Snout", Vector3.new(1.3, 1.0, 2.3), dark, Enum.Material.Fabric)
+	glue(ctx, head, snout, CFrame.new(0, -0.35, -2.1) * CFrame.Angles(math.rad(-6), 0, 0))
+	local nose = part(ctx, "Nose", Vector3.new(0.6, 0.45, 0.35), Color3.fromRGB(20, 18, 18))
+	glue(ctx, head, nose, CFrame.new(0, -0.05, -3.25))
+	local upperTeeth = part(ctx, "Teeth", Vector3.new(1.1, 0.22, 1.9), bone)
+	glue(ctx, head, upperTeeth, CFrame.new(0, -0.92, -2.15))
+	local jaw = part(ctx, "Jaw", Vector3.new(1.1, 0.42, 2.2), dark, Enum.Material.Fabric)
+	joint(ctx, "Jaw", head, jaw, Vector3.new(0, -1.05, -1.1), Vector3.new(0, 0, 1.0))
+	local lowerTeeth = part(ctx, "Teeth", Vector3.new(0.95, 0.2, 1.8), bone)
+	glue(ctx, jaw, lowerTeeth, CFrame.new(0, 0.28, -0.1))
+	for _, side in { -1, 1 } do
+		local fang = wedge(ctx, "Fang", Vector3.new(0.18, 0.55, 0.22), bone)
+		glue(ctx, head, fang, CFrame.new(side * 0.42, -1.25, -2.95) * CFrame.Angles(math.rad(180), 0, 0))
+		local eye = part(ctx, "Eye", Vector3.new(0.42, 0.22, 0.12), glow, Enum.Material.Neon)
+		glue(ctx, head, eye, CFrame.new(side * 0.62, 0.28, -1.22) * CFrame.Angles(0, 0, math.rad(side * 12)))
+		local ear = wedge(ctx, "Ear", Vector3.new(0.28, 1.3, 0.8), dark, Enum.Material.Fabric)
+		glue(ctx, head, ear, CFrame.new(side * 0.72, 1.55, 0.35) * CFrame.Angles(math.rad(-10), 0, math.rad(side * -14)))
+	end
+	local light = Instance.new("PointLight")
+	light.Color = glow
+	light.Range = 10
+	light.Brightness = 1.4
+	light.Parent = head
+
+	-- Long legs: upper, lower, paw with claws.
+	local legs: { [string]: { number } } = { FL = { -1.05, -1.0, -2.6 }, FR = { 1.05, -1.0, -2.6 }, BL = { -1.05, -0.9, 2.5 }, BR = { 1.05, -0.9, 2.5 } }
+	for id, at in legs do
+		local back = string.sub(id, 1, 1) == "B"
+		local upper = part(ctx, "Upper_" .. id, Vector3.new(0.95, 2.4, if back then 1.4 else 1.1), fur, Enum.Material.Fabric)
+		joint(ctx, "Hip_" .. id, torso, upper, Vector3.new(at[1], at[2], at[3]), Vector3.new(0, 1.0, 0))
+		local lower = part(ctx, "Lower_" .. id, Vector3.new(0.65, 2.5, 0.75), dark, Enum.Material.Fabric)
+		joint(ctx, "Knee_" .. id, upper, lower, Vector3.new(0, -1.1, 0), Vector3.new(0, 1.15, 0))
+		local paw = part(ctx, "Paw_" .. id, Vector3.new(0.9, 0.45, 1.2), dark)
+		glue(ctx, lower, paw, CFrame.new(0, -1.3, -0.25))
+		for c = -1, 1 do
+			local claw = part(ctx, "Claw", Vector3.new(0.14, 0.14, 0.5), bone)
+			glue(ctx, lower, claw, CFrame.new(c * 0.3, -1.4, -0.95))
+		end
+	end
+
+	-- Ragged tail: three segments, the last one frayed.
+	local prev: BasePart = torso
+	local prevAt = Vector3.new(0, 1.0, 3.5)
+	for i = 1, 3 do
+		local seg = part(ctx, "Tail" .. i, Vector3.new(0.75 - i * 0.12, 0.75 - i * 0.12, 1.5), if i == 3 then dark else fur, Enum.Material.Fabric)
+		joint(ctx, "Tail" .. i, prev, seg, prevAt, Vector3.new(0, 0, -0.7))
+		prev = seg
+		prevAt = Vector3.new(0, 0, 0.7)
+	end
+	local tuft = wedge(ctx, "TailTuft", Vector3.new(0.6, 0.6, 1.0), dark, Enum.Material.Fabric)
+	glue(ctx, prev, tuft, CFrame.new(0, 0, 1.1))
+	local embers = Instance.new("ParticleEmitter")
+	embers.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	embers.Color = ColorSequence.new(glow)
+	embers.LightEmission = 1
+	embers.Size = NumberSequence.new(0.25, 0)
+	embers.Lifetime = NumberRange.new(0.6, 1.2)
+	embers.Rate = 6
+	embers.Speed = NumberRange.new(0.5, 1.5)
+	embers.Acceleration = Vector3.new(0, 3, 0)
+	embers.Parent = torso
+
+	settle(model, root)
+	-- Torso center -> paw sole: hip drop + upper + lower + paw.
+	local reach = (1.0 + 1.0 + 1.1 + 1.15 + 1.3 + 0.25) * ctx.s
+	finish(model, root, reach - root.Size.Y / 2, "Hound", "Quadruped")
+	return model
+end
+
+-- Lantern Wisp: a drifting paper lantern with a painted grin, a living flame inside, a ring of
+-- paper talismans orbiting above it and cloth streamers trailing below. Joints: Body (sway),
+-- Rotor (talisman ring), Eye (the painted face turns to look), Streamer1..3 (cloth).
+local function wisp(look: EnemyConfig.RigLook): Model
+	local model = Instance.new("Model")
+	model.Name = "Wisp"
+	local ctx: Ctx = { model = model, s = look.scale }
+	local paper = rgb(look.body)
+	local ink = rgb(look.accent or { 190, 50, 40 })
+	local glow = rgb(look.glow or { 255, 160, 60 })
+	local wood = Color3.fromRGB(45, 32, 26)
+	local root = part(ctx, "HumanoidRootPart", Vector3.new(3, 3, 3), paper)
+	root.Transparency = 1
+	root.CanCollide = true
+	root.Massless = false
+	-- Body: an invisible core the lantern pieces hang on (so they can be rotated freely).
+	local body = part(ctx, "Body", Vector3.new(0.4, 0.4, 0.4), paper)
+	body.Transparency = 1
+	joint(ctx, "Body", root, body, Vector3.zero, Vector3.zero)
+	local up = CFrame.Angles(0, 0, math.rad(90)) -- cylinders run along X: stand them up
+	local shell = part(ctx, "Paper", Vector3.new(3.4, 2.9, 2.9), paper, Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
+	shell.Transparency = 0.12
+	glue(ctx, body, shell, up)
+	local core = part(ctx, "Flame", Vector3.new(1.5, 1.5, 1.5), glow, Enum.Material.Neon, Enum.PartType.Ball)
+	glue(ctx, body, core, CFrame.new(0, -0.2, 0))
+	for _, y in { -1.25, -0.42, 0.42, 1.25 } do
+		local rib = part(ctx, "Rib", Vector3.new(0.12, 3.0, 3.0), wood, Enum.Material.Wood, Enum.PartType.Cylinder)
+		glue(ctx, body, rib, CFrame.new(0, y, 0) * up)
+	end
+	for _, y in { 1.85, -1.85 } do
+		local cap = part(ctx, "Cap", Vector3.new(0.45, 1.9, 1.9), wood, Enum.Material.Wood, Enum.PartType.Cylinder)
+		glue(ctx, body, cap, CFrame.new(0, y, 0) * up)
+	end
+	local hook = part(ctx, "Hook", Vector3.new(0.15, 0.9, 0.15), wood, Enum.Material.Metal)
+	glue(ctx, body, hook, CFrame.new(0, 2.4, 0))
+	local tassel = part(ctx, "Tassel", Vector3.new(0.35, 1.1, 0.35), ink, Enum.Material.Fabric)
+	glue(ctx, body, tassel, CFrame.new(0, -2.6, 0))
+	local fire = Instance.new("PointLight")
+	fire.Color = glow
+	fire.Range = 16
+	fire.Brightness = 2.2
+	fire.Parent = core
+
+	-- Painted face on the paper (turns on the Eye joint).
+	local face = part(ctx, "Face", Vector3.new(0.3, 0.3, 0.3), paper)
+	face.Transparency = 1
+	joint(ctx, "Eye", body, face, Vector3.new(0, 0.2, -1.42), Vector3.zero)
+	for _, side in { -1, 1 } do
+		local eye = part(ctx, "PaintedEye", Vector3.new(0.55, 0.22, 0.06), Color3.fromRGB(15, 10, 10))
+		glue(ctx, face, eye, CFrame.new(side * 0.42, 0.35, 0) * CFrame.Angles(0, 0, math.rad(side * -18)))
+		local pupil = part(ctx, "Pupil", Vector3.new(0.16, 0.14, 0.07), glow, Enum.Material.Neon)
+		glue(ctx, face, pupil, CFrame.new(side * 0.42, 0.33, -0.01))
+	end
+	local grin = part(ctx, "Grin", Vector3.new(1.2, 0.16, 0.06), ink, Enum.Material.Neon)
+	glue(ctx, face, grin, CFrame.new(0, -0.45, 0))
+	for k = -2, 2 do
+		local tooth = part(ctx, "GrinTooth", Vector3.new(0.08, 0.28, 0.07), ink, Enum.Material.Neon)
+		glue(ctx, face, tooth, CFrame.new(k * 0.24, -0.45 + (if k % 2 == 0 then 0.1 else -0.1), 0))
+	end
+
+	-- Talisman ring (spun by the animator).
+	local ring = part(ctx, "Talismans", Vector3.new(0.2, 0.2, 0.2), paper)
+	ring.Transparency = 1
+	joint(ctx, "Rotor", body, ring, Vector3.new(0, 2.9, 0), Vector3.zero)
+	for k = 0, 5 do
+		local a = k / 6 * math.pi * 2
+		local slip = part(ctx, "Ofuda", Vector3.new(0.5, 1.2, 0.05), Color3.fromRGB(240, 232, 210))
+		glue(ctx, ring, slip, CFrame.Angles(0, a, 0) * CFrame.new(0, 0, -2.3))
+		local stroke = part(ctx, "OfudaInk", Vector3.new(0.1, 0.9, 0.06), ink, Enum.Material.Neon)
+		glue(ctx, ring, stroke, CFrame.Angles(0, a, 0) * CFrame.new(0, 0, -2.33))
+	end
+
+	-- Cloth streamers under the lantern (two segments each).
+	for k = 1, 3 do
+		local a = (k - 1) / 3 * math.pi * 2
+		local at = Vector3.new(math.cos(a) * 0.7, -2.0, math.sin(a) * 0.7)
+		local s1 = part(ctx, "Streamer" .. k, Vector3.new(0.45, 1.6, 0.05), ink, Enum.Material.Fabric)
+		joint(ctx, "Streamer" .. k, body, s1, at, Vector3.new(0, 0.8, 0))
+		local s2 = part(ctx, "StreamerTip" .. k, Vector3.new(0.38, 1.4, 0.05), ink:Lerp(Color3.new(0, 0, 0), 0.3), Enum.Material.Fabric)
+		joint(ctx, "StreamerTip" .. k, s1, s2, Vector3.new(0, -0.8, 0), Vector3.new(0, 0.7, 0))
+	end
+	local smoke = Instance.new("ParticleEmitter")
+	smoke.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	smoke.Color = ColorSequence.new(glow)
+	smoke.LightEmission = 1
+	smoke.Size = NumberSequence.new(0.35, 0)
+	smoke.Lifetime = NumberRange.new(0.8, 1.6)
+	smoke.Rate = 10
+	smoke.Speed = NumberRange.new(0.3, 1)
+	smoke.Acceleration = Vector3.new(0, 2.5, 0)
+	smoke.Parent = core
+
+	settle(model, root)
+	finish(model, root, 5 * ctx.s, "Wisp", "Hover")
+	return model
+end
+
+function CreatureBuilder.Build(kind: string, look: EnemyConfig.RigLook?): Model?
+	if look == nil then
+		return nil
+	end
+	if kind == "Tiger" then
+		return tiger(look)
+	elseif kind == "Drone" then
+		return drone(look)
+	elseif kind == "Hound" then
+		return hound(look)
+	elseif kind == "Wisp" then
+		return wisp(look)
+	end
+	return nil
+end
+
+return CreatureBuilder
