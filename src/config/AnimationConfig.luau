@@ -343,6 +343,17 @@ AnimationConfig.Walk = {
 	idleBreathDegrees = 1.5,
 }
 
+-- Run cycle for NPCs (fades in between startSpeed and fullSpeed studs/s).
+AnimationConfig.Run = {
+	startSpeed = 12,
+	fullSpeed = 18,
+	cyclesPerSecond = 1.9,
+	legSwingDegrees = 50,
+	armSwingDegrees = 45,
+	kneeBendDegrees = 85,
+	leanDegrees = 16,
+}
+
 -- Animation level of detail for NPCs (studs from the camera).
 AnimationConfig.Lod = { near = 60, far = 160 }
 

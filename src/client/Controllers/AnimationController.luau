@@ -232,6 +232,7 @@ type TrackState = {
 	stanceUpper: AnimationTrack?,
 	stanceLower: AnimationTrack?,
 	walk: AnimationTrack?,
+	run: AnimationTrack?,
 }
 local trackStates: { [Model]: TrackState } = {}
 
@@ -452,42 +453,74 @@ local function updateStance(model: Model, st: TrackState, still: number)
 end
 
 -- Procedural walk cycle for NPCs (they have no Animate script).
+-- One locomotion cycle as keyframes. The swinging leg bends its knee while it travels
+-- forward (cos > 0) and plants straight; the body dips at full stride and the torso
+-- counter-twists. `run` adds a forward lean, a longer stride and pumping arms.
+local function gaitFrames(armed: boolean, run: boolean): ({ AnimBuilder.Frame }, number)
+	local cfg = AnimationConfig.Walk
+	local R = AnimationConfig.Run
+	local swing = if run then R.legSwingDegrees else cfg.legSwingDegrees
+	local knee = if run then R.kneeBendDegrees else cfg.kneeBendDegrees
+	local length = 1 / (if run then R.cyclesPerSecond else cfg.cyclesPerSecond)
+	local frames: { AnimBuilder.Frame } = {}
+	local steps = 12
+	for i = 0, steps do
+		local ph = i / steps * math.pi * 2
+		local sn, cs = math.sin(ph), math.cos(ph)
+		local lean = if run then R.leanDegrees else 4
+		local pose: { [string]: { number } } = {
+			leftHip = { swing * sn + (if run then 10 else 0), 0, 0 },
+			rightHip = { -swing * sn + (if run then 10 else 0), 0, 0 },
+			leftKnee = { -knee * math.max(0, cs) - (if run then 15 else 4), 0, 0 },
+			rightKnee = { -knee * math.max(0, -cs) - (if run then 15 else 4), 0, 0 },
+			root = { -lean * 0.5, sn * (if run then 7 else 5), sn * 2, 0, -math.abs(sn) * (if run then 0.5 else 0.3), 0 },
+			waist = { -lean * 0.5, -sn * (if run then 12 else 9), 0 },
+		}
+		if not armed then
+			local arm = if run then R.armSwingDegrees else cfg.armSwingDegrees
+			pose.shoulder = { arm * sn, 0, 6 }
+			pose.leftShoulder = { -arm * sn, 0, -6 }
+			if run then
+				pose.elbow = { 75, 0, 0 }
+				pose.leftElbow = { 75, 0, 0 }
+			end
+		end
+		table.insert(frames, { t = length * i / steps, pose = pose })
+	end
+	return frames, length
+end
+
+-- Procedural walk + run for NPCs (they have no Animate script); the run fades in at speed.
 local function updateWalk(model: Model, st: TrackState, speed: number, armed: boolean)
 	local cfg = AnimationConfig.Walk
+	local R = AnimationConfig.Run
 	if st.walk == nil then
-		local frames: { AnimBuilder.Frame } = {}
-		local steps = 8
-		local length = 1 / cfg.cyclesPerSecond
-		for i = 0, steps do
-			local ph = i / steps * math.pi * 2
-			local sn = math.sin(ph)
-			-- Whole-body walk: legs stride, hips sway and bob, torso counter-twists.
-			local pose: { [string]: { number } } = {
-				leftHip = { cfg.legSwingDegrees * sn, 0, 0 },
-				rightHip = { -cfg.legSwingDegrees * sn, 0, 0 },
-				leftKnee = { -cfg.kneeBendDegrees * math.max(0, sn), 0, 0 },
-				rightKnee = { -cfg.kneeBendDegrees * math.max(0, -sn), 0, 0 },
-				root = { -6, sn * 5, sn * 2, 0, -math.abs(sn) * 0.35, 0 },
-				waist = { -4, -sn * 9, 0 },
-			}
-			if not armed then
-				pose.shoulder = { cfg.armSwingDegrees * sn, 0, 0 }
-				pose.leftShoulder = { -cfg.armSwingDegrees * sn, 0, 0 }
-			end
-			table.insert(frames, { t = length * i / steps, pose = pose })
-		end
+		local frames = gaitFrames(armed, false)
 		local id = AnimBuilder.Get(if armed then "WalkArmed" else "Walk", frames, { loop = true, priority = Enum.AnimationPriority.Movement }, model)
 		local t = id and loadTrack(st, id)
 		if t then
 			t:Play(0.2, 0.001, 1)
 			st.walk = t
 		end
+		local runFrames = gaitFrames(armed, true)
+		local rid = AnimBuilder.Get(if armed then "RunArmed" else "Run", runFrames, { loop = true, priority = Enum.AnimationPriority.Movement }, model)
+		local rt = rid and loadTrack(st, rid)
+		if rt then
+			rt:Play(0.2, 0.001, 1)
+			st.run = rt
+		end
 	end
+	local runAmount = math.clamp((speed - R.startSpeed) / (R.fullSpeed - R.startSpeed), 0, 1)
+	local walkAmount = math.clamp(speed / cfg.fullSpeed, 0, 1) * (1 - runAmount)
 	local walk = st.walk
 	if walk then
-		local amount = math.clamp(speed / cfg.fullSpeed, 0, 1)
-		walk:AdjustWeight(math.max(amount, 0.001), 0.15)
-		walk:AdjustSpeed(math.max(0.4, amount * 1.2))
+		walk:AdjustWeight(math.max(walkAmount, 0.001), 0.15)
+		walk:AdjustSpeed(math.max(0.4, math.clamp(speed / cfg.fullSpeed, 0, 1) * 1.2))
+	end
+	local run = st.run
+	if run then
+		run:AdjustWeight(math.max(runAmount, 0.001), 0.15)
+		run:AdjustSpeed(math.max(0.6, speed / R.fullSpeed))
 	end
 end
 
