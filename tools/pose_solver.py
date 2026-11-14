@@ -54,11 +54,15 @@ def arm(side, d):
     return best
 
 
-def hand(side, target, d=None):
+def hand(side, target, d=None, seed=None, pull=0.004):
+    """Best (error, shoulder, elbow) for a hand at `target` (optionally blade along d).
+    `seed` = (shoulder, elbow) keeps the answer near an existing pose (smooth blends)."""
     best = None
     for sh, e in grid(range(-20, 181, 10), range(-120, 121, 15), range(-60, 91, 10), range(0, 131, 15)):
         h = chain(side, sh, e)
         err = math.dist(h.p, target)
+        if seed:
+            err += pull * (sum(abs(sh[i] - seed[0][i]) for i in range(3)) + abs(e - seed[1]))
         if d:
             g = h * GRIP
             bd = norm([g.point((0, 1, 0))[i] - g.p[i] for i in range(3)])

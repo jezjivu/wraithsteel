@@ -62,6 +62,40 @@ local function piece(k: Kit, on: string, label: string, sx: number, sy: number, 
 	return k.attach(k.model, p, label, Vector3.new(s.X * sx, s.Y * sy, s.Z * sz), off, color, mat, shape)
 end
 
+-- Cloth that hangs from a hinge at its top edge (Motor6D "Sway<label>"): the client
+-- ClothController swings it with movement. Same sizing/offset rules as piece().
+local function hang(k: Kit, on: string, label: string, sx: number, sy: number, sz: number, offset: CFrame, color: Color3, mat: Enum.Material?): Part?
+	local base = k.part(on)
+	if not base then
+		return nil
+	end
+	local s = base.Size
+	local pos = offset.Position
+	local center = CFrame.new(pos.X * s.X, pos.Y * s.Y, pos.Z * s.Z) * offset.Rotation
+	local size = Vector3.new(s.X * sx, s.Y * sy, s.Z * sz)
+	local p = Instance.new("Part")
+	p.Name = label
+	p.Size = size
+	p.Color = color
+	p.Material = mat or FABRIC
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Massless = true
+	p.CastShadow = false
+	p.CFrame = base.CFrame * center
+	local hinge = CFrame.new(0, size.Y / 2, 0)
+	local m = Instance.new("Motor6D")
+	m.Name = "Sway" .. label
+	m.Part0 = base
+	m.Part1 = p
+	m.C0 = center * hinge
+	m.C1 = hinge
+	m.Parent = p
+	p.Parent = k.model
+	return p
+end
+
 local function both(fn: (string, number) -> ())
 	fn("Left", -1)
 	fn("Right", 1)
@@ -79,7 +113,7 @@ local function hakama(k: Kit, color: Color3)
 		piece(k, side .. "UpperLeg", "Hakama", 1.45, 1.05, 1.35, CFrame.new(0.08 * sign, -0.02, 0), color, FABRIC)
 		piece(k, side .. "LowerLeg", "HakamaLow", 1.5, 0.9, 1.45, CFrame.new(0.08 * sign, 0.05, 0), color, FABRIC)
 	end)
-	piece(k, "LowerTorso", "HakamaFront", 1.15, 1.6, 0.2, CFrame.new(0, -0.6, -0.55), shade(color, -0.08), FABRIC)
+	hang(k, "LowerTorso", "HakamaFront", 1.15, 1.6, 0.2, CFrame.new(0, -0.6, -0.55), shade(color, -0.08), FABRIC)
 end
 
 local function kimono(k: Kit, color: Color3, trim: Color3)
@@ -127,7 +161,7 @@ local function wraps(k: Kit, color: Color3, on: string)
 end
 
 local function cape(k: Kit, color: Color3, length: number)
-	piece(k, "UpperTorso", "Cape", 1.15, length, 0.12, CFrame.new(0, 0.5 - length / 2, 0.62) * CFrame.Angles(math.rad(-6), 0, 0), color, FABRIC)
+	hang(k, "UpperTorso", "Cape", 1.15, length, 0.12, CFrame.new(0, 0.5 - length / 2, 0.62) * CFrame.Angles(math.rad(-6), 0, 0), color, FABRIC)
 end
 
 -- Outfits -------------------------------------------------------------------------------------
@@ -165,8 +199,8 @@ local outfits: { [string]: (Kit) -> () } = {
 	Monk = function(k)
 		piece(k, "UpperTorso", "Robe", 1.1, 1.05, 1.14, CFrame.new(), k.body, FABRIC)
 		piece(k, "UpperTorso", "Kesa", 0.35, 1.25, 1.18, CFrame.new(0.05, 0, 0) * CFrame.Angles(0, 0, math.rad(35)), k.accent, FABRIC)
-		piece(k, "LowerTorso", "RobeFront", 1.12, 4.2, 0.16, CFrame.new(0, -1.9, -0.55), k.body, FABRIC)
-		piece(k, "LowerTorso", "RobeBack", 1.12, 4.2, 0.16, CFrame.new(0, -1.9, 0.55), k.body, FABRIC)
+		hang(k, "LowerTorso", "RobeFront", 1.12, 4.2, 0.16, CFrame.new(0, -1.9, -0.55), k.body, FABRIC)
+		hang(k, "LowerTorso", "RobeBack", 1.12, 4.2, 0.16, CFrame.new(0, -1.9, 0.55), k.body, FABRIC)
 		both(function(side, sign)
 			piece(k, side .. "UpperLeg", "RobeSide", 0.16, 1.05, 1.1, CFrame.new(0.58 * sign, 0, 0), k.body, FABRIC)
 			piece(k, side .. "UpperArm", "Sleeve", 1.35, 1.05, 1.35, CFrame.new(0, -0.05, 0), k.body, FABRIC)
@@ -187,8 +221,8 @@ local outfits: { [string]: (Kit) -> () } = {
 	Shinobi = function(k)
 		piece(k, "UpperTorso", "Gi", 1.04, 1.02, 1.08, CFrame.new(), k.body, FABRIC)
 		piece(k, "UpperTorso", "Scarf", 1.15, 0.28, 1.2, CFrame.new(0, 0.42, 0), k.accent, FABRIC)
-		piece(k, "UpperTorso", "ScarfTail", 0.25, 1.4, 0.08, CFrame.new(0.25, -0.15, 0.6) * CFrame.Angles(math.rad(-10), 0, math.rad(8)), k.accent, FABRIC)
-		piece(k, "UpperTorso", "ScarfTail", 0.22, 1.15, 0.08, CFrame.new(0.05, -0.05, 0.62) * CFrame.Angles(math.rad(-8), 0, math.rad(-6)), shade(k.accent, -0.15), FABRIC)
+		hang(k, "UpperTorso", "ScarfTail", 0.25, 1.4, 0.08, CFrame.new(0.25, -0.15, 0.6) * CFrame.Angles(math.rad(-10), 0, math.rad(8)), k.accent, FABRIC)
+		hang(k, "UpperTorso", "ScarfTail2", 0.22, 1.15, 0.08, CFrame.new(0.05, -0.05, 0.62) * CFrame.Angles(math.rad(-8), 0, math.rad(-6)), shade(k.accent, -0.15), FABRIC)
 		piece(k, "LowerTorso", "Belt", 1.08, 0.7, 1.12, CFrame.new(0, 0.1, 0), shade(k.body, 0.12), FABRIC)
 		both(function(side, sign)
 			piece(k, "LowerTorso", "Pouch", 0.22, 0.9, 0.3, CFrame.new(0.46 * sign, -0.2, -0.45), Color3.fromRGB(70, 55, 40), FABRIC)
@@ -261,7 +295,7 @@ local outfits: { [string]: (Kit) -> () } = {
 	Noble = function(k)
 		kimono(k, k.body, k.accent)
 		piece(k, "UpperTorso", "Haori", 1.18, 1.08, 1.2, CFrame.new(0, -0.02, 0.03), shade(k.body, -0.25), FABRIC)
-		piece(k, "LowerTorso", "HaoriTail", 1.18, 2.6, 0.14, CFrame.new(0, -1.1, 0.6), shade(k.body, -0.25), FABRIC)
+		hang(k, "LowerTorso", "HaoriTail", 1.18, 2.6, 0.14, CFrame.new(0, -1.1, 0.6), shade(k.body, -0.25), FABRIC)
 		piece(k, "UpperTorso", "Crest", 0.2, 0.2, 0.05, CFrame.new(0, 0.25, 0.64), k.accent, FABRIC, Enum.PartType.Ball)
 		obi(k, k.accent)
 		hakama(k, k.legs)
