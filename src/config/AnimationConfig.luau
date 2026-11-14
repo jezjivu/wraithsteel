@@ -412,6 +412,46 @@ AnimationConfig.Gestures = {
 	timing = { windup = 0.8, active = 1.4, recovery = 0.9 },
 }
 
+-- Quadruped attack poses (CreatureAnimator, joints of World/CreatureBuilder). Degrees {x, y, z}.
+-- +X on a hip swings the leg forward; +X on Spine/Neck lifts the front; -X on Jaw opens the mouth.
+AnimationConfig.CreaturePoses = {
+	Swipe = {
+		windup = { Hip_FR = { 85, 0, 25 }, Knee_FR = { -50, 0, 0 }, Spine = { 8, 20, 0 }, Neck = { 10, -15, 0 }, Jaw = { -20, 0, 0 } },
+		strike = { Hip_FR = { 20, 0, -40 }, Knee_FR = { -10, 0, 0 }, Spine = { -4, -25, 0 }, Neck = { -5, 20, 0 }, Jaw = { -30, 0, 0 } },
+	},
+	-- Rear the head back with the jaw wide, then snap forward and shut it.
+	Bite = {
+		windup = { Spine = { 6, 0, 0 }, Neck = { 28, 0, 0 }, Jaw = { -45, 0, 0 }, Hip_FL = { -15, 0, 0 }, Hip_FR = { -15, 0, 0 }, Hip_BL = { 20, 0, 0 }, Hip_BR = { 20, 0, 0 }, Knee_BL = { -30, 0, 0 }, Knee_BR = { -30, 0, 0 } },
+		strike = { Spine = { -8, 0, 0 }, Neck = { -30, 0, 0 }, Jaw = { -2, 0, 0 }, Hip_FL = { 35, 0, 0 }, Hip_FR = { 30, 0, 0 }, Hip_BL = { -25, 0, 0 }, Hip_BR = { -25, 0, 0 } },
+	},
+	-- Spotted you: head thrown back in a howl.
+	Howl = {
+		windup = { Neck = { 45, 0, 0 }, Jaw = { -20, 0, 0 }, Spine = { 12, 0, 0 }, Hip_FL = { 10, 0, 0 }, Hip_FR = { 10, 0, 0 } },
+		strike = { Neck = { 55, 0, 0 }, Jaw = { -50, 0, 0 }, Spine = { 14, 0, 0 } },
+	},
+	Pounce = {
+		windup = { Spine = { -10, 0, 0 }, Hip_FL = { -25, 0, 0 }, Hip_FR = { -25, 0, 0 }, Hip_BL = { 30, 0, 0 }, Hip_BR = { 30, 0, 0 }, Knee_BL = { -60, 0, 0 }, Knee_BR = { -60, 0, 0 }, Neck = { -10, 0, 0 } },
+		strike = { Spine = { 14, 0, 0 }, Hip_FL = { 75, 0, 0 }, Hip_FR = { 75, 0, 0 }, Hip_BL = { -45, 0, 0 }, Hip_BR = { -45, 0, 0 }, Neck = { 10, 0, 0 }, Jaw = { -40, 0, 0 } },
+	},
+	Rear = {
+		windup = { Spine = { 38, 0, 0 }, Hip_FL = { 70, 0, 0 }, Hip_FR = { 70, 0, 0 }, Knee_FL = { -60, 0, 0 }, Knee_FR = { -60, 0, 0 }, Hip_BL = { -20, 0, 0 }, Hip_BR = { -20, 0, 0 }, Neck = { 20, 0, 0 }, Jaw = { -35, 0, 0 } },
+		strike = { Spine = { -12, 0, 0 }, Hip_FL = { 10, 0, 0 }, Hip_FR = { 10, 0, 0 }, Neck = { -15, 0, 0 }, Jaw = { -10, 0, 0 } },
+	},
+	Roar = {
+		windup = { Neck = { 35, 0, 0 }, Jaw = { -15, 0, 0 }, Spine = { 10, 0, 0 } },
+		strike = { Neck = { 15, 0, 0 }, Jaw = { -50, 0, 0 }, Spine = { 4, 0, 0 } },
+	},
+	Spit = {
+		windup = { Neck = { 25, 0, 0 }, Jaw = { -10, 0, 0 }, Spine = { 6, 0, 0 } },
+		strike = { Neck = { -18, 0, 0 }, Jaw = { -45, 0, 0 }, Spine = { -6, 0, 0 } },
+	},
+	Spin = {
+		windup = { Spine = { 0, 40, 0 }, Neck = { 0, -20, 0 } },
+		strike = { Spine = { 0, -40, 0 } },
+		spin = true,
+	},
+} :: { [string]: { windup: { [string]: { number } }, strike: { [string]: { number } }, spin: boolean? } }
+
 -- Animation level of detail for NPCs (studs from the camera).
 AnimationConfig.Lod = { near = 60, far = 160 }
 
