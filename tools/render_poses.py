@@ -134,8 +134,8 @@ COLORS = {
     "LeftUpperLeg": (60, 70, 60), "LeftLowerLeg": (80, 95, 80), "LeftFoot": (40, 45, 40),
 }
 
-AUTO_WINDUP = {"waist": [-8, 32, 0], "root": [8, 14, 0, 0, -0.5, 0.5], "leftHip": [10, 0, -6], "rightHip": [-22, 0, 8], "leftKnee": [-30, 0, 0], "rightKnee": [-26, 0, 0]}
-AUTO_STRIKE = {"waist": [12, -34, 0], "root": [-14, -16, 0, 0, -0.9, -1.4], "leftHip": [-48, 0, -4], "rightHip": [34, 0, 6], "leftKnee": [-42, 0, 0], "rightKnee": [-14, 0, 0]}
+AUTO_WINDUP = {"waist": [8, 32, 0], "root": [8, 14, 0, 0, -0.5, 0.5], "leftHip": [10, 0, -6], "rightHip": [-22, 0, 8], "leftKnee": [-30, 0, 0], "rightKnee": [-26, 0, 0]}
+AUTO_STRIKE = {"waist": [-12, -34, 0], "root": [-14, -16, 0, 0, -0.9, -1.4], "leftHip": [-48, 0, -4], "rightHip": [34, 0, 6], "leftKnee": [-42, 0, 0], "rightKnee": [-14, 0, 0]}
 NO_FOOTWORK = {"HitReact", "HitHeavy", "BlockRecoil", "DeflectStrike", "Kneel", "DashForward", "SideStep", "Sweep", "Guard", "Dodge", "Drink", "Flip", "Stagger", "Flinch", "Grasp", "CastGuard", "AirSlam"}
 GRIP = CF((0, -0.15, 0), rx(math.radians(-90)))  # replaced from WeaponConfig in main()
 

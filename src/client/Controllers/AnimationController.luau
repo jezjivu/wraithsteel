@@ -292,11 +292,11 @@ end
 -- Footwork + torso added to every move that does not specify them itself: the hips coil
 -- into the windup and uncoil through the strike, the lead leg steps in, the body leans in.
 local AUTO_WINDUP: { [string]: { number } } = {
-	waist = { -8, 32, 0 }, root = { 8, 14, 0, 0, -0.5, 0.5 },
+	waist = { 8, 32, 0 }, root = { 8, 14, 0, 0, -0.5, 0.5 },
 	leftHip = { 10, 0, -6 }, rightHip = { -22, 0, 8 }, leftKnee = { -30, 0, 0 }, rightKnee = { -26, 0, 0 },
 }
 local AUTO_STRIKE: { [string]: { number } } = {
-	waist = { 12, -34, 0 }, root = { -14, -16, 0, 0, -0.9, -1.4 },
+	waist = { -12, -34, 0 }, root = { -14, -16, 0, 0, -0.9, -1.4 },
 	leftHip = { -48, 0, -4 }, rightHip = { 34, 0, 6 }, leftKnee = { -42, 0, 0 }, rightKnee = { -14, 0, 0 },
 }
 
@@ -416,7 +416,7 @@ local function updateStance(model: Model, st: TrackState, still: number)
 			local function shifted(dw: number, dyaw: number, darm: number): { [string]: { number } }
 				local out = table.clone(upper)
 				local w = upper.waist or { 0, 0, 0 }
-				out.waist = { w[1] + dw, w[2] + dyaw, w[3] }
+				out.waist = { w[1] - dw, w[2] + dyaw, w[3] }
 				local sh = upper.shoulder or { 0, 0, 0 }
 				out.shoulder = { sh[1] + darm, sh[2], sh[3] }
 				local ls = upper.leftShoulder or { 0, 0, 0 }
@@ -468,7 +468,7 @@ local function updateWalk(model: Model, st: TrackState, speed: number, armed: bo
 				leftKnee = { -cfg.kneeBendDegrees * math.max(0, sn), 0, 0 },
 				rightKnee = { -cfg.kneeBendDegrees * math.max(0, -sn), 0, 0 },
 				root = { -6, sn * 5, sn * 2, 0, -math.abs(sn) * 0.35, 0 },
-				waist = { 4, -sn * 9, 0 },
+				waist = { -4, -sn * 9, 0 },
 			}
 			if not armed then
 				pose.shoulder = { cfg.armSwingDegrees * sn, 0, 0 }
